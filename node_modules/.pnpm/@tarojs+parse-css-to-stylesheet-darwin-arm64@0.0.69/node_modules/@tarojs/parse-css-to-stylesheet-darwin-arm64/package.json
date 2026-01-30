@@ -1,0 +1,19 @@
+{
+  "name": "@tarojs/parse-css-to-stylesheet-darwin-arm64",
+  "version": "0.0.69",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "main": "parse-css-to-stylesheet.darwin-arm64.node",
+  "files": [
+    "parse-css-to-stylesheet.darwin-arm64.node"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "repository": "https://github.com/NervJS/parse-css-to-stylesheet"
+}
