@@ -72,13 +72,13 @@ pnpm build:mobile
 
 ```typescript
 // 类型定义
-import type { Hotel, Room, Order } from "@yisu/shared/types";
+import type { Hotel, Room, Order } from '@yisu/shared/types';
 
 // 工具函数
-import { formatPrice, formatDate } from "@yisu/shared/utils";
+import { formatPrice, formatDate } from '@yisu/shared/utils';
 
 // 常量
-import { ORDER_STATUS_MAP, STORAGE_KEYS } from "@yisu/shared/constants";
+import { ORDER_STATUS_MAP, STORAGE_KEYS } from '@yisu/shared/constants';
 ```
 
 ## 📝 License
