@@ -2,7 +2,7 @@
   "miniprogramRoot": "dist/",
   "projectname": "mobile",
   "description": "基于 Taro 和 React 开发的智慧出行酒店预订系统，涵盖酒店查询、列表展示及详情预订流程。",
-  "appid": "wx7fe177359a7a9190",
+  "appid": "touristid",
   "setting": {
     "urlCheck": true,
     "es6": false,
