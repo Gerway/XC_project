@@ -8,11 +8,11 @@
 
 本项目采用 Monorepo 风格的目录结构，统一在一个仓库中管理三个核心子项目：
 
-| 目录 | 功能 | 技术栈 | 说明 |
-| :--- | :--- | :--- | :--- |
-| **`/mobile`** | 移动端应用 | [Taro](https://taro.zone/) + React + TypeScript | 编译为**微信小程序**。 |
-| **`/admin`** | 管理后台 | [Vite](https://vitejs.dev/) + React + TypeScript | 用于酒店管理员管理房型、订单、用户等数据。 |
-| **`/server`** | 后端服务 | Node.js + TypeScript + Express | 提供 RESTful API 接口，连接数据库。 |
+| 目录          | 功能       | 技术栈                                           | 说明                                       |
+| :------------ | :--------- | :----------------------------------------------- | :----------------------------------------- |
+| **`/mobile`** | 移动端应用 | [Taro](https://taro.zone/) + React + TypeScript  | 编译为**微信小程序**。                     |
+| **`/admin`**  | 管理后台   | [Vite](https://vitejs.dev/) + React + TypeScript | 用于酒店管理员管理房型、订单、用户等数据。 |
+| **`/server`** | 后端服务   | Node.js + TypeScript + Express                   | 提供 RESTful API 接口，连接数据库。        |
 
 ---
 
@@ -22,16 +22,18 @@
 
 1.  **Node.js**: 推荐安装最新 LTS 版本 (v18+)。
 2.  **包管理器**: 本项目统一使用 **pnpm** 进行依赖管理。
-    *   安装 pnpm: `npm install -g pnpm`
+    - 安装 pnpm: `npm install -g pnpm`
 3.  **开发工具**:
-    *   **微信开发者工具**: 必装，用于调试和预览微信小程序。
+    - **微信开发者工具**: 必装，用于调试和预览微信小程序。
 
 ---
 
-##  快速开始
+## 快速开始
 
 ### 1. 克隆项目 & 初始化
+
 如果您是第一次下载本项目：
+
 ```bash
 # 所有子项目的依赖安装（目前需分别进入各目录安装，并未配置 workspace）
 cd mobile && pnpm install && cd ..
@@ -42,13 +44,16 @@ cd server && pnpm install && cd ..
 ### 2. 📱 移动端开发指南 (`/mobile`)
 
 #### 启动开发服务器
+
 ```bash
 cd mobile
 pnpm dev:weapp
 ```
-*此时，Taro 会启动编译监听模式，将代码实时编译到 `mobile/dist` 目录。*
+
+_此时，Taro 会启动编译监听模式，将代码实时编译到 `mobile/dist` 目录。_
 
 #### 导入微信开发者工具
+
 1.  打开 **微信开发者工具**。
 2.  点击 **导入项目** (Import Project)。
 3.  **目录**: 选择项目中的 `mobile` 文件夹 (注意**不是** `dist`)。
@@ -60,6 +65,7 @@ pnpm dev:weapp
 ### 3. 💻 管理后台开发指南 (`/admin`)
 
 #### 启动开发服务器
+
 ```bash
 cd admin
 pnpm dev
@@ -69,6 +75,7 @@ pnpm dev
 ### 4. ⚙️ 后端服务开发指南 (`/server`)
 
 #### 启动开发服务器
+
 ```bash
 cd server
 pnpm dev
@@ -108,7 +115,53 @@ yisu-hotel/
 
 ## 🤝 贡献与规范
 
-*   **代码风格**: 项目配置了 ESLint 和 Prettier，请确保编辑器开启自动格式化。
-*   **Git 提交**: 参考文档https://xc0001.yuque.com/do304p/kcufua/zwm27awh9u4igr49。
+### 代码规范自动化
+
+本项目集成了 **Husky + lint-staged + ESLint + Prettier** 全自动代码质量工具链：
+
+1.  **提交代码前**：Husky 自动触发检查
+2.  **检查范围**：仅检查本次修改的文件 (lint-staged)
+3.  **自动修复**：
+    - **Prettier**: 自动格式化（单引号、2空格、无分号）
+    - **ESLint**: 自动修复简单逻辑错误
+
+### 手动检查命令
+
+在根目录下运行：
+
+```bash
+# 全局安装依赖（包括 husky, lint-staged, prettier）
+pnpm install
+
+# 触发全量检查（VS Code 会自动实时报错，此命令用于 pipeline）
+pnpm lint:mobile  # 检查小程序代码
+pnpm lint:admin   # 检查管理后台代码
+pnpm lint:server  # 检查后端服务代码
+```
+
+### 推荐 VS Code 设置
+
+项目已内置 `.vscode/settings.json`，请安装 **ESLint** 和 **Prettier** 插件，即可实现 **Save to Fix**（保存自动修复）。
+
+### Commit Message 规范
+
+本项目采用 **Angular 规范** 的简化版，格式如下：
+`type: 简短描述 (尽量用中文)`
+
+| 关键词       | 含义                  | 示例                                |
+| :----------- | :-------------------- | :---------------------------------- |
+| **feat**     | 新增功能              | `feat: 完成登录页面布局`            |
+| **fix**      | 修复 Bug              | `fix: 修复点击按钮无响应的问题`     |
+| **docs**     | 文档更新              | `docs: 修改 README 安装步骤`        |
+| **style**    | 格式调整 (不影响逻辑) | `style: 格式化代码，移除多余空行`   |
+| **refactor** | 重构代码 (无功能变动) | `refactor: 提取公共函数到 utils.js` |
+| **chore**    | 构建/工具变动         | `chore: 添加忽略文件 .gitignore`    |
+
+**验证机制**：
+
+- 当您执行 `git commit` 时，**commit-msg** 钩子会自动校验消息格式。
+- ❌ 错误示例：`add login page` (缺少 type)
+- ✅ 正确示例：`feat: add login page`
+*   **Git 提交细则**: 参考文档https://xc0001.yuque.com/do304p/kcufua/zwm27awh9u4igr49。
 
 如有任何问题，请查阅相关框架文档或联系项目负责人。
