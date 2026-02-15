@@ -1,0 +1,16 @@
+{
+  "name": "yisu-hotel",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "husky",
+    "lint:mobile": "cd yisu-hotel/mobile && npx eslint src/",
+    "lint:admin": "cd yisu-hotel/admin && npx eslint .",
+    "lint:server": "cd server && npx eslint ."
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
+    "prettier": "^3.5.3"
+  }
+}
