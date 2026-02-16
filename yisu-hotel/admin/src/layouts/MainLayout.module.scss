@@ -1,0 +1,124 @@
+.layout {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sider {
+  background: #101922 !important;
+
+  :global(.ant-menu) {
+    background: #101922;
+  }
+}
+
+.logo {
+  height: 64px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 16px;
+
+  .logoIcon {
+    width: 32px;
+    height: 32px;
+    background: #137fec;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  h1 {
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: 0.5px;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+  z-index: 10;
+  background: white; // Ensure background
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.searchInput {
+  width: 256px;
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 6px 12px;
+
+  &:focus-within {
+    background: white;
+    box-shadow: 0 0 0 2px rgba(19, 127, 236, 0.2);
+  }
+}
+
+.iconButton {
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+}
+
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 24px;
+  border-left: 1px solid #e5e7eb;
+}
+
+.userInfo {
+  text-align: right;
+  line-height: 1.5;
+  display: none;
+  @media (min-width: 640px) {
+    display: block;
+  }
+
+  .userName {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+  }
+
+  .userRole {
+    font-size: 12px;
+    color: #6b7280;
+  }
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  background: #f0f2f5;
+  position: relative;
+}

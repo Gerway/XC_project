@@ -1,0 +1,172 @@
+$primary-color: #137fec;
+$primary-hover: #0e6bd0;
+$background-light: #f0f2f5;
+$background-white: #ffffff;
+$text-primary: #1f2937;
+$text-secondary: #6b7280;
+$border-color: #e5e7eb;
+$border-radius: 8px;
+$border-radius-lg: 12px;
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-md:
+  0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+.bg-primary {
+  background-color: rgba($primary-color, 0.1);
+  color: $primary-color;
+}
+
+.bg-info {
+  background-color: rgba(24, 144, 255, 0.1);
+  color: #1890ff;
+}
+
+.bg-success {
+  background-color: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
+}
+
+.bg-warning {
+  background-color: rgba(250, 173, 20, 0.1);
+  color: #faad14;
+}
+
+.dashboardContainer {
+  padding: 24px;
+  background-color: $background-light;
+  min-height: 100%;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.section {
+  background: $background-white;
+  border-radius: $border-radius;
+  padding: 24px;
+  box-shadow: $shadow-sm;
+  margin-bottom: 24px;
+  border: 1px solid $border-color;
+
+  h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: 16px;
+  }
+}
+
+.quickActions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: $border-radius;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+
+    :global(.anticon) {
+      margin-right: 8px;
+    }
+
+    &.primary {
+      background-color: $primary-color;
+      color: white;
+
+      &:hover {
+        background-color: $primary-hover;
+      }
+    }
+
+    &.default {
+      background-color: white;
+      border: 1px solid #d1d5db;
+      color: #374151;
+
+      &:hover {
+        background-color: #f9fafb;
+      }
+    }
+  }
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid $border-color;
+
+  a {
+    color: $primary-color;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.hotelInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .iconWrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: $border-radius;
+    background-color: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+  }
+
+  .details {
+    p {
+      margin: 0;
+    }
+    .name {
+      font-weight: 500;
+      color: $text-primary;
+    }
+    .id {
+      font-size: 12px;
+      color: $text-secondary;
+    }
+  }
+}
+
+.actionButton {
+  color: $text-secondary;
+  cursor: pointer;
+  transition: color 0.2s;
+
+  &:hover {
+    color: $primary-color;
+  }
+}

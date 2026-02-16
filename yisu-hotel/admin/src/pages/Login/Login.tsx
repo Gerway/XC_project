@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Form, Input, Button, Radio, Checkbox, message, ConfigProvider } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import styles from './Login.module.scss'
 import { UserRole } from '@yisu/shared/enums/UserRole'
 import type { RadioChangeEvent } from 'antd'
@@ -15,6 +15,7 @@ interface LoginFormValues {
 const Login: React.FC = () => {
   const [role, setRole] = useState<UserRole>(UserRole.MERCHANT)
   const [form] = Form.useForm()
+  const navigate = useNavigate()
 
   const onRoleChange = (e: RadioChangeEvent) => {
     setRole(e.target.value)
@@ -25,7 +26,7 @@ const Login: React.FC = () => {
     console.log('Login attempt:', { role, ...values })
     message.loading('登录中...', 1.5).then(() => {
       message.success('登录成功！(演示)')
-      // TODO: Navigate to dashboard
+      navigate('/dashboard')
     })
   }
 
