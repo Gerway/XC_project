@@ -26,3 +26,16 @@ export interface IStatCardData {
   description: string
   colorClass: string // e.g., 'primary', 'success', 'warning'
 }
+
+export interface IRoom {
+  id: string
+  name: string
+  basePrice: number
+  isActive: boolean // true=在售, false=下架
+}
+
+export interface IDayInventory {
+  date: string // YYYY-MM-DD
+  price: number
+  stock: number
+}
