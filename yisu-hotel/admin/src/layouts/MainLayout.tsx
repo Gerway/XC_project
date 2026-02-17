@@ -92,7 +92,18 @@ const MainLayout: React.FC = () => {
               label: '管理',
               type: 'group',
               children: [
-                { key: 'rooms', icon: <AppstoreOutlined />, label: '房间管理' },
+                {
+                  key: 'rooms',
+                  icon: <AppstoreOutlined />,
+                  label: '酒店管理',
+                  onClick: () => navigate('/rooms'),
+                },
+                {
+                  key: 'inventory',
+                  icon: <AppstoreOutlined />,
+                  label: '房型与库存管理',
+                  onClick: () => navigate('/inventory'),
+                },
                 { key: 'orders', icon: <FileTextOutlined />, label: '订单管理' },
                 { key: 'customers', icon: <TeamOutlined />, label: '客户列表' },
               ],
@@ -118,7 +129,16 @@ const MainLayout: React.FC = () => {
             <Breadcrumb
               items={[
                 { title: '首页' },
-                { title: '仪表盘概览' }, // Layout breadcrumb logic can be dynamic in real app
+                {
+                  title:
+                    location.pathname === '/rooms'
+                      ? '酒店管理'
+                      : location.pathname === '/inventory'
+                        ? '房型与库存管理'
+                        : location.pathname === '/dashboard'
+                          ? '仪表盘概览'
+                          : location.pathname.replace('/', '') || '仪表盘概览',
+                },
               ]}
             />
           </div>
