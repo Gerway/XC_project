@@ -78,11 +78,6 @@ const Favorites: React.FC = () => {
                     </View>
 
                     <Text className="favorites-page__title">收藏 / 足迹</Text>
-
-                    <View className="favorites-page__header-actions">
-                        <Text className="favorites-page__header-action-icon">🔍</Text>
-                        <Text className="favorites-page__header-action-icon">⋮</Text>
-                    </View>
                 </View>
 
                 <View className="favorites-page__tabs">

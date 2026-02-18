@@ -100,7 +100,7 @@ const Profile: React.FC = () => {
 
         {/* Stats Row */}
         <View className="profile-page__stats-row">
-          <View className="profile-page__stat-item">
+          <View className="profile-page__stat-item" onClick={() => handleAuthAction(() => Taro.navigateTo({ url: '/pages/coupons/index' }))}>
             <Text className="profile-page__stat-value">2</Text>
             <Text className="profile-page__stat-label">Coupons</Text>
           </View>

@@ -10,7 +10,7 @@ export default defineAppConfig({
     'pages/orders/index',
     'pages/order-details/index',
     'pages/favorites/index',
-    // 'pages/coupons/index',
+    'pages/coupons/index',
   ],
   window: {
     backgroundTextStyle: 'light',
