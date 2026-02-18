@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { View, Text, Image, Button, ScrollView } from '@tarojs/components';
 import { Order, OrderStatus } from '../../../types/types';
@@ -6,29 +6,37 @@ import './index.scss';
 
 const Orders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [activeTab, setActiveTab] = useState('All');
+  const [activeTab, setActiveTab] = useState(0);
   const [canGoBack, setCanGoBack] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useDidShow(() => {
     // Check page stack depth
     const pages = Taro.getCurrentPages();
     setCanGoBack(pages.length > 1);
 
-    // Load orders
-    try {
-      const raw = Taro.getStorageSync('orders');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          setOrders(parsed);
+    // Check Login Status
+    const userInfo = Taro.getStorageSync('userInfo');
+    if (userInfo) {
+      setIsLoggedIn(true);
+      // Load orders
+      try {
+        const raw = Taro.getStorageSync('orders');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            setOrders(parsed);
+          }
+        } else {
+          setOrders([]);
         }
-      } else {
-        // Mock data if empty for demo purposes? No, keep it clean.
-        // Or maybe read from initial constants if needed?
-        // For now, assume Booking page populates it or empty.
+      } catch (e) {
+        console.error('Failed to load orders', e);
+        setOrders([]);
       }
-    } catch (e) {
-      console.error('Failed to load orders', e);
+    } else {
+      setIsLoggedIn(false);
+      setOrders([]);
     }
   });
 
@@ -69,6 +77,10 @@ const Orders: React.FC = () => {
     });
   };
 
+  const handleLogin = () => {
+    Taro.navigateTo({ url: '/pages/login/index' });
+  };
+
   const handleAction = (action: string, order: Order) => {
     if (action === 'book_again') {
       // Check if hotel exists in constant? For now simplify to navigate to details
@@ -80,21 +92,24 @@ const Orders: React.FC = () => {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
-    if (activeTab === 'All') return true;
-    if (activeTab === 'To Pay') return order.status === OrderStatus.PENDING;
-    if (activeTab === 'To Check-in') return order.status === OrderStatus.PAID || order.status === OrderStatus.CHECKED_IN;
-    if (activeTab === 'To Review') return order.status === OrderStatus.COMPLETED;
-    if (activeTab === 'Cancelled') return order.status === OrderStatus.CANCELLED;
-    return true;
-  });
+  const filteredOrders = useMemo(() => {
+    if (!isLoggedIn) return [];
+    switch (activeTab) {
+      case 0: return orders; // All
+      case 1: return orders.filter(o => o.status === OrderStatus.PENDING); // To Pay
+      case 2: return orders.filter(o => o.status === OrderStatus.PAID || o.status === OrderStatus.CHECKED_IN); // To Check-in (Paid or Checked-in)
+      case 3: return orders.filter(o => o.status === OrderStatus.COMPLETED); // To Review (Completed)
+      case 4: return orders.filter(o => o.status === OrderStatus.CANCELLED); // Cancelled
+      default: return orders;
+    }
+  }, [activeTab, orders, isLoggedIn]);
 
   const tabs = [
-    { id: 'All', label: '全部' },
-    { id: 'To Pay', label: '待支付' },
-    { id: 'To Check-in', label: '待入住' },
-    { id: 'To Review', label: '待评价' },
-    { id: 'Cancelled', label: '取消' },
+    { id: 0, label: '全部' },
+    { id: 1, label: '待支付' },
+    { id: 2, label: '待入住' },
+    { id: 3, label: '待评价' },
+    { id: 4, label: '取消' },
   ];
 
   const { statusBarHeight } = Taro.getSystemInfoSync();
@@ -158,12 +173,23 @@ const Orders: React.FC = () => {
           <Text>按入住时间排序</Text>
         </View>
       </View>
-
+      {/* Order List */}
       <ScrollView scrollY className="orders-page__list">
-        {filteredOrders.length === 0 ? (
+        {!isLoggedIn ? (
           <View className="orders-page__empty">
             <Text className="orders-page__empty-icon">🧾</Text>
-            <Text className="orders-page__empty-text">暂无订单</Text>
+            <Text className="orders-page__empty-text">您还没有订单哟~</Text>
+            <View className="orders-page__login-btn" onClick={handleLogin}>
+              <Text>登录</Text>
+            </View>
+          </View>
+        ) : filteredOrders.length === 0 ? (
+          <View className="orders-page__empty">
+            <Text className="orders-page__empty-icon">🧾</Text>
+            <Text className="orders-page__empty-text">您还没有订单哟~</Text>
+            <View className="orders-page__empty-btn" onClick={() => Taro.switchTab({ url: '/pages/home/index' })}>
+              <Text>预订</Text>
+            </View>
           </View>
         ) : (
           filteredOrders.map(order => {

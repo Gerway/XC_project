@@ -363,4 +363,22 @@
             }
         }
     }
+
+    &__empty-btn,
+    &__login-btn {
+        margin-top: $spacing-6;
+        padding: $spacing-3 $spacing-8;
+        background: $primary;
+        color: $white;
+        font-weight: $font-bold;
+        border-radius: 9999px;
+        box-shadow: $shadow-lg;
+        font-size: $text-sm;
+        transition: all $transition-normal;
+
+        &:active {
+            transform: scale(0.98);
+            background: $primary-dark;
+        }
+    }
 }
