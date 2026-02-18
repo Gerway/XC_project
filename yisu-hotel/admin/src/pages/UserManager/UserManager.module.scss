@@ -1,0 +1,475 @@
+// ===== Design Tokens =====
+$primary-color: #1890ff;
+$primary-hover: #40a9ff;
+$primary-light: rgba(24, 144, 255, 0.1);
+$background-main: #f0f2f5;
+$background-white: #ffffff;
+$text-primary: #1f2937;
+$text-secondary: #6b7280;
+$text-muted: #9ca3af;
+$border-color: #e5e7eb;
+$border-radius: 8px;
+$border-radius-lg: 12px;
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+// Role colors
+$role-admin-bg: #f5f3ff;
+$role-admin-text: #6d28d9;
+$role-admin-border: #ddd6fe;
+$role-merchant-bg: #eff6ff;
+$role-merchant-text: #1d4ed8;
+$role-merchant-border: #bfdbfe;
+$role-customer-bg: #fff7ed;
+$role-customer-text: #c2410c;
+$role-customer-border: #fed7aa;
+
+// Status colors
+$status-active-bg: #f0fdf4;
+$status-active-text: #15803d;
+$status-active-border: #dcfce7;
+$status-active-dot: #22c55e;
+$status-banned-bg: #fef2f2;
+$status-banned-text: #b91c1c;
+$status-banned-border: #fecaca;
+$status-banned-dot: #ef4444;
+
+// ===== 容器 =====
+.container {
+  min-height: 100%;
+  background: $background-main;
+}
+
+.innerContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+// ===== 页面标题 =====
+.pageHeader {
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: $text-primary;
+    margin: 0;
+    letter-spacing: -0.025em;
+  }
+
+  p {
+    color: $text-secondary;
+    margin: 4px 0 0;
+    font-size: 14px;
+  }
+}
+
+// ===== 统计卡片 =====
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.statCard {
+  border-radius: $border-radius-lg !important;
+  border: 1px solid $border-color;
+  box-shadow: $shadow-sm;
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  :global(.ant-card-body) {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.statInfo {
+  p {
+    color: $text-secondary;
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  :global(.ant-statistic) {
+    margin-top: 4px;
+  }
+
+  :global(.ant-statistic-content-value) {
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    color: $text-primary !important;
+  }
+}
+
+.statIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+
+  &.blue {
+    background: #eff6ff;
+    color: $primary-color;
+  }
+
+  &.green {
+    background: #f0fdf4;
+    color: #16a34a;
+  }
+
+  &.purple {
+    background: #f5f3ff;
+    color: #7c3aed;
+  }
+
+  &.red {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+}
+
+// ===== 筛选栏 =====
+.filterCard {
+  background: $background-white;
+  padding: 24px;
+  border-radius: $border-radius-lg;
+  border: 1px solid $border-color;
+  box-shadow: $shadow-sm;
+}
+
+.filterForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+
+  :global {
+    .ant-form-item {
+      margin-bottom: 0;
+    }
+
+    .ant-form-item-label > label {
+      font-size: 14px;
+      font-weight: 500;
+      color: $text-primary;
+    }
+
+    .ant-input,
+    .ant-select-selector {
+      border-radius: $border-radius !important;
+      box-shadow: $shadow-sm;
+    }
+  }
+}
+
+.searchField {
+  flex: 1;
+  min-width: 240px;
+}
+
+.selectField {
+  width: 192px;
+}
+
+.filterActions {
+  display: flex;
+  gap: 12px;
+}
+
+.filterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: $border-radius;
+  font-size: 14px;
+  font-weight: 500;
+  height: 32px;
+  padding: 0 16px;
+  box-shadow: 0 1px 3px rgba(24, 144, 255, 0.3);
+}
+
+.resetBtn {
+  border-radius: $border-radius;
+  font-size: 14px;
+  font-weight: 500;
+  height: 32px;
+  padding: 0 16px;
+}
+
+// ===== 数据表格 =====
+.tableCard {
+  background: $background-white;
+  border-radius: $border-radius-lg;
+  border: 1px solid $border-color;
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+
+  :global {
+    .ant-table {
+      border-radius: 0;
+    }
+
+    .ant-table-thead > tr > th {
+      background: #f8fafc;
+      color: $text-secondary;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 16px 24px;
+      border-bottom: 1px solid $border-color;
+    }
+
+    .ant-table-tbody > tr > td {
+      padding: 16px 24px;
+      vertical-align: middle;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+      background: #f8fafc;
+    }
+
+    .ant-table-pagination {
+      padding: 12px 24px;
+      margin: 0;
+      border-top: 1px solid $border-color;
+    }
+  }
+}
+
+// ===== Cell: 用户 ID =====
+.userId {
+  font-size: 14px;
+  color: $text-muted;
+}
+
+// ===== Cell: 用户信息 =====
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid $border-color;
+  flex-shrink: 0;
+}
+
+.userMeta {
+  display: flex;
+  flex-direction: column;
+
+  .userName {
+    font-size: 14px;
+    font-weight: 500;
+    color: $text-primary;
+  }
+
+  .userContact {
+    font-size: 12px;
+    color: $text-muted;
+    margin-top: 2px;
+  }
+}
+
+// ===== Cell: 角色标签 =====
+.roleTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+
+  &.admin {
+    background: $role-admin-bg;
+    color: $role-admin-text;
+    border: 1px solid $role-admin-border;
+  }
+
+  &.merchant {
+    background: $role-merchant-bg;
+    color: $role-merchant-text;
+    border: 1px solid $role-merchant-border;
+  }
+
+  &.customer {
+    background: $role-customer-bg;
+    color: $role-customer-text;
+    border: 1px solid $role-customer-border;
+  }
+}
+
+// ===== Cell: 日期 =====
+.dateText {
+  font-size: 14px;
+  color: $text-secondary;
+}
+
+// ===== Cell: 状态 =====
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+
+  &.active {
+    background: $status-active-bg;
+    color: $status-active-text;
+    border: 1px solid $status-active-border;
+  }
+
+  &.banned {
+    background: $status-banned-bg;
+    color: $status-banned-text;
+    border: 1px solid $status-banned-border;
+  }
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &.active {
+    background: $status-active-dot;
+  }
+
+  &.banned {
+    background: $status-banned-dot;
+  }
+}
+
+// ===== Cell: 操作 =====
+.detailLink {
+  color: $primary-color;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  margin-right: 12px;
+  transition: color 0.2s;
+
+  &:hover {
+    color: $primary-hover;
+    text-decoration: underline;
+  }
+}
+
+.banLink {
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #dc2626;
+    text-decoration: underline;
+  }
+}
+
+.unbanLink {
+  color: $text-muted;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+
+  &:hover {
+    color: $text-secondary;
+    text-decoration: underline;
+  }
+}
+
+// ===== Popover: 封禁确认 =====
+.banPopover {
+  :global(.ant-popover-inner) {
+    padding: 0;
+    border-radius: $border-radius-lg;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.banPopContent {
+  width: 240px;
+  padding: 16px;
+}
+
+.banPopHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.banPopIcon {
+  color: #eab308;
+  font-size: 20px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.banPopTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: $text-primary;
+}
+
+.banPopTextarea {
+  margin-top: 8px;
+
+  :global(.ant-input) {
+    border-radius: 4px;
+    font-size: 12px;
+    resize: none;
+  }
+}
+
+.banPopActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.banPopCancel {
+  font-size: 12px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 4px;
+}
+
+.banPopConfirm {
+  font-size: 12px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 4px;
+  background: #ef4444;
+  border-color: #ef4444;
+  color: white;
+
+  &:hover {
+    background: #dc2626 !important;
+    border-color: #dc2626 !important;
+  }
+}
