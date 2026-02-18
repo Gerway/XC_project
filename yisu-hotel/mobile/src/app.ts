@@ -2,6 +2,7 @@ import { PropsWithChildren } from 'react'
 import { useLaunch } from '@tarojs/taro'
 
 import './app.scss'
+import './custom-tab-bar/index'
 
 function App({ children }: PropsWithChildren<any>) {
   useLaunch(() => {
@@ -11,7 +12,7 @@ function App({ children }: PropsWithChildren<any>) {
   // children 是将要会渲染的页面
   return children
 }
-  
+
 
 
 export default App

@@ -1,0 +1,222 @@
+@use 'variables' as *;
+
+// ============================================================
+// LAYOUT MIXINS
+// ============================================================
+
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@mixin flex-col {
+    display: flex;
+    flex-direction: column;
+}
+
+@mixin flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+@mixin flex-start {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+// ============================================================
+// SCROLLBAR
+// ============================================================
+
+@mixin hide-scrollbar {
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+// ============================================================
+// TEXT TRUNCATION
+// ============================================================
+
+@mixin line-clamp($lines: 1) {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+@mixin truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// ============================================================
+// GRADIENTS
+// ============================================================
+
+@mixin gradient-primary {
+    background: linear-gradient(to right, $orange-500, $primary);
+}
+
+@mixin gradient-primary-reverse {
+    background: linear-gradient(to right, $primary, $orange-500);
+}
+
+@mixin gradient-primary-br {
+    background: linear-gradient(to bottom right, $orange-400, $primary);
+}
+
+@mixin gradient-hero {
+    background: linear-gradient(to bottom right, #FF6B6B, #FF8E53);
+}
+
+@mixin gradient-orange-to-red {
+    background: linear-gradient(to right, $orange-500, $red-500);
+}
+
+// ============================================================
+// BUTTONS
+// ============================================================
+
+@mixin btn-gradient {
+    @include gradient-primary;
+    color: $white;
+    font-weight: $font-bold;
+    border: none;
+    cursor: pointer;
+    transition: all $transition-normal;
+
+    &:active {
+        transform: scale(0.98);
+    }
+}
+
+@mixin btn-outline {
+    background: $white;
+    border: 1px solid $gray-200;
+    color: $gray-600;
+    font-weight: $font-bold;
+    cursor: pointer;
+    transition: all $transition-normal;
+
+    &:active {
+        background: $gray-50;
+    }
+}
+
+@mixin btn-rounded-full {
+    border-radius: $rounded-full;
+}
+
+// ============================================================
+// BACKDROP BLUR
+// ============================================================
+
+@mixin backdrop-blur {
+    backdrop-filter: blur($backdrop-blur-sm);
+    -webkit-backdrop-filter: blur($backdrop-blur-sm);
+}
+
+@mixin backdrop-blur-sm {
+    backdrop-filter: blur($backdrop-blur-sm);
+    -webkit-backdrop-filter: blur($backdrop-blur-sm);
+}
+
+@mixin backdrop-blur-md {
+    backdrop-filter: blur($backdrop-blur-md);
+    -webkit-backdrop-filter: blur($backdrop-blur-md);
+}
+
+@mixin backdrop-blur-lg {
+    backdrop-filter: blur($backdrop-blur-lg);
+    -webkit-backdrop-filter: blur($backdrop-blur-lg);
+}
+
+// ============================================================
+// RESPONSIVE
+// ============================================================
+
+@mixin respond-to($bp) {
+    @if $bp =='sm' {
+        @media (min-width: $breakpoint-sm) {
+            @content;
+        }
+    }
+
+    @else if $bp =='md' {
+        @media (min-width: $breakpoint-md) {
+            @content;
+        }
+    }
+
+    @else if $bp =='lg' {
+        @media (min-width: $breakpoint-lg) {
+            @content;
+        }
+    }
+
+    @else if $bp =='xl' {
+        @media (min-width: $breakpoint-xl) {
+            @content;
+        }
+    }
+}
+
+// ============================================================
+// ANIMATIONS (Keyframes)
+// ============================================================
+
+@mixin fade-in {
+    animation: fadeIn 0.2s ease-out;
+}
+
+@mixin slide-up {
+    animation: slideUp 0.3s ease-out;
+}
+
+// ============================================================
+// UTILITY MIXINS
+// ============================================================
+
+@mixin absolute-fill {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+@mixin fixed-fill {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+@mixin circle($size) {
+    width: $size;
+    height: $size;
+    border-radius: $rounded-full;
+}
+
+@mixin card {
+    background: $white;
+    border-radius: $rounded-xl;
+    box-shadow: $shadow-sm;
+    border: 1px solid $gray-100;
+}
+
+@mixin card-2xl {
+    background: $white;
+    border-radius: $rounded-2xl;
+    box-shadow: $shadow-sm;
+    border: 1px solid $gray-100;
+}

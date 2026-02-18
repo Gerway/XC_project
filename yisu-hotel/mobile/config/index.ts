@@ -1,14 +1,18 @@
 import { defineConfig, type UserConfigExport } from '@tarojs/cli'
-
+import path from 'path';
 import devConfig from './dev'
 import prodConfig from './prod'
 
 // https://taro-docs.jd.com/docs/next/config#defineconfig-辅助函数
 export default defineConfig<'vite'>(async (merge, { command, mode }) => {
   const baseConfig: UserConfigExport<'vite'> = {
+    // 项目名称
     projectName: 'mobile',
+    // 创建日期
     date: '2026-2-8',
+    // 设计稿尺寸
     designWidth: 750,
+    // 设计稿尺寸换算规则
     deviceRatio: {
       640: 2.34 / 2,
       750: 1,
@@ -17,9 +21,17 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
     },
     sourceRoot: 'src',
     outputRoot: 'dist',
+    // Taro 插件配置
     plugins: [
-      "@tarojs/plugin-generator"
+      "@tarojs/plugin-generator",
+      '@tarojs/plugin-sass'
     ],
+    // 全局 SCSS 变量注入（避免每个文件都 @use）
+    sass: {
+      resource: ['src/styles/_variables.scss', 'src/styles/_mixins.scss'],
+      projectDirectory: path.resolve(__dirname, '..')
+    },
+    // 全局变量设置
     defineConstants: {
     },
     copy: {
