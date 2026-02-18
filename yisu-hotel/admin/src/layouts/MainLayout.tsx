@@ -5,8 +5,6 @@ import {
   DashboardOutlined,
   AppstoreOutlined,
   FileTextOutlined,
-  TeamOutlined,
-  BarChartOutlined,
   NotificationOutlined,
   SearchOutlined,
   UserOutlined,
@@ -104,17 +102,12 @@ const MainLayout: React.FC = () => {
                   label: '房型与库存管理',
                   onClick: () => navigate('/inventory'),
                 },
-                { key: 'orders', icon: <FileTextOutlined />, label: '订单管理' },
-                { key: 'customers', icon: <TeamOutlined />, label: '客户列表' },
-              ],
-            },
-            {
-              key: 'insights',
-              label: '洞察',
-              type: 'group',
-              children: [
-                { key: 'analytics', icon: <BarChartOutlined />, label: '数据分析' },
-                { key: 'marketing', icon: <NotificationOutlined />, label: '营销管理' },
+                {
+                  key: 'orders',
+                  icon: <FileTextOutlined />,
+                  label: '订单管理',
+                  onClick: () => navigate('/orders'),
+                },
               ],
             },
           ]}
@@ -135,9 +128,11 @@ const MainLayout: React.FC = () => {
                       ? '酒店管理'
                       : location.pathname === '/inventory'
                         ? '房型与库存管理'
-                        : location.pathname === '/dashboard'
-                          ? '仪表盘概览'
-                          : location.pathname.replace('/', '') || '仪表盘概览',
+                        : location.pathname === '/orders'
+                          ? '订单管理'
+                          : location.pathname === '/dashboard'
+                            ? '仪表盘概览'
+                            : location.pathname.replace('/', '') || '仪表盘概览',
                 },
               ]}
             />
