@@ -1,11 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Input, ScrollView } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import { Hotel, Room, OrderStatus, Order, Coupon } from '../../../types/types';
 import { MOCK_USER, COUPONS } from '../../constants';
 import './index.scss';
 
 const Booking: React.FC = () => {
+  const router = useRouter();
+  const { orderId } = router.params;
+  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   // Read booking info from storage (set by HotelDetails page)
   const bookingData = useMemo(() => {
     try {
@@ -24,6 +27,25 @@ const Booking: React.FC = () => {
     } catch (e) { /* ignore */ }
     return null;
   }, []);
+
+  // Load existing order if orderId is present
+  useDidShow(() => {
+    if (orderId) {
+      try {
+        const raw = Taro.getStorageSync('orders');
+        if (raw) {
+          const orders: Order[] = JSON.parse(raw);
+          const found = orders.find(o => o.order_id === orderId);
+          if (found) {
+            setCurrentOrder(found);
+            // Pre-fill fields if they exist in order (e.g. if editing)
+            if (found.guest_name) setGuestName(found.guest_name);
+            if (found.guest_phone) setPhoneNumber(found.guest_phone);
+          }
+        }
+      } catch (e) { }
+    }
+  });
 
   const hotel = bookingData?.hotel;
   const room = bookingData?.room;
@@ -143,31 +165,57 @@ const Booking: React.FC = () => {
     }
     setIsProcessing(true);
     setTimeout(() => {
-      const newOrder: Order = {
-        order_id: `o_${Date.now()}`,
-        user_id: user?.user_id || 'guest',
-        hotel_id: hotel.hotel_id,
-        hotel_name: hotel.name,
-        hotel_image: hotel.image_url,
-        room_id: room.room_id,
-        room_name: room.name,
-        check_in: safeDates.start.toISOString().split('T')[0],
-        check_out: safeDates.end.toISOString().split('T')[0],
-        nights: nights,
-        total_price: total,
-        real_pay: total,
-        status: OrderStatus.PAID,
-        created_at: new Date().toISOString()
-      };
-
-      // Save order to storage
+      // Update existing order or create new one (fallback)
       try {
         const existingOrders = Taro.getStorageSync('orders');
-        const orders = existingOrders ? JSON.parse(existingOrders) : [];
-        orders.unshift(newOrder);
+        let orders: Order[] = existingOrders ? JSON.parse(existingOrders) : [];
+
+        let targetOrder = currentOrder;
+
+        if (targetOrder) {
+          // Update existing
+          const idx = orders.findIndex(o => o.order_id === targetOrder!.order_id);
+          if (idx > -1) {
+            orders[idx] = {
+              ...orders[idx],
+              user_id: user?.user_id || 'guest',
+              total_price: total,
+              real_pay: total,
+              status: OrderStatus.PAID,
+              guest_name: guestName,
+              guest_phone: phoneNumber,
+              note: notes,
+              arrival_time: arrivalTime
+            };
+          }
+        } else {
+          // Fallback: create new (shouldn't happen with new flow)
+          const newOrder: Order = {
+            order_id: `o_${Date.now()}`,
+            user_id: user?.user_id || 'guest',
+            hotel_id: hotel.hotel_id,
+            hotel_name: hotel.name,
+            hotel_image: hotel.image_url,
+            room_id: room.room_id,
+            room_name: room.name,
+            check_in: safeDates.start.toISOString().split('T')[0],
+            check_out: safeDates.end.toISOString().split('T')[0],
+            nights: nights,
+            total_price: total,
+            real_pay: total,
+            status: OrderStatus.PAID,
+            created_at: new Date().toISOString(),
+            guest_name: guestName,
+            guest_phone: phoneNumber,
+            note: notes,
+            arrival_time: arrivalTime
+          };
+          orders.unshift(newOrder);
+        }
+
         Taro.setStorageSync('orders', JSON.stringify(orders));
       } catch (e) {
-        console.log('Failed to save order');
+        console.log('Failed to save order', e);
       }
 
       setIsProcessing(false);

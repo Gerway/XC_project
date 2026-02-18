@@ -8,7 +8,7 @@ export default defineAppConfig({
     'pages/booking/index',
     'pages/profile/index',
     'pages/orders/index',
-    // 'pages/order-details/index',
+    'pages/order-details/index',
     // 'pages/favorites/index',
     // 'pages/coupons/index',
   ],

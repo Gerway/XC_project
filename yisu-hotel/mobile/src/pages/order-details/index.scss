@@ -1,0 +1,554 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+$purple-main: #6D5DD3;
+
+.order-details {
+    background: #F5F7FA;
+    min-height: 100vh;
+    @include flex-col;
+    position: relative;
+
+    // ---- Header ----
+    &__header {
+        position: fixed; // Fixed for custom nav
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: $z-40;
+        background: rgba($white, 0.95);
+        // backdrop-filter not supported natively in wxss easily, just use opacity
+        border-bottom: 1px solid $gray-50;
+    }
+
+    &__header-inner {
+        position: relative;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 $spacing-4;
+    }
+
+    &__back-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 9999px;
+        @include flex-center;
+        background: rgba($gray-100, 0.5);
+        // margin-left: -$spacing-1; // Removed negative margin to ensure hit target is safe
+    }
+
+    &__back-icon {
+        color: $gray-800;
+        font-size: 20px;
+        line-height: 1;
+        margin-top: -2px;
+    }
+
+    &__title {
+        font-size: 16px; // Match Orders page polish
+        font-weight: $font-bold;
+        color: $gray-900;
+        @include absolute-fill;
+        @include flex-center;
+        pointer-events: none;
+    }
+
+    &__header-actions {
+        display: flex;
+        align-items: center;
+        gap: $spacing-3;
+        z-index: $z-10;
+        position: relative; // Ensure on top of title
+    }
+
+    &__header-action-icon {
+        color: $gray-600;
+        font-size: 20px;
+    }
+
+    // ---- Main ----
+    &__main {
+        flex: 1;
+        box-sizing: border-box;
+        padding: $spacing-4 $spacing-3;
+        // Padding bottom handled by spacer
+    }
+
+    // Status Section
+    &__status-section {
+        padding: 0 $spacing-2;
+        margin-bottom: $spacing-2;
+    }
+
+    &__status-title {
+        font-size: $text-2xl;
+        font-weight: $font-bold;
+        color: $gray-900;
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+    }
+
+    &__status-countdown {
+        font-size: $text-sm;
+        font-weight: $font-normal;
+        color: $gray-500;
+        margin-top: $spacing-1;
+        display: block; // Force new line
+    }
+
+    // Card (white rounded section)
+    &__card {
+        background: $white;
+        border-radius: $rounded-2xl;
+        padding: $spacing-4;
+        box-shadow: $shadow-sm;
+        margin-bottom: $spacing-3;
+
+        &--gradient {
+            background: linear-gradient(to bottom right, $gray-50, $white);
+            // border: 1px solid $gray-100;
+        }
+
+        &--spaced {
+            display: flex;
+            flex-direction: column;
+            gap: $spacing-4;
+        }
+
+        &--mb {
+            margin-bottom: $spacing-6;
+        }
+    }
+
+    // Payment Card
+    &__payment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: $spacing-3;
+    }
+
+    &__payment-label {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__payment-amount {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+        color: $red-500;
+    }
+
+    &__payment-currency {
+        font-size: $text-xs;
+        font-weight: $font-bold;
+    }
+
+    &__payment-value {
+        font-size: $text-xl;
+        font-weight: $font-bold;
+    }
+
+    &__payment-detail {
+        display: flex;
+        align-items: center;
+        font-size: $text-xs;
+        color: $gray-500;
+        margin-left: 4px;
+    }
+
+    &__payment-detail-arrow {
+        font-size: 12px;
+    }
+
+    &__cancel-policy {
+        display: flex;
+        align-items: flex-start;
+        gap: $spacing-2;
+        padding-top: $spacing-3;
+        border-top: 1px solid $gray-50;
+    }
+
+    &__cancel-label {
+        font-size: $text-xs;
+        color: $gray-500;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    &__cancel-text {
+        font-size: $text-xs;
+        color: $gray-500;
+        line-height: $leading-relaxed;
+    }
+
+    // Hotel Info Card
+    &__hotel-row {
+        display: flex;
+        gap: $spacing-3;
+        margin-bottom: $spacing-4;
+    }
+
+    &__hotel-thumb {
+        width: 64px;
+        height: 64px;
+        background: $gray-100;
+        border-radius: $rounded-lg;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    &__hotel-thumb-img {
+        width: 100%;
+        height: 100%;
+    }
+
+    &__hotel-info {
+        flex: 1;
+        min-width: 0;
+        @include flex-col;
+        justify-content: center;
+    }
+
+    &__hotel-name {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+        line-height: $leading-snug;
+        @include line-clamp(1);
+        margin-bottom: $spacing-1;
+    }
+
+    &__hotel-address {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+        font-size: $text-xs;
+        color: $gray-500;
+    }
+
+    &__hotel-address-text {
+        @include truncate;
+        max-width: 200px;
+    }
+
+    &__hotel-address-arrow {
+        font-size: 14px;
+    }
+
+    &__action-buttons {
+        display: flex;
+        gap: $spacing-3;
+    }
+
+    &__action-btn {
+        flex: 1;
+        height: 36px;
+        border-radius: $rounded-full;
+        border: 1px solid $gray-200;
+        @include flex-center;
+        gap: $spacing-1;
+
+        text {
+            font-size: $text-xs;
+            font-weight: $font-bold;
+            color: $gray-700;
+        }
+
+        &--active {
+            background: $gray-50;
+        }
+    }
+
+    &__action-btn-icon {
+        font-size: 16px;
+    }
+
+    // Booking Details
+    &__detail-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+
+        &--top {
+            align-items: flex-start;
+        }
+    }
+
+    &__detail-icon {
+        color: $gray-400;
+        font-size: 18px;
+
+        &--top {
+            margin-top: 2px;
+        }
+    }
+
+    &__detail-dates {
+        display: flex;
+        align-items: baseline;
+        gap: $spacing-2;
+        flex: 1;
+    }
+
+    &__detail-date {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__detail-nights {
+        font-size: $text-xs;
+        padding: 2px 6px;
+        border-radius: $rounded-full;
+        border: 1px solid $gray-200;
+        color: $gray-500;
+        white-space: nowrap;
+    }
+
+    &__detail-room-row {
+        flex: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    &__detail-room-name {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__detail-link {
+        display: flex;
+        align-items: center;
+        font-size: $text-xs;
+        color: $gray-400;
+    }
+
+    &__detail-link-arrow {
+        font-size: 12px;
+    }
+
+    &__detail-room-info {
+        margin-top: $spacing-2;
+        background: $gray-50;
+        border-radius: $rounded-lg;
+        padding: $spacing-2;
+        font-size: $text-xs;
+        color: $gray-500;
+        @include flex-col;
+        gap: $spacing-1;
+    }
+
+    // Membership Benefits
+    &__membership-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: $spacing-3;
+    }
+
+    &__membership-title {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__membership-worth {
+        font-size: $text-xs;
+        color: $red-500;
+    }
+
+    &__benefits-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: $spacing-2;
+        text-align: center;
+    }
+
+    &__benefit-item {
+        @include flex-col;
+        align-items: center;
+    }
+
+    &__benefit-icon-wrapper {
+        width: 40px;
+        height: 40px;
+        border-radius: 9999px;
+        background: $purple-main;
+        @include flex-center;
+        color: $white;
+        margin-bottom: $spacing-1;
+        position: relative;
+    }
+
+    &__benefit-icon {
+        font-size: 20px;
+    }
+
+    &__benefit-badge {
+        position: absolute;
+        top: -4px;
+        right: -8px;
+        background: $red-500;
+        color: $white;
+        font-size: 8px;
+        padding: 0 4px;
+        border-radius: 9999px;
+        border: 1px solid $white;
+    }
+
+    &__benefit-label {
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        color: $gray-800;
+    }
+
+    &__benefit-sub {
+        font-size: 9px;
+        color: $gray-400;
+        margin-top: 2px;
+    }
+
+    &__points-info {
+        margin-top: $spacing-3;
+        padding-top: $spacing-3;
+        border-top: 1px solid $gray-100;
+        @include flex-col;
+        gap: $spacing-1;
+    }
+
+    &__points-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: $text-xs;
+    }
+
+    &__points-label {
+        color: $gray-500;
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+    }
+
+    &__points-info-icon {
+        font-size: 12px;
+    }
+
+    &__points-value-text {
+        color: $gray-800;
+    }
+
+    &__points-highlight {
+        color: $purple-main;
+    }
+
+    // Order Info
+    &__order-info-title {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+        margin-bottom: $spacing-2;
+    }
+
+    &__info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: $text-xs;
+        margin-bottom: 8px;
+    }
+
+    &__info-label {
+        color: $gray-400;
+    }
+
+    &__info-value {
+        color: $gray-900;
+        font-weight: $font-medium;
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+    }
+
+    &__copy-icon {
+        font-size: 12px;
+        color: $gray-400;
+    }
+
+    // Not Found
+    &__not-found {
+        min-height: 100vh;
+        background: $gray-50;
+        @include flex-col;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &__not-found-text {
+        color: $gray-500;
+        margin-bottom: $spacing-4;
+    }
+
+    &__not-found-link {
+        color: $primary;
+        font-weight: $font-bold;
+    }
+
+    // ---- Footer ----
+    &__footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: $white;
+        border-top: 1px solid $gray-100;
+        padding: $spacing-3;
+        padding-bottom: env(safe-area-inset-bottom);
+        z-index: $z-50;
+        box-shadow: 0 -4px 10px rgba($black, 0.05);
+    }
+
+    &__footer-inner {
+        display: flex;
+        gap: $spacing-3;
+        max-width: $max-width-md;
+        margin: 0 auto;
+    }
+
+    &__footer-btn {
+        flex: 1;
+        height: 44px;
+        border-radius: $rounded-full;
+        font-weight: $font-bold;
+        font-size: $text-sm;
+        @include flex-center;
+
+        &--outline {
+            border: 1px solid $gray-200;
+            background: none;
+
+            text {
+                color: $gray-600;
+            }
+        }
+
+        &--purple {
+            flex: 1.5;
+            background: $purple-main;
+            box-shadow: 0 10px 15px -3px rgba($purple-main, 0.3);
+            border: none;
+
+            text {
+                color: $white;
+            }
+        }
+    }
+}

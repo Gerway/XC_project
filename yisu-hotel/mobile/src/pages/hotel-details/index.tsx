@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Image, ScrollView } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
-import { HOTELS, ROOMS } from '../../constants';
-import { Room } from '../../../types/types';
+import { HOTELS, ROOMS, MOCK_USER } from '../../constants';
+import { Room, Order, OrderStatus } from '../../../types/types';
 import './index.scss';
 
 const HotelDetails: React.FC = () => {
@@ -43,13 +43,48 @@ const HotelDetails: React.FC = () => {
   }
 
   const handleBook = (room: Room) => {
-    // Store booking info and navigate to booking page
+    // 1. Create PENDING order immediately
+    const nights = Math.max(1, Math.round((dates.end.getTime() - dates.start.getTime()) / (1000 * 60 * 60 * 24)));
+    const totalPrice = room.price * nights;
+
+    const newOrder: Order = {
+      order_id: `o_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      user_id: MOCK_USER.user_id,
+      hotel_id: hotel.hotel_id,
+      hotel_name: hotel.name,
+      hotel_image: hotel.image_url,
+      room_id: room.room_id,
+      room_name: room.name,
+      check_in: dates.start.toISOString().split('T')[0],
+      check_out: dates.end.toISOString().split('T')[0],
+      nights: nights,
+      total_price: totalPrice,
+      real_pay: totalPrice, // Initial price, might change with coupons/breakfast
+      status: OrderStatus.PENDING,
+      created_at: new Date().toISOString(),
+      guest_name: '',
+      guest_phone: ''
+    };
+
+    // 2. Save to storage
+    try {
+      const existing = Taro.getStorageSync('orders');
+      const orders = existing ? JSON.parse(existing) : [];
+      orders.unshift(newOrder); // Add to top
+      Taro.setStorageSync('orders', JSON.stringify(orders));
+    } catch (e) {
+      console.error('Failed to create order', e);
+    }
+
+    // 3. Store booking info for UI rendering (Hotel/Room details)
     Taro.setStorageSync('bookingInfo', JSON.stringify({
       hotel,
       room,
       dates: { start: dates.start.getTime(), end: dates.end.getTime() }
     }));
-    Taro.navigateTo({ url: '/pages/booking/index' });
+
+    // 4. Navigate with orderId
+    Taro.navigateTo({ url: `/pages/booking/index?orderId=${newOrder.order_id}` });
   };
 
   const formatDate = (date: Date) => {

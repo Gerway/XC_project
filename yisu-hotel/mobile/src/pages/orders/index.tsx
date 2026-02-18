@@ -74,7 +74,7 @@ const Orders: React.FC = () => {
       // Check if hotel exists in constant? For now simplify to navigate to details
       Taro.navigateTo({ url: `/pages/hotel-details/index?id=${order.hotel_id}` });
     } else if (action === 'pay') {
-      Taro.showToast({ title: '支付功能开发中', icon: 'none' });
+      Taro.navigateTo({ url: `/pages/booking/index?orderId=${order.order_id}` });
     } else if (action === 'review') {
       Taro.navigateTo({ url: `/pages/reviews/index?orderId=${order.order_id}` });
     }
@@ -176,7 +176,7 @@ const Orders: React.FC = () => {
               <View
                 key={order.order_id}
                 className="orders-page__card"
-                onClick={() => Taro.showToast({ title: '订单详情开发中', icon: 'none' })}
+                onClick={() => Taro.navigateTo({ url: `/pages/order-details/index?orderId=${order.order_id}` })}
               >
                 <View className="orders-page__card-image">
                   <Image

@@ -85,4 +85,8 @@ export interface Order {
   real_pay: number;
   status: OrderStatus;
   created_at: string;
+  guest_name?: string;
+  guest_phone?: string;
+  arrival_time?: string;
+  note?: string;
 }
