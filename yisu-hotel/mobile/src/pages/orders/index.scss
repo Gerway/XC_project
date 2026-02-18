@@ -1,0 +1,366 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.orders-page {
+    background: $gray-50;
+    min-height: 100vh;
+    @include flex-col;
+    position: relative;
+
+    // ---- Header ----
+    &__header {
+        background: $white;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: $z-40;
+        box-shadow: 0 1px 0 0 rgba($black, 0.05);
+    }
+
+    &__header-inner {
+        position: relative;
+        height: 40px; // Reduced height
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 $spacing-4;
+    }
+
+    &__back-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 9999px;
+        @include flex-center;
+        background: rgba($gray-100, 0.5);
+        z-index: $z-50;
+    }
+
+    &__back-icon {
+        color: $gray-800;
+        font-size: 18px;
+        font-weight: bold;
+        line-height: 1;
+        margin-top: -2px; // Visual adjustment
+    }
+
+    &__title-center {
+        @include absolute-fill;
+        @include flex-center;
+        pointer-events: none;
+    }
+
+    &__title-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+        pointer-events: auto;
+    }
+
+    &__title {
+        font-size: 16px;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__title-expand {
+        color: $gray-900;
+        font-size: $text-xs;
+        margin-top: 2px;
+    }
+
+    &__header-actions {
+        display: flex;
+        align-items: center;
+        gap: $spacing-3;
+        z-index: $z-10;
+    }
+
+    &__header-action-icon {
+        color: $gray-600;
+        font-size: 18px;
+    }
+
+    // Tabs
+    &__tabs {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 $spacing-2;
+        height: 44px; // Fixed height for tabs
+    }
+
+    &__tab {
+        position: relative;
+        flex: 1;
+        height: 100%;
+        @include flex-center;
+    }
+
+    &__tab-text {
+        font-size: $text-sm;
+        font-weight: $font-medium;
+        color: $gray-500;
+        transition: color $transition-normal;
+
+        &--active {
+            color: $gray-900;
+            font-weight: $font-bold;
+        }
+    }
+
+    &__tab-indicator {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 16px;
+        height: 3px;
+        background: $gray-900;
+        border-radius: $rounded-full;
+    }
+
+    // Sort Bar
+    &__sort-bar {
+        padding: $spacing-3 $spacing-4;
+        background: $gray-50;
+        display: flex;
+        gap: $spacing-3;
+        // height is implicit (~44px + padding)
+    }
+
+    &__sort-btn {
+        padding: 4px $spacing-3;
+        background: $white;
+        border-radius: $rounded-full;
+        box-shadow: $shadow-sm;
+        @include flex-center;
+
+        &--active {
+            background: $purple-50;
+
+            text {
+                color: $primary;
+                font-weight: $font-bold;
+            }
+        }
+
+        text {
+            font-size: $text-xs;
+            color: $gray-600;
+        }
+    }
+
+    // ---- Order List ----
+    &__list {
+        flex: 1;
+        padding: 0 $spacing-3;
+        box-sizing: border-box;
+        // Padding bottom handled by spacer view
+    }
+
+    // Empty State
+    &__empty {
+        @include flex-col;
+        align-items: center;
+        justify-content: center;
+        height: 256px;
+        color: $gray-400;
+    }
+
+    &__empty-icon {
+        font-size: 64px;
+        margin-bottom: $spacing-2;
+        color: $gray-200;
+    }
+
+    &__empty-text {
+        font-size: $text-sm;
+    }
+
+    // Order Card
+    &__card {
+        background: $white;
+        border-radius: $rounded-xl;
+        overflow: hidden;
+        box-shadow: $shadow-sm;
+        // border: 1px solid $gray-100; // Removed border to match mini-program style better
+        display: flex;
+        margin-bottom: $spacing-3;
+    }
+
+    &__card-image {
+        width: 110px;
+        background: $gray-200;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    &__card-img {
+        width: 100%;
+        height: 100%;
+        // aspect-fill handled by mode prop
+    }
+
+    &__card-cancelled-overlay {
+        @include absolute-fill;
+        background: rgba($white, 0.3);
+        // backdrop-filter not supported well, use opacity
+    }
+
+    &__card-content {
+        flex: 1;
+        padding: $spacing-3;
+        @include flex-col;
+        min-height: 145px;
+    }
+
+    &__card-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: $spacing-2;
+        margin-bottom: 4px;
+    }
+
+    &__card-hotel-name {
+        font-size: 15px;
+        font-weight: $font-bold;
+        color: $gray-900;
+        line-height: $leading-snug;
+        @include line-clamp(2);
+        flex: 1;
+    }
+
+    &__card-status {
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        white-space: nowrap;
+        margin-top: 2px;
+        flex-shrink: 0;
+
+        &--pending {
+            color: $red-500;
+        }
+
+        &--paid {
+            color: $primary;
+        }
+
+        &--checked-in {
+            color: $blue-600;
+        }
+
+        &--completed {
+            color: $gray-500;
+        }
+
+        &--cancelled {
+            color: $gray-400;
+        }
+    }
+
+    &__card-dates {
+        font-size: $text-xs;
+        color: $gray-500;
+        font-weight: $font-medium;
+        margin-bottom: 4px;
+        padding-top: 4px;
+    }
+
+    &__card-room {
+        font-size: $text-xs;
+        color: $gray-500;
+        font-weight: $font-medium;
+    }
+
+    &__card-spacer {
+        flex: 1;
+    }
+
+    &__card-price-row {
+        display: flex;
+        justify-content: flex-end;
+        align-items: baseline;
+        margin-top: $spacing-3;
+        margin-bottom: $spacing-2;
+    }
+
+    &__card-currency {
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        margin-right: 2px;
+
+        &--red {
+            color: $red-500;
+        }
+
+        &--normal {
+            color: $gray-900;
+        }
+    }
+
+    &__card-price {
+        font-size: $text-xl;
+        font-weight: $font-bold;
+        line-height: 1;
+
+        &--red {
+            color: $red-500;
+        }
+
+        &--normal {
+            color: $gray-900;
+        }
+    }
+
+    // Card Actions
+    &__card-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: $spacing-2;
+        align-items: center;
+    }
+
+    &__card-delete-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 9999px; // Circle
+        @include flex-center;
+        margin-right: auto;
+        margin-left: -8px; // Pull left slightly
+    }
+
+    &__card-delete-icon {
+        font-size: 18px;
+        // color emoji used in TSX
+    }
+
+    &__card-btn {
+        padding: 4px $spacing-3;
+        border-radius: $rounded-full;
+        font-size: $text-xs;
+        font-weight: $font-medium;
+        @include flex-center;
+
+        &--outline {
+            border: 1px solid $gray-300;
+            background: $white;
+
+            text {
+                color: $gray-700;
+            }
+        }
+
+        &--primary {
+            background: $primary;
+            box-shadow: $shadow-md;
+            border: none;
+
+            text {
+                color: $white;
+                font-weight: $font-bold;
+            }
+        }
+    }
+}

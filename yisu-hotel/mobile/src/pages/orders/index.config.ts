@@ -1,4 +1,5 @@
 export default definePageConfig({
-  navigationBarTitleText: '订单页面',
-  usingComponents: {},
+  navigationStyle: 'custom',
+  navigationBarTitleText: '订单',
+  usingComponents: {}
 })
