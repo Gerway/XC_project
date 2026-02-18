@@ -2,484 +2,228 @@
 @use '../../styles/mixins' as *;
 
 .profile-page {
-    background: $background;
+    background: #f7f8fa; // Lighter background
     min-height: 100vh;
     padding-bottom: $spacing-24;
 
     // ---- Header ----
     &__header {
-        position: relative;
         background: $white;
-        padding: $spacing-8 $spacing-5 $spacing-6;
-        border-radius: 0 0 2.5rem 2.5rem;
-        box-shadow: 0 10px 40px -10px rgba($black, 0.05);
-        overflow: hidden;
+        padding: $spacing-4 $spacing-5 $spacing-2;
     }
 
-    &__decor-blob {
-        position: absolute;
-        border-radius: 9999px; // $rounded-full
-        pointer-events: none;
-
-        &--orange {
-            top: 0;
-            right: 0;
-            width: 192px;
-            height: 192px;
-            background: rgba($orange-100, 0.5);
-            filter: blur(48px);
-            margin-right: -64px;
-            margin-top: -64px;
-        }
-
-        &--blue {
-            top: 80px;
-            left: 0;
-            width: 128px;
-            height: 128px;
-            background: rgba($blue-50, 0.5);
-            filter: blur(48px);
-            margin-left: -40px;
-        }
-    }
-
-    &__top-bar {
-        @include flex-between;
-        margin-bottom: $spacing-6;
-        position: relative;
-        z-index: $z-10;
-        margin-top: 10px; // Extra spacing below status bar if needed
-    }
-
-    &__page-title {
-        font-size: $text-2xl;
-        font-weight: $font-bold;
-        color: $slate-900;
-    }
-
-    &__notification-btn {
-        width: 40px; // @include circle($w-10)
-        height: 40px;
-        border-radius: 9999px;
-        background: $gray-50;
-        @include flex-center;
-        color: $slate-600;
-        border: none;
-        // cursor: pointer; // Not needed in mobile
-        transition: background-color $transition-normal;
-
-        &:active {
-            // :hover -> :active
-            background: $gray-100;
-        }
-    }
-
-    &__notification-icon {
-        font-size: 20px;
-    }
-
-    // User Info
-    &__user-info {
-        @include flex-col;
+    &__header-content {
+        display: flex;
         align-items: center;
-        gap: $spacing-3;
-        position: relative;
-        z-index: $z-10;
+        margin-top: $spacing-2;
     }
 
     &__avatar-wrapper {
         position: relative;
-    }
-
-    &__avatar-ring {
-        width: 112px; // @include circle(112px)
-        height: 112px;
-        border-radius: 9999px;
-        padding: $spacing-1;
-        background: $white;
-        box-shadow: 0 20px 25px -5px rgba($orange-500, 0.1);
-        // outline: 4px solid $white; // outline not supported well, use border or shadow
-        border: 4px solid $white;
-        position: relative;
-        z-index: $z-10;
-        overflow: hidden;
+        margin-right: $spacing-4;
     }
 
     &__avatar-img {
-        width: 100%;
-        height: 100%;
-        border-radius: 9999px; // $rounded-full
-        object-fit: cover;
-    }
-
-    &__edit-btn {
-        position: absolute;
-        bottom: $spacing-1;
-        right: $spacing-1;
-        z-index: $z-20;
-        background: $primary;
-        color: $white;
-        width: 32px; // @include circle($w-8)
-        height: 32px;
+        width: 56px;
+        height: 56px;
         border-radius: 9999px;
-        @include flex-center;
-        box-shadow: $shadow-md;
         border: 2px solid $white;
-        transition: background-color $transition-normal;
-
-        &:active {
-            background: $primary-dark;
-        }
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
 
-    &__edit-icon {
-        font-size: 14px;
-    }
-
-    &__name-area {
-        text-align: center;
-        margin-top: $spacing-1;
+    &__user-info {
+        flex: 1;
+        @include flex-col;
+        justify-content: center;
     }
 
     &__username {
-        font-size: $text-2xl;
-        font-weight: $font-bold;
+        font-size: 20px; // Larger, bold title
+        font-weight: 700;
+        color: $slate-900;
+        line-height: 1.2;
+    }
+
+    &__user-mobile {
+        font-size: $text-xs;
+        color: $slate-500;
+        margin-top: 4px;
+    }
+
+    &__header-actions {
+        display: flex;
+        gap: $spacing-4;
+    }
+
+    &__header-icon {
+        font-size: 20px;
         color: $slate-900;
     }
 
-    &__membership-badge {
-        display: inline-block;
-        background: linear-gradient(to right, $orange-400, $red-500);
-        color: $white;
-        font-size: 10px; // $text-10px
-        font-weight: $font-bold;
-        padding: $spacing-1 $spacing-3;
-        border-radius: 9999px; // $rounded-full
-        box-shadow: $shadow-sm;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        margin-top: $spacing-2;
+    // ---- Member Card ----
+    &__card-container {
+        padding: 0 $spacing-4;
+        background: $white;
+        padding-bottom: $spacing-4;
     }
 
-    &__email {
-        color: $slate-400;
-        font-size: $text-sm;
-        font-weight: $font-medium;
+    &__member-card {
+        // Orange/Gold Gradient
+        background: linear-gradient(135deg, #FFEFD5 0%, #FFE4B5 100%);
+        border-radius: $rounded-2xl;
+        padding: $spacing-4 $spacing-5;
+        @include flex-between;
+        align-items: flex-start;
+        position: relative;
+        overflow: hidden;
+        height: 70px; // Compact height
+        box-shadow: 0 8px 24px -6px rgba(255, 165, 0, 0.2);
     }
 
-    &__guest-hint {
-        color: $slate-400;
-        font-size: $text-sm;
-        margin-top: $spacing-1;
+    &__member-info {
+        z-index: 10;
+    }
+
+    &__member-title-row {
+        display: flex;
+        align-items: baseline;
+        gap: $spacing-2;
+        color: #8B4500; // Dark brown/orange text
+    }
+
+    &__member-v {
+        font-size: 24px;
+        font-weight: 800;
+        font-style: italic;
+    }
+
+    &__member-level {
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    &__member-sub {
+        font-size: 11px;
+        color: rgba(#8B4500, 0.7);
+        margin-top: 4px;
+        display: block;
+    }
+
+    &__member-icon {
+        width: 64px;
+        height: 64px;
+        position: absolute;
+        right: 16px;
+        bottom: -10px;
+        opacity: 0.9;
+        transform: rotate(-10deg);
     }
 
     // ---- Content ----
     &__content {
-        padding: 0 $spacing-4;
+        padding: $spacing-3;
         @include flex-col;
-        gap: $spacing-6;
-        margin-top: -$spacing-4;
-        position: relative;
-        z-index: $z-20;
-    }
-
-    // Points Card
-    &__points-card {
-        background: linear-gradient(to bottom right, #FF8E53, #FF6B6B);
-        border-radius: $rounded-3xl;
-        padding: $spacing-6;
-        color: $white;
-        box-shadow: 0 20px 25px -5px rgba($orange-500, 0.3);
-        position: relative;
-        overflow: hidden;
-        transition: transform $transition-normal;
-
-        &:active {
-            transform: scale(0.98);
-        }
-    }
-
-    &__points-decor-stripe {
-        position: absolute;
-        right: 0;
-        top: 0;
-        height: 100%;
-        width: 66%;
-        background: rgba($white, 0.1);
-        transform: skewX(12deg) translateX(48px);
-        filter: blur(4px);
-    }
-
-    &__points-decor-circle {
-        position: absolute;
-        left: -40px;
-        bottom: -40px;
-        width: 128px; // @include circle(128px)
-        height: 128px;
-        border-radius: 9999px;
-        background: rgba($orange-400, 0.3);
-        filter: blur(32px);
-    }
-
-    &__points-inner {
-        position: relative;
-        z-index: $z-10;
-        @include flex-between;
-    }
-
-    &__points-label {
-        font-size: 10px; // $text-10px
-        font-weight: $font-bold;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: $orange-100;
-        margin-bottom: $spacing-1;
-    }
-
-    &__points-value {
-        font-size: $text-3xl;
-        font-weight: 800;
-        letter-spacing: -0.025em;
-        margin-bottom: $spacing-1;
-    }
-
-    &__points-unit {
-        font-size: $text-base;
-        font-weight: $font-medium;
-        opacity: 0.8;
-    }
-
-    &__points-tier-text {
-        font-size: $text-xs;
-        color: $orange-50;
-        font-weight: $font-medium;
-    }
-
-    &__points-action-btn {
-        background: $white;
-        color: $orange-600;
-        font-size: $text-xs;
-        font-weight: $font-bold;
-        padding: $spacing-2-5 $spacing-4;
-        border-radius: $rounded-xl;
-        box-shadow: $shadow-lg;
-        border: none;
-        transition: background-color $transition-normal;
-
-        &:active {
-            // :hover
-            background: $orange-50;
-        }
-    }
-
-    // Orders Shortcut
-    &__orders-header {
-        @include flex-between;
-        margin-bottom: $spacing-4;
-        padding: 0 $spacing-1;
-    }
-
-    &__orders-title {
-        font-size: $text-lg;
-        font-weight: $font-bold;
-        color: $slate-900;
-    }
-
-    &__orders-link {
-        color: $primary;
-        font-size: $text-sm;
-        font-weight: $font-bold;
-        display: flex;
-        align-items: center;
-        transition: opacity $transition-normal;
-
-        &:active {
-            // :hover
-            opacity: 0.8;
-        }
-    }
-
-    &__orders-link-icon {
-        font-size: 18px;
-    }
-
-    &__orders-grid {
-        background: $white;
-        border-radius: $rounded-3xl;
-        padding: $spacing-6;
-        box-shadow: $shadow-sm;
-        border: 1px solid $gray-100;
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: $spacing-2;
-    }
-
-    &__order-item {
-        @include flex-col;
-        align-items: center;
         gap: $spacing-3;
     }
 
-    &__order-icon-wrapper {
-        width: 48px; // @include circle(48px)
-        height: 48px;
-        border-radius: $rounded-2xl;
-        background: rgba($orange-50, 0.5);
-        @include flex-center;
-        color: $primary;
-        position: relative;
-        transition: all 0.3s;
-
-        &:active {
-            // :hover
-            background: $orange-50;
-            transform: scale(1.05);
-        }
+    // ---- Stats and Orders shared card style ----
+    &__section-card,
+    &__stats-row {
+        background: $white;
+        border-radius: $rounded-xl;
+        padding: $spacing-4; // Compact padding
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
     }
 
-    &__order-icon {
+    // Stats Row specific
+    &__stats-row {
+        @include flex-between;
+        padding: $spacing-4 $spacing-2;
+    }
+
+    &__stat-item {
+        flex: 1;
+        @include flex-col;
+        align-items: center;
+        gap: 4px;
+    }
+
+    &__stat-value {
+        font-weight: 700;
+        font-size: 16px;
+        color: $slate-900;
+    }
+
+    &__stat-label {
+        font-size: 11px;
+        color: $slate-500;
+    }
+
+    &__stat-line {
+        width: 1px;
+        height: 16px;
+        background: $gray-100;
+    }
+
+    // Orders Row
+    &__icon-row {
+        @include flex-between;
+    }
+
+    &__icon-item {
+        @include flex-col;
+        align-items: center;
+        gap: 8px;
+        width: 25%;
+    }
+
+    &__icon-img {
         font-size: 24px;
+        // color: $slate-700; 
     }
 
-    &__order-badge {
-        position: absolute;
-        top: -6px;
-        right: -6px;
-        min-width: 18px;
-        height: 18px;
-        background: $red-500;
-        color: $white;
-        font-size: 10px; // $text-10px
-        font-weight: $font-bold;
-        @include flex-center;
-        border-radius: 9999px; // $rounded-full
-        border: 2px solid $white;
-        box-shadow: $shadow-sm;
-    }
-
-    &__order-label {
-        font-size: $text-xs;
-        font-weight: 600;
+    &__icon-label {
+        font-size: 11px; // Smaller font
         color: $slate-600;
     }
 
-    // Menu Items
-    &__menu-title {
-        font-size: $text-lg;
-        font-weight: $font-bold;
-        color: $slate-900;
-        margin-bottom: $spacing-3;
-        padding: 0 $spacing-1;
+    // Grid
+    &__grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        row-gap: $spacing-5;
+        column-gap: $spacing-2;
+        padding-top: $spacing-2;
     }
 
-    &__menu-card {
-        background: $white;
-        border-radius: $rounded-3xl;
-        box-shadow: $shadow-sm;
-        border: 1px solid $gray-100;
-        overflow: hidden;
-    }
-
-    &__menu-item {
-        @include flex-between;
-        padding: $spacing-4;
-        transition: background-color $transition-normal;
-
-        &:active {
-            // :hover -> :active
-            background: $gray-50;
-        }
-
-        &--bordered {
-            border-bottom: 1px solid $gray-50;
-        }
-    }
-
-    &__menu-item-left {
-        display: flex;
+    &__grid-item {
+        @include flex-col;
         align-items: center;
-        gap: $spacing-4;
+        gap: 8px;
     }
 
-    &__menu-icon-wrapper {
-        width: 44px;
-        height: 44px;
-        border-radius: $rounded-2xl;
-        @include flex-center;
-
-        &--pink {
-            background: $pink-50;
-            color: $pink-500;
-        }
-
-        &--amber {
-            background: $amber-50;
-            color: $amber-500;
-        }
-
-        &--orange {
-            background: $orange-50;
-            color: $orange-500;
-        }
-
-        &--slate {
-            background: $slate-50;
-            color: $slate-500;
-        }
+    &__grid-icon {
+        font-size: 24px;
+        color: $slate-400; // Neutral icons
     }
 
-    &__menu-icon {
-        font-size: 22px;
-    }
-
-    &__menu-label {
-        font-weight: $font-bold;
-        font-size: $text-sm;
-        color: $slate-900;
-        display: flex;
-        align-items: center;
-        gap: $spacing-2;
-    }
-
-    &__menu-badge-dot {
-        width: 8px; // @include circle(8px)
-        height: 8px;
-        border-radius: 9999px;
-        background: $red-500;
-    }
-
-    &__menu-sub {
-        font-size: $text-xs;
-        color: $slate-400;
-        margin-top: $spacing-0-5;
-    }
-
-    &__menu-arrow {
-        color: $gray-300;
-        font-size: 20px;
+    &__grid-label {
+        font-size: 11px;
+        color: $slate-600;
     }
 
     // Logout
     &__logout-btn {
-        width: 100%;
-        height: 56px;
+        margin-top: $spacing-4;
         background: $white;
-        border: 1px solid $gray-200;
-        color: $slate-600;
-        font-weight: $font-bold;
-        border-radius: $rounded-2xl;
-        box-shadow: $shadow-sm;
-        transition: all $transition-normal;
-        @include flex-center;
+        color: $red-500;
+        font-size: 14px;
+        border: none;
+        border-radius: $rounded-xl;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 
-        &:active {
-            // :hover
-            background: $gray-50;
-            transform: scale(0.98);
+        &::after {
+            border: none;
         }
-    }
-
-    &__spacer {
-        height: $spacing-4;
     }
 }

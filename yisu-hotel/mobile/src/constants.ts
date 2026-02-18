@@ -7,7 +7,8 @@ export const MOCK_USER: User = {
   role: UserRole.USER,
   isLoggedIn: true,
   points: 2450,
-  email: 'alex.j@example.com'
+  email: 'alex.j@example.com',
+  phone: '12345678901'
 };
 
 export const HOTELS: Hotel[] = [

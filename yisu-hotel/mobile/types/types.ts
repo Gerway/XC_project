@@ -28,6 +28,7 @@ export interface User {
   isLoggedIn: boolean;
   points: number;
   email?: string;
+  phone?: string;
 }
 
 export interface Hotel {
