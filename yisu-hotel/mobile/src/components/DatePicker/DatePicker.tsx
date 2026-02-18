@@ -46,7 +46,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ isOpen, onClose, onSelect, star
     }, [isOpen, initialStart, initialEnd]);
 
     const months = useMemo(() => {
-        const result = [];
+        const result: Date[] = [];
         const today = new Date();
         for (let i = 0; i < 6; i++) {
             const d = new Date(today.getFullYear(), today.getMonth() + i, 1);

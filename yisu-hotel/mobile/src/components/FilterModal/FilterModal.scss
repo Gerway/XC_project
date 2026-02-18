@@ -1,0 +1,447 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.filter-modal {
+    @include fixed-fill;
+    z-index: $z-60;
+    @include flex-col;
+
+    // ---- Backdrop ----
+    &__backdrop {
+        @include absolute-fill;
+        background: rgba($black, 0.5);
+        transition: opacity $transition-normal;
+    }
+
+    // ---- Modal Content ----
+    &__content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: $white;
+        border-radius: $rounded-3xl $rounded-3xl 0 0;
+        height: 85vh;
+        @include flex-col;
+        overflow: hidden;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    // ---- Header ----
+    &__header {
+        position: relative;
+        @include flex-center;
+        padding: $spacing-4;
+        border-bottom: 1px solid $gray-100;
+        flex-shrink: 0;
+    }
+
+    &__close-btn {
+        position: absolute;
+        left: $spacing-4;
+        padding: $spacing-2;
+        border-radius: $rounded-full;
+        border: none;
+        background: none;
+        cursor: pointer;
+        margin-left: -$spacing-2;
+
+        &:hover {
+            background: $gray-100;
+        }
+    }
+
+    &__close-icon {
+        color: $gray-800;
+        font-size: $text-xl;
+    }
+
+    &__title {
+        font-size: $text-lg;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    // ---- Price Section ----
+    &__price-section {
+        padding: $spacing-5;
+        border-bottom: 1px solid $gray-100;
+        background: $white;
+        z-index: $z-10;
+        flex-shrink: 0;
+    }
+
+    &__price-title {
+        font-weight: $font-bold;
+        color: $gray-900;
+        margin-bottom: $spacing-6;
+    }
+
+    &__price-labels {
+        @include flex-between;
+        color: $primary;
+        font-weight: $font-bold;
+        font-size: $text-sm;
+        margin-bottom: $spacing-2;
+    }
+
+    // ---- Custom Slider ----
+    &__slider {
+        position: relative;
+        height: $h-8;
+        margin-bottom: $spacing-6;
+        cursor: pointer;
+        touch-action: none;
+        @include flex-center;
+    }
+
+    &__slider-track {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: $h-1-5;
+        background: $gray-100;
+        border-radius: $rounded-full;
+    }
+
+    &__slider-active {
+        position: absolute;
+        height: $h-1-5;
+        background: $primary;
+        border-radius: $rounded-full;
+    }
+
+    &__slider-thumb {
+        position: absolute;
+        @include circle($w-8);
+        background: $white;
+        border: 2px solid $primary;
+        box-shadow: $shadow-md;
+        @include flex-center;
+        z-index: $z-10;
+        transition: transform $transition-normal;
+
+        &:hover {
+            transform: translateX(-50%) scale(1.1);
+        }
+    }
+
+    &__slider-thumb-dot {
+        @include circle($w-2-5);
+        background: $primary;
+        pointer-events: none;
+    }
+
+    // ---- Price Presets ----
+    &__presets {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: $spacing-2;
+    }
+
+    &__preset-btn {
+        padding: $spacing-2 $spacing-1;
+        font-size: $text-10px;
+        font-weight: $font-medium;
+        border-radius: $rounded;
+        border: 1px solid $gray-100;
+        background: $white;
+        color: $gray-600;
+        cursor: pointer;
+        transition: all $transition-normal;
+        @include truncate;
+
+        &:hover {
+            border-color: $gray-200;
+        }
+
+        &--selected {
+            background: $orange-50;
+            border-color: $primary;
+            color: $primary;
+        }
+    }
+
+    // ---- Split View ----
+    &__split-view {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+    }
+
+    // ---- Sidebar ----
+    &__sidebar {
+        width: $w-24;
+        background: $gray-50;
+        @include flex-col;
+        flex-shrink: 0;
+        overflow-y: auto;
+        @include hide-scrollbar;
+    }
+
+    &__sidebar-btn {
+        padding: $spacing-4 0;
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        text-align: center;
+        position: relative;
+        width: 100%;
+        border: none;
+        background: none;
+        cursor: pointer;
+        transition: all $transition-normal;
+        color: $gray-500;
+
+        &:hover {
+            color: $gray-700;
+        }
+
+        &--active {
+            background: $white;
+            color: $primary;
+        }
+    }
+
+    &__sidebar-indicator {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: $w-1;
+        height: $h-4;
+        background: $primary;
+        border-radius: 0 $rounded-full $rounded-full 0;
+    }
+
+    // ---- Main Content ----
+    &__main-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: $spacing-4;
+        padding-bottom: $spacing-24;
+        @include hide-scrollbar;
+        background: $white;
+    }
+
+    &__brands-header {
+        @include flex-between;
+        margin-bottom: $spacing-4;
+        padding: $spacing-2 0;
+    }
+
+    &__brands-title {
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__select-all-btn {
+        font-size: $text-xs;
+        color: $primary;
+        font-weight: $font-bold;
+        padding: $spacing-1 $spacing-2;
+        border-radius: $rounded;
+        border: none;
+        background: none;
+        cursor: pointer;
+        transition: background-color $transition-normal;
+
+        &:hover {
+            background: $orange-50;
+        }
+    }
+
+    &__brands-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: $spacing-3;
+    }
+
+    &__brand-btn {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+        padding: $spacing-2;
+        border-radius: $rounded-xl;
+        border: 1px solid transparent;
+        transition: all $transition-normal;
+        position: relative;
+        overflow: hidden;
+        text-align: left;
+        cursor: pointer;
+        background: $gray-50;
+
+        &:hover {
+            border-color: rgba($primary, 0.3);
+        }
+
+        &--selected {
+            background: $white;
+            border-color: $primary;
+            box-shadow: $shadow-sm;
+            outline: 1px solid rgba($primary, 0.2);
+        }
+    }
+
+    &__brand-icon {
+        @include circle($w-8);
+        border-radius: $rounded-lg;
+        @include flex-center;
+        color: $white;
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        flex-shrink: 0;
+
+        &--red {
+            background: $red-600;
+        }
+
+        &--blue {
+            background: $blue-600;
+        }
+
+        &--orange-4 {
+            background: $orange-400;
+        }
+
+        &--orange-5 {
+            background: $orange-500;
+        }
+
+        &--yellow {
+            background: $yellow-500;
+        }
+
+        &--purple {
+            background: $purple-600;
+        }
+
+        &--emerald {
+            background: $emerald-500;
+        }
+
+        &--indigo {
+            background: $indigo-500;
+        }
+
+        &--blue-4 {
+            background: $blue-400;
+        }
+
+        &--black {
+            background: $black;
+        }
+    }
+
+    &__brand-name {
+        font-size: $text-sm;
+        font-weight: $font-medium;
+        color: $gray-700;
+        @include truncate;
+
+        &--selected {
+            color: $primary;
+        }
+    }
+
+    &__brand-check {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: $w-4;
+        height: $h-4;
+    }
+
+    &__brand-check-triangle {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-top: 16px solid transparent;
+        border-right: 16px solid $primary;
+    }
+
+    &__brand-check-icon {
+        color: $white;
+        font-size: $text-10px;
+        position: absolute;
+        top: -1px;
+        right: 1px;
+        font-weight: $font-bold;
+    }
+
+    // ---- Placeholder Tab ----
+    &__placeholder {
+        @include flex-col;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: $gray-400;
+    }
+
+    &__placeholder-icon {
+        font-size: $text-4xl;
+        margin-bottom: $spacing-2;
+    }
+
+    &__placeholder-text {
+        font-size: $text-xs;
+    }
+
+    // ---- Footer ----
+    &__footer {
+        flex-shrink: 0;
+        padding: $spacing-4;
+        border-top: 1px solid $gray-100;
+        display: flex;
+        gap: $spacing-3;
+        padding-bottom: $spacing-8;
+        background: $white;
+        z-index: $z-20;
+        box-shadow: 0 -4px 20px -10px rgba($black, 0.05);
+    }
+
+    &__clear-all-btn {
+        flex: 1;
+        height: $h-12;
+        border-radius: $rounded-full;
+        border: 1px solid $gray-200;
+        color: $gray-600;
+        font-weight: $font-bold;
+        background: $white;
+        cursor: pointer;
+        transition: transform $transition-normal;
+
+        &:active {
+            transform: scale(0.95);
+        }
+
+        &:hover {
+            background: $gray-50;
+        }
+    }
+
+    &__confirm-btn {
+        flex: 2;
+        height: $h-12;
+        border-radius: $rounded-full;
+        @include gradient-primary-reverse;
+        color: $white;
+        font-weight: $font-bold;
+        box-shadow: $shadow-lg, $shadow-orange-medium;
+        border: none;
+        cursor: pointer;
+        transition: all $transition-normal;
+
+        &:active {
+            transform: scale(0.95);
+        }
+
+        &:hover {
+            opacity: 0.95;
+        }
+    }
+}
+
+// Add w-2.5 alias
+$w-2-5: 10px;
