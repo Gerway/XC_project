@@ -68,7 +68,10 @@ const Home: React.FC = () => {
 
   const handleTagClick = (tag: string) => {
     setKeyword(prev => {
-      if (prev.includes(tag)) return prev;
+      if (prev.includes(tag)) {
+        // Remove the tag from keyword
+        return prev.replace(tag, '').replace(/\s+/g, ' ').trim();
+      }
       return prev ? `${prev} ${tag}` : tag;
     });
   };
