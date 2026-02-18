@@ -2,7 +2,7 @@ export default defineAppConfig({
   pages: [
     'pages/home/index',
     'pages/search/index',
-    // 'pages/hotel-details/index',
+    'pages/hotel-details/index',
     // 'pages/reviews/index',
     // 'pages/login/index',
     // 'pages/booking/index',

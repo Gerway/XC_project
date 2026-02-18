@@ -1,0 +1,1078 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+// Local variable definitions for small sizes
+$text-8px: 8px;
+$text-9px: 9px;
+$text-10px: 10px;
+$text-11px: 11px;
+
+.hotel-details {
+    background: $gray-50;
+    min-height: 100vh;
+
+    // ---- Hero Image ----
+    &__hero {
+        position: relative;
+        width: 100%;
+        height: 280px;
+        overflow: hidden;
+    }
+
+    &__hero-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    &__hero-gradient {
+        @include absolute-fill;
+        background: linear-gradient(to bottom, rgba($black, 0.4), transparent, rgba($black, 0.1));
+    }
+
+    // Top Nav
+    &__top-nav {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 44px $spacing-4 $spacing-4;
+        @include flex-between;
+        z-index: $z-20;
+    }
+
+    &__nav-btn {
+        @include flex-center;
+        @include circle($w-10);
+        background: rgba($black, 0.3);
+        color: $white;
+    }
+
+    &__nav-btn-icon {
+        font-size: $text-xl;
+        color: $white;
+        font-weight: $font-bold;
+    }
+
+    &__nav-actions {
+        display: flex;
+        gap: $spacing-3;
+    }
+
+    // Image Counter
+    &__image-counter {
+        position: absolute;
+        bottom: 50px;
+        right: $spacing-4;
+        z-index: $z-20;
+        background: rgba($black, 0.5);
+        padding: $spacing-1 $spacing-3;
+        border-radius: $rounded-full;
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+        color: $white;
+        font-size: $text-xs;
+        font-weight: $font-medium;
+    }
+
+    &__image-counter-icon {
+        font-size: $text-sm;
+    }
+
+    // Bottom Actions on Image
+    &__hero-actions {
+        position: absolute;
+        bottom: 50px;
+        left: $spacing-4;
+        z-index: $z-20;
+        display: flex;
+        gap: $spacing-2;
+    }
+
+    &__hero-action-btn {
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        padding: $spacing-1-5 $spacing-3;
+        border-radius: $rounded-full;
+
+        &--primary {
+            background: rgba($white, 0.9);
+            color: $gray-800;
+            box-shadow: $shadow-sm;
+        }
+
+        &--secondary {
+            background: rgba($black, 0.4);
+            color: $white;
+            border: 1px solid rgba($white, 0.2);
+        }
+    }
+
+    // ---- Main Content ----
+    &__main {
+        background: $white;
+        position: relative;
+        margin-top: -$spacing-4;
+        border-radius: $rounded-3xl $rounded-3xl 0 0;
+        padding: $spacing-6 $spacing-4 $spacing-6;
+        box-shadow: 0 -4px 20px rgba($black, 0.05);
+        z-index: $z-10;
+        @include flex-col;
+        gap: $spacing-5;
+    }
+
+    // Title & Info
+    &__title {
+        font-size: $text-2xl;
+        font-weight: $font-bold;
+        color: $gray-900;
+        line-height: $leading-tight;
+        margin-bottom: $spacing-2;
+    }
+
+    &__meta {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+        font-size: $text-xs;
+        color: $gray-500;
+    }
+
+    &__tag-badge {
+        background: $blue-50;
+        color: $blue-600;
+        padding: 2px $spacing-1-5;
+        border-radius: $rounded;
+        font-weight: $font-bold;
+    }
+
+    &__dot {
+        @include circle(4px);
+        background: $gray-300;
+    }
+
+    // Ranking Banners
+    &__rankings {
+        @include flex-col;
+        gap: $spacing-2;
+    }
+
+    &__ranking-banner {
+        border-radius: $rounded-lg;
+        padding: $spacing-3;
+        @include flex-between;
+
+        &--orange {
+            background: $orange-50;
+        }
+
+        &--yellow {
+            background: $yellow-50;
+        }
+    }
+
+    &__ranking-info {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+    }
+
+    &__ranking-icon {
+        font-size: $text-lg;
+    }
+
+    &__ranking-text {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+
+        &--orange {
+            color: $orange-900;
+        }
+
+        &--yellow {
+            color: $yellow-900;
+        }
+    }
+
+    &__ranking-arrow {
+        font-size: $text-xl;
+        font-weight: $font-bold;
+
+        &--orange {
+            color: $orange-300;
+        }
+
+        &--yellow {
+            color: $yellow-400;
+        }
+    }
+
+    // Score & Map Row
+    &__score-map-row {
+        display: flex;
+        gap: $spacing-3;
+    }
+
+    &__score-card {
+        flex: 1;
+        background: $gray-50;
+        border-radius: $rounded-xl;
+        padding: $spacing-3;
+        @include flex-col;
+        justify-content: center;
+    }
+
+    &__score-top {
+        display: flex;
+        align-items: baseline;
+        gap: $spacing-1-5;
+    }
+
+    &__score-number {
+        font-size: $text-2xl;
+        font-weight: $font-bold;
+        color: $blue-600;
+    }
+
+    &__score-label {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__score-reviews {
+        font-size: $text-xs;
+        color: $gray-500;
+        margin-top: $spacing-1;
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+    }
+
+    &__score-subtitle {
+        font-size: $text-10px;
+        color: $gray-400;
+        margin-top: 2px;
+    }
+
+    &__map-card {
+        flex: 1.2;
+        background: $gray-50;
+        border-radius: $rounded-xl;
+        padding: $spacing-3;
+        @include flex-between;
+        position: relative;
+        overflow: hidden;
+    }
+
+    &__map-info {
+        @include flex-col;
+        justify-content: center;
+        max-width: 70%;
+    }
+
+    &__map-address {
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        color: $gray-900;
+        @include line-clamp(2);
+        line-height: $leading-tight;
+        margin-bottom: $spacing-1;
+    }
+
+    &__map-distance {
+        font-size: $text-10px;
+        color: $gray-500;
+    }
+
+    &__map-icon-wrapper {
+        @include circle($w-8);
+        background: $blue-100;
+        @include flex-center;
+        flex-shrink: 0;
+    }
+
+    &__map-icon {
+        font-size: $text-lg;
+    }
+
+    // Coupon Row
+    &__coupon-row {
+        @include flex-between;
+        padding: $spacing-1 0;
+    }
+
+    &__coupon-pills {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+    }
+
+    &__coupon-label {
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        color: $gray-900;
+        flex-shrink: 0;
+    }
+
+    &__coupon-pill {
+        background: $red-50;
+        color: $red-500;
+        font-size: $text-10px;
+        font-weight: $font-bold;
+        padding: 2px $spacing-2;
+        border-radius: $rounded;
+        border: 1px solid $red-100;
+        flex-shrink: 0;
+    }
+
+    &__coupon-claim {
+        font-size: $text-xs;
+        color: $gray-500;
+        font-weight: $font-medium;
+        white-space: nowrap;
+    }
+
+    // ---- Sticky Tabs & Date ----
+    &__sticky-section {
+        background: $gray-50;
+        padding: $spacing-2 0;
+    }
+
+    &__date-bar {
+        background: $white;
+        margin: 0 $spacing-3;
+        padding: $spacing-3;
+        border-radius: $rounded-xl;
+        box-shadow: $shadow-sm;
+        border: 1px solid $gray-100;
+        margin-bottom: $spacing-3;
+        @include flex-between;
+    }
+
+    &__date-picker-trigger {
+        display: flex;
+        align-items: center;
+        gap: $spacing-4;
+    }
+
+    &__date-range-text {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__date-separator {
+        color: $gray-400;
+        font-weight: $font-normal;
+        margin: 0 $spacing-1;
+    }
+
+    &__nights-chip {
+        font-size: $text-10px;
+        font-weight: $font-bold;
+        background: $gray-100;
+        color: $gray-600;
+        padding: 2px $spacing-1-5;
+        border-radius: $rounded;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+
+    &__nights-chip-icon {
+        font-size: 12px;
+    }
+
+    &__booking-type-toggle {
+        display: flex;
+        background: $gray-100;
+        padding: 2px;
+        border-radius: $rounded-lg;
+    }
+
+    &__booking-type-btn {
+        padding: $spacing-1 $spacing-3;
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        border-radius: $rounded-md;
+        color: $gray-500;
+        background: transparent;
+
+        &--active {
+            background: $white;
+            box-shadow: $shadow;
+            color: $gray-900;
+        }
+    }
+
+    // Filter Chips
+    &__filter-chips-scroll {
+        background: $gray-50;
+    }
+
+    &__filter-chips {
+        display: flex;
+        gap: $spacing-2;
+        padding: 0 $spacing-3;
+        white-space: nowrap;
+    }
+
+    &__filter-chip {
+        padding: $spacing-1-5 $spacing-3;
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        border-radius: $rounded-full;
+        border: 1px solid $gray-200;
+        background: $white;
+        color: $gray-600;
+        flex-shrink: 0;
+
+        &--active {
+            background: $gray-900;
+            color: $white;
+            border-color: $gray-900;
+        }
+    }
+
+    // ---- Room List ----
+    &__room-list {
+        padding: 0 $spacing-3 $spacing-6;
+        @include flex-col;
+        gap: $spacing-4;
+    }
+
+    &__room-card {
+        background: $white;
+        border-radius: $rounded-2xl;
+        padding: $spacing-3;
+        box-shadow: $shadow-sm;
+        border: 1px solid $gray-100;
+        @include flex-col;
+        gap: $spacing-3;
+    }
+
+    &__room-top {
+        display: flex;
+        gap: $spacing-3;
+    }
+
+    &__room-image-wrapper {
+        width: 112px;
+        height: 112px;
+        background: $gray-100;
+        border-radius: $rounded-xl;
+        flex-shrink: 0;
+        overflow: hidden;
+        position: relative;
+    }
+
+    &__room-image {
+        width: 100%;
+        height: 100%;
+    }
+
+    &__room-popular-tag {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: $red-500;
+        color: $white;
+        font-size: $text-9px;
+        font-weight: $font-bold;
+        padding: 2px $spacing-1-5;
+        border-radius: 0 0 $rounded-lg 0;
+    }
+
+    &__room-image-count {
+        position: absolute;
+        bottom: $spacing-1;
+        right: $spacing-1;
+        background: rgba($black, 0.5);
+        color: $white;
+        font-size: $text-9px;
+        padding: 0 $spacing-1;
+        border-radius: $rounded;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+
+    &__room-image-count-icon {
+        font-size: 10px;
+    }
+
+    // Room Info
+    &__room-info {
+        flex: 1;
+        min-width: 0;
+        @include flex-col;
+        justify-content: space-between;
+    }
+
+    &__room-name-row {
+        @include flex-between;
+        align-items: flex-start;
+    }
+
+    &__room-name {
+        font-weight: $font-bold;
+        color: $gray-900;
+        font-size: 15px;
+        line-height: $leading-tight;
+        margin-bottom: $spacing-1;
+    }
+
+    &__room-expand-icon {
+        color: $gray-300;
+        font-size: $text-lg;
+    }
+
+    &__room-specs {
+        font-size: $text-xs;
+        color: $gray-500;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: $spacing-1-5;
+    }
+
+    &__spec-dot {
+        @include circle(2px);
+        background: $gray-400;
+    }
+
+    &__room-badges {
+        margin-top: $spacing-2;
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacing-1;
+    }
+
+    &__room-badge {
+        font-size: $text-10px;
+        padding: 2px $spacing-1-5;
+        border-radius: $rounded;
+        border-width: 1px;
+        border-style: solid;
+
+        &--green {
+            color: $green-600;
+            background: $green-50;
+            border-color: $green-100;
+        }
+
+        &--orange {
+            color: $orange-600;
+            background: $orange-50;
+            border-color: $orange-100;
+        }
+    }
+
+    // Price & Action Area
+    &__room-action-area {
+        background: $gray-50;
+        border-radius: $rounded-xl;
+        padding: $spacing-3;
+        @include flex-between;
+    }
+
+    &__room-price-col {
+        @include flex-col;
+    }
+
+    &__room-deal-tags {
+        display: flex;
+        gap: $spacing-1;
+        margin-bottom: 2px;
+    }
+
+    &__room-deal-tag {
+        font-size: $text-9px;
+        font-weight: $font-bold;
+        color: $red-500;
+        border: 1px solid $red-200;
+        padding: 0 $spacing-1;
+        border-radius: 2px;
+        background: $white;
+    }
+
+    &__room-price-row {
+        display: flex;
+        align-items: flex-end;
+        gap: $spacing-1-5;
+    }
+
+    &__room-original-price {
+        font-size: $text-xs;
+        color: $gray-400;
+        text-decoration: line-through;
+    }
+
+    &__room-current-price {
+        display: flex;
+        align-items: baseline;
+        font-weight: $font-bold;
+        color: $gray-900;
+
+        &--red {
+            color: $red-600;
+        }
+    }
+
+    &__room-currency {
+        font-size: $text-xs;
+    }
+
+    &__room-price-value {
+        font-size: $text-xl;
+    }
+
+    &__room-price-unit {
+        font-size: $text-10px;
+        color: $gray-500;
+        font-weight: $font-normal;
+        margin-left: 2px;
+    }
+
+    &__room-tax-note {
+        font-size: $text-9px;
+        color: $gray-400;
+    }
+
+    &__book-btn {
+        background: linear-gradient(to right, $orange-500, $red-500);
+        padding: $spacing-2-5 $spacing-6;
+        border-radius: $rounded-lg;
+        box-shadow: $shadow-md;
+    }
+
+    &__book-btn-text {
+        color: $white;
+        font-weight: $font-bold;
+        font-size: $text-sm;
+    }
+
+    // ---- Section: Hotel Honors ----
+    &__honors {
+        padding: 0 $spacing-3;
+        margin-bottom: $spacing-4;
+    }
+
+    &__section-title {
+        font-size: $text-base;
+        font-weight: $font-bold;
+        color: $gray-900;
+        margin-bottom: $spacing-3;
+
+        &--lg {
+            font-size: $text-lg;
+        }
+    }
+
+    &__honors-card {
+        @include card-2xl;
+        padding: $spacing-4;
+        @include flex-col;
+        gap: $spacing-4;
+    }
+
+    &__honor-item {
+        display: flex;
+        align-items: center;
+        gap: $spacing-3;
+    }
+
+    &__honor-icon-wrapper {
+        @include circle($w-10);
+        @include flex-center;
+        flex-shrink: 0;
+
+        &--orange {
+            background: $orange-50;
+        }
+
+        &--yellow {
+            background: $yellow-50;
+        }
+    }
+
+    &__honor-icon {
+        font-size: $text-lg;
+    }
+
+    &__honor-info {
+        flex: 1;
+    }
+
+    &__honor-title {
+        font-weight: $font-bold;
+        font-size: $text-sm;
+        color: $gray-900;
+    }
+
+    &__honor-desc {
+        font-size: $text-xs;
+        color: $gray-500;
+        @include line-clamp(1);
+    }
+
+    &__honor-arrow {
+        color: $gray-300;
+        font-size: $text-xl;
+        font-weight: $font-bold;
+    }
+
+    &__honors-divider {
+        width: 100%;
+        height: 1px;
+        background: $gray-50;
+    }
+
+    // ---- Section: Amenities ----
+    &__amenities {
+        padding: 0 $spacing-3;
+        margin-bottom: $spacing-4;
+    }
+
+    &__amenities-header {
+        @include flex-between;
+        margin-bottom: $spacing-3;
+    }
+
+    &__amenities-view-all {
+        font-size: $text-xs;
+        color: $gray-500;
+        display: flex;
+        align-items: center;
+    }
+
+    &__amenity-icons-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: $spacing-2;
+    }
+
+    &__amenity-icon-item {
+        @include flex-col;
+        align-items: center;
+        justify-content: center;
+        padding: $spacing-3;
+        background: $white;
+        border-radius: $rounded-xl;
+        border: 1px solid $gray-100;
+    }
+
+    &__amenity-icon {
+        font-size: $text-2xl;
+        margin-bottom: $spacing-1;
+    }
+
+    &__amenity-icon-label {
+        font-size: $text-10px;
+        color: $gray-500;
+    }
+
+    // ---- Section: Hotel Policy & Location ----
+    &__info-sections {
+        padding: 0 $spacing-3;
+        margin-bottom: $spacing-6;
+        @include flex-col;
+        gap: $spacing-4;
+    }
+
+    &__policy-card {
+        background: $white;
+        padding: $spacing-4;
+        border-radius: $rounded-xl;
+        border: 1px solid $gray-100;
+        font-size: $text-xs;
+    }
+
+    &__policy-row {
+        @include flex-between;
+        margin-bottom: $spacing-2;
+    }
+
+    &__policy-label {
+        color: $gray-500;
+    }
+
+    &__policy-value {
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__policy-text {
+        color: $gray-500;
+        line-height: $leading-relaxed;
+        margin-top: $spacing-3;
+        margin-bottom: $spacing-3;
+    }
+
+    &__policy-read-more {
+        color: $blue-600;
+        font-weight: $font-bold;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        font-size: $text-xs;
+    }
+
+    // Location
+    &__location-card {
+        background: $white;
+        border-radius: $rounded-xl;
+        overflow: hidden;
+        border: 1px solid $gray-100;
+        box-shadow: $shadow-sm;
+    }
+
+    &__map-preview {
+        height: 128px;
+        background: $gray-200;
+        position: relative;
+        @include flex-center;
+    }
+
+    &__map-marker {
+        @include flex-col;
+        align-items: center;
+    }
+
+    &__map-marker-label {
+        background: $blue-600;
+        color: $white;
+        font-size: $text-10px;
+        font-weight: $font-bold;
+        padding: $spacing-1 $spacing-2;
+        border-radius: $rounded;
+        box-shadow: $shadow-lg;
+        position: relative;
+    }
+
+    &__map-marker-dot {
+        @include circle(8px);
+        background: $blue-600;
+        margin-top: $spacing-1-5;
+    }
+
+    &__location-station {
+        padding: $spacing-3;
+        @include flex-between;
+    }
+
+    &__station-info {
+        display: flex;
+        align-items: center;
+        gap: $spacing-3;
+    }
+
+    &__station-icon {
+        font-size: $text-xl;
+    }
+
+    &__station-name {
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__station-distance {
+        font-size: $text-10px;
+        color: $gray-500;
+    }
+
+    &__station-arrow {
+        color: $gray-300;
+        font-size: $text-xl;
+        font-weight: $font-bold;
+    }
+
+    // ---- Section: Reviews ----
+    &__reviews {
+        padding: 0 $spacing-3;
+        margin-bottom: $spacing-6;
+    }
+
+    &__reviews-card {
+        background: $white;
+        padding: $spacing-4;
+        border-radius: $rounded-xl;
+        border: 1px solid $gray-100;
+        box-shadow: $shadow-sm;
+    }
+
+    // Review Summary
+    &__review-summary {
+        display: flex;
+        align-items: flex-start;
+        gap: $spacing-3;
+        margin-bottom: $spacing-4;
+    }
+
+    &__review-summary-title {
+        font-size: 28px;
+        font-weight: $font-bold;
+        color: $primary;
+        line-height: 1;
+    }
+
+    &__review-stars {
+        display: flex;
+        gap: 2px;
+    }
+
+    &__review-star {
+        @include circle($w-4);
+        background: $primary;
+        border-radius: 2px;
+        @include flex-center;
+    }
+
+    &__review-star-icon {
+        color: $white;
+        font-size: 10px;
+    }
+
+    &__review-count {
+        font-size: $text-xs;
+        color: $gray-400;
+        margin-top: $spacing-1;
+    }
+
+    // Review Tags
+    &__review-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacing-2;
+        margin-bottom: $spacing-6;
+    }
+
+    &__review-tag {
+        background: $gray-50;
+        color: $gray-600;
+        font-size: $text-xs;
+        padding: $spacing-2 $spacing-3;
+        border-radius: $rounded-lg;
+        font-weight: $font-medium;
+    }
+
+    // Review Items
+    &__review-list {
+        @include flex-col;
+        gap: $spacing-6;
+    }
+
+    &__review-item {
+        @include flex-col;
+        gap: $spacing-2;
+
+        &--bordered {
+            border-top: 1px solid $gray-50;
+            padding-top: $spacing-6;
+        }
+    }
+
+    &__reviewer-info {
+        display: flex;
+        align-items: center;
+        gap: $spacing-3;
+    }
+
+    &__reviewer-avatar {
+        @include circle($w-10);
+        background: $orange-50;
+        @include flex-center;
+        overflow: hidden;
+    }
+
+    &__reviewer-avatar-icon {
+        font-size: $text-2xl;
+    }
+
+    &__reviewer-name-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+    }
+
+    &__reviewer-name {
+        font-weight: $font-bold;
+        color: $gray-900;
+        font-size: $text-sm;
+    }
+
+    &__reviewer-badge {
+        font-size: $text-10px;
+        color: $orange-600;
+        border: 1px solid $orange-200;
+        padding: 0 $spacing-1;
+        border-radius: 2px;
+    }
+
+    &__reviewer-stay {
+        font-size: $text-11px;
+        color: $gray-500;
+        margin-top: 2px;
+    }
+
+    &__review-score-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+    }
+
+    &__review-score {
+        background: $primary;
+        color: $white;
+        font-size: $text-10px;
+        width: 20px;
+        height: 20px;
+        @include flex-center;
+        border-radius: 4px;
+        font-weight: $font-bold;
+    }
+
+    &__review-mini-tag {
+        font-size: $text-xs;
+        color: $gray-500;
+        background: $gray-50;
+        padding: 2px $spacing-1;
+        border-radius: $rounded;
+    }
+
+    &__review-text {
+        font-size: $text-sm;
+        color: $gray-800;
+        line-height: $leading-relaxed;
+    }
+
+    &__review-helpful {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    &__review-helpful-btn {
+        font-size: $text-xs;
+        color: $gray-400;
+    }
+
+    // View More Reviews
+    &__review-view-more {
+        margin-top: $spacing-4;
+        padding-top: $spacing-4;
+        border-top: 1px solid $gray-50;
+        display: flex;
+        justify-content: center;
+    }
+
+    &__review-view-more-link {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $primary;
+    }
+}
