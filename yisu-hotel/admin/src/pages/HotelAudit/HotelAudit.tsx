@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Table, Button, Input, Card, Statistic, Modal, message } from 'antd'
+import { Table, Button, Input, Card, Statistic, message } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import {
   SearchOutlined,
@@ -12,6 +12,8 @@ import {
 } from '@ant-design/icons'
 import { HotelStatus } from '@yisu/shared'
 import type { IHotel } from '@yisu/shared'
+import AuditDrawer from './AuditDrawer'
+import type { IAuditDetail } from './AuditDrawer'
 import styles from './HotelAudit.module.scss'
 
 // ===== 审核队列数据类型 =====
@@ -78,6 +80,30 @@ const mockAuditData: IAuditRecord[] = [
   },
 ]
 
+/** 将表格行转为抽屉详情 Mock */
+const toAuditDetail = (record: IAuditRecord): IAuditDetail => ({
+  id: record.id,
+  applicationNo: `2023102700${record.id.replace('AUDIT-', '')}89`,
+  hotelName: record.name,
+  merchantName: record.merchantName,
+  merchantId: '882910',
+  phone: '010-88886666',
+  address: record.address || record.location,
+  applyTime: `${record.submissionDate} ${record.submissionTime}:45`,
+  description: `${record.name}位于繁华的CBD核心区，距离地铁1号线仅200米。酒店拥有现代化客房120间，配备全套智能家居系统。`,
+  status: HotelStatus.PENDING,
+  businessLicenseUrl:
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuAPTSjBOY12EHAnT-_1Bygi0OkFNgfE2p1nVruso6Y3eGTmXQKklHLOmfKrUYV_mfN6Y6QNrhjv0AJERhIb8Di3a19V7IOTTNHd__PbwsoowRHhYPhG-gL6TgX0AZwId0Wia8OLHryWWZjG8EAVOIvPDTx5fjIpau4pyCM4tSqF-9zxwE_D_OBBe0Pike7aVOmeh2utFsCtvbXwdS14eUFLVzbKERa_Tbj9ed00vW6YGTWYpi8jEkExFHicj_p28W8alHO12G8tuYUu',
+  permitUrl:
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuBDl2zw0PI2eljJApagk72XyrHxGhXTHg5tz-h22r-MZLKx6WM9tQXk5ZhZZHKc6qXr8SbxE06_H2vOe6a_CxQJqPwULVHJybF_n4Y_KeR6R8pomM13QqB6zcx9TLsmqpEmhpCWX7FA2vT68Gys-KaEWGX3WizJ5q8sKHPyu2ZPANvQrz2Bpqbyg1kHgHhO8GE0AZ25Vd60mIKx8iaQocCG5Msxh62Lxwh7dK6IXDtcuzoYDoJlmIRyUg1U7VWY-vwDrM9hf6HoMiRB',
+  scenePhotos: [
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuBmKaX_ExvwB8Nng6GU2RARN2qWcAyWTFj2T0glmZ0i8x_a4G546qI9wc48aZHnq83A99uqlC4gjA1eQa-DG_x2QYA62wHYa_ZcHkFLYYvZwZf_dxBNr2Oh9SZoEoxX4oaXVk3rGilAbLLq1xPfmRgIZPUST_eKADKhWKp4psc2Z_UVp9qdI0lMAoPDA9e-RE4pGZvKNWXFG6XF6aUJ1iqfPLWAOTSwjPhJcH6hkrNWthMa8uUtiSvuQcK9YN0kYjCiLrrbOlnPhDuo',
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuBwa11Ge_mIeB--MUr_hplUdp1nxociaZsPhCLC9Gdr3W6-r7eYq6LuSohQoS8htOk2h4RU1AvRUWAb7lShSUOgU5zgQ9Ra4WvcpnD_FQ0SHzDlVZMNsAARJiC86w5h2KxQDOD0k9rQd2XU7Om5igzQLpbBTlVIW0L8Ii-upwYk4qNlkaLopDYlrJolK8WnajsF_q1uI8DHKZmJTDFTpbnUJpRbVb8MQOxm9nG5ssMxpmehrptryZF5WZSA6VE4U77ZrdIJUAIT3ywk',
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuAVzTnR6rx6_9W4aa2IbAZo-7tg8wzC-FctDmZyRhUdXTArjURdxv3y6J6lq0T-hiH95x3irKNyOVuFcOwrstz4x1KgTEva-D0VTt-5JDQ5N4wnxd8c36-FDAv-Yaeg5q5hS17u2--uhwscOveI73VGouIwrIOYGVhRECaL9Me0Io6k1LdaeEvsEUs0Q6jA6qZIoQjnLLHZsGJR2tqI_OWNtKlRpYJdX3LuTGWy0X_rGKXZLvAAjRHTIDkWTjKyFRd3C72o_ElriKby',
+  ],
+  facilities: ['免费WiFi', '免费停车', '健身房', '自助早餐', '会议室'],
+})
+
 // ===== 组件 =====
 const HotelAudit: React.FC = () => {
   const [loading, setLoading] = useState(true)
@@ -89,6 +115,10 @@ const HotelAudit: React.FC = () => {
     total: 24,
     showTotal: (total, range) => `显示 ${range[0]} 到 ${range[1]} 条，共 ${total} 条结果`,
   })
+
+  // 抽屉状态
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [currentDetail, setCurrentDetail] = useState<IAuditDetail | null>(null)
 
   // 模拟异步加载
   useEffect(() => {
@@ -122,24 +152,24 @@ const HotelAudit: React.FC = () => {
     message.info('筛选功能（待实现）')
   }
 
-  // 审核按钮 — 打开 Modal
+  // 审核按钮 — 打开 Drawer
   const handleAudit = (record: IAuditRecord) => {
-    Modal.confirm({
-      title: '酒店审核',
-      content: (
-        <div>
-          <p>
-            您正在审核 <strong>{record.name}</strong>（商家：{record.merchantName}）
-          </p>
-          <p>确认通过此酒店的入驻申请？</p>
-        </div>
-      ),
-      okText: '通过',
-      cancelText: '取消',
-      onOk: () => {
-        message.success(`已通过「${record.name}」的入驻审核`)
-      },
-    })
+    setCurrentDetail(toAuditDetail(record))
+    setDrawerOpen(true)
+  }
+
+  // 通过回调
+  const handleApprove = (hotelId: string, remark: string) => {
+    console.log('Approve:', hotelId, remark)
+    message.success('审核通过！')
+    setDrawerOpen(false)
+  }
+
+  // 驳回回调
+  const handleReject = (hotelId: string, remark: string) => {
+    console.log('Reject:', hotelId, remark)
+    message.error('已驳回该申请')
+    setDrawerOpen(false)
   }
 
   // ===== 表格列配置 =====
@@ -286,6 +316,15 @@ const HotelAudit: React.FC = () => {
 
         <div className={styles.footer}>© 2026 易宿酒店管理平台。保留所有权利。</div>
       </div>
+
+      {/* ===== 审核抽屉 ===== */}
+      <AuditDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        detail={currentDetail}
+        onApprove={handleApprove}
+        onReject={handleReject}
+      />
     </div>
   )
 }
