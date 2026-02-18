@@ -27,10 +27,13 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
       '@tarojs/plugin-sass'
     ],
     // 全局 SCSS 变量注入（避免每个文件都 @use）
-    sass: {
-      resource: ['src/styles/_variables.scss', 'src/styles/_mixins.scss'],
-      projectDirectory: path.resolve(__dirname, '..')
-    },
+    // sass: {
+    //   resource: [
+    //     path.resolve(__dirname, '..', 'src/styles/_variables.scss'),
+    //     path.resolve(__dirname, '..', 'src/styles/_mixins.scss')
+    //   ],
+    //   projectDirectory: path.resolve(__dirname, '..')
+    // },
     // 全局变量设置
     defineConstants: {
     },

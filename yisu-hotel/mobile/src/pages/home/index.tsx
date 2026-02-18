@@ -21,11 +21,11 @@ const Home: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const categories = [
-    { name: 'Hotels', icon: 'hotel' },
-    { name: 'Homestays', icon: 'cottage' },
-    { name: 'Flight + Hotel', icon: 'flight' },
-    { name: 'Hourly', icon: 'schedule' },
-    { name: 'Guide', icon: 'map' },
+    { name: 'Hotels', icon: '🏨' },
+    { name: 'Homestays', icon: '🏡' },
+    { name: 'Flight+Hotel', icon: '✈️' },
+    { name: 'Hourly', icon: '⏰' },
+    { name: 'Guide', icon: '🗺️' },
   ];
 
   const recommendedHotels = useMemo(() => {
@@ -75,14 +75,14 @@ const Home: React.FC = () => {
             <Text className="home__logo-dot">.</Text>
           </View>
           <View className="home__user-actions">
-            {/* Taro doesn't support 'download' app easily, omit or change to 'Help' */}
             <View className="home__action-btn">
-              <Text className="material-symbols-outlined">help_outline</Text>
+              <Text>❓</Text>
             </View>
             <View className="home__avatar-container" onClick={navigateToProfile}>
               <Image
                 src={user?.avatar || 'https://ui-avatars.com/api/?name=Guest&background=random'}
                 className="home__avatar"
+                mode="aspectFill"
               />
               {user && <View className="home__status-dot"></View>}
             </View>
@@ -107,7 +107,7 @@ const Home: React.FC = () => {
               <View className="home__search-field home__search-field--location">
                 <Text className="home__search-label">Location</Text>
                 <View className="home__input-wrapper">
-                  <Text className="material-symbols-outlined home__field-icon">location_on</Text>
+                  <Text className="home__field-icon">📍</Text>
                   <Input
                     className="home__search-input"
                     value={location}
@@ -117,7 +117,7 @@ const Home: React.FC = () => {
                 </View>
               </View>
               <View className="home__location-btn">
-                <Text className="material-symbols-outlined">my_location</Text>
+                <Text>📌</Text>
                 <Text className="home__location-text">Current</Text>
               </View>
             </View>
@@ -157,7 +157,7 @@ const Home: React.FC = () => {
                 />
               </View>
               <View className="home__filter-btn" onClick={() => setIsFilterOpen(true)}>
-                <Text className="material-symbols-outlined">tune</Text>
+                <Text>⚙</Text>
               </View>
             </View>
 
@@ -171,7 +171,7 @@ const Home: React.FC = () => {
             {categories.map(cat => (
               <View key={cat.name} className="home__category-item">
                 <View className="home__category-icon">
-                  <Text className="material-symbols-outlined">{cat.icon}</Text>
+                  <Text>{cat.icon}</Text>
                 </View>
                 <Text className="home__category-name">{cat.name}</Text>
               </View>

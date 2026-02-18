@@ -1,69 +1,96 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
 .home {
+    min-height: 100vh;
+    background: $background;
 
     // ---- Header ----
     &__header {
-        position: sticky;
-        top: 0;
-        z-index: $z-40;
         background: rgba($background, 0.95);
-        @include backdrop-blur-md;
-        transition: background-color $transition-normal;
+        padding-top: env(safe-area-inset-top, 0);
     }
 
-    &__header-inner {
+    &__header-content {
         @include flex-between;
-        padding: $spacing-4 $spacing-5;
-    }
-
-    &__logo-section {
-        display: flex;
-        align-items: center;
-        gap: $spacing-2;
+        padding: $spacing-3 $spacing-4;
     }
 
     &__logo {
-        width: $w-9;
-        height: $h-9;
-        border-radius: $rounded-xl;
-        @include gradient-primary-br;
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+    }
+
+    &__logo-text {
+        font-size: $text-xl;
+        font-weight: $font-bold;
+        color: $primary;
+    }
+
+    &__logo-dot {
+        font-size: $text-xl;
+        font-weight: $font-bold;
+        color: $primary;
+    }
+
+    &__user-actions {
+        display: flex;
+        align-items: center;
+        gap: $spacing-3;
+    }
+
+    &__action-btn {
         @include flex-center;
-        color: $white;
-        font-weight: $font-bold;
-        font-size: $text-xl;
-        box-shadow: $shadow-md, 0 4px 6px -1px rgba($orange-200, 1);
+        @include circle($w-9);
+        background: $gray-100;
+        border-radius: $rounded-full;
+        font-size: $text-lg;
+        color: $gray-600;
     }
 
-    &__brand-name {
-        font-size: $text-xl;
-        font-weight: $font-bold;
-        letter-spacing: -0.025em;
-        color: $gray-900;
-    }
-
-    &__avatar-btn {
+    &__avatar-container {
         position: relative;
+        @include circle($w-10);
         border-radius: $rounded-full;
         overflow: hidden;
-        @include circle($w-10);
         border: 2px solid $white;
         box-shadow: $shadow-sm;
-        outline: 1px solid $gray-100;
-        cursor: pointer;
-        background: none;
-        padding: 0;
     }
 
-    &__avatar-img {
+    &__avatar {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+    }
+
+    &__status-dot {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        @include circle(10px);
+        background: $green-500;
+        border: 2px solid $white;
+    }
+
+    // ---- Scroll Container ----
+    &__scroll-container {
+        height: calc(100vh - 100px);
     }
 
     // ---- Main Content ----
     &__content {
         padding: 0 $spacing-4;
         @include flex-col;
-        gap: $spacing-6;
+        gap: $spacing-5;
+    }
+
+    // ---- Hero Title ----
+    &__hero-title {
+        font-size: $text-2xl;
+        font-weight: $font-bold;
+        color: $gray-900;
+        padding: $spacing-2 0;
+        line-height: $leading-tight;
     }
 
     // ---- Search Box ----
@@ -74,31 +101,24 @@
         box-shadow: $shadow-soft;
         position: relative;
         overflow: visible;
-        z-index: $z-10;
     }
 
-    // Tabs
-    &__tabs {
-        @include flex-between;
+    // Search Tabs
+    &__search-tabs {
+        display: flex;
+        gap: $spacing-4;
         padding: 0 $spacing-1;
-        margin-bottom: $spacing-6;
+        margin-bottom: $spacing-5;
         border-bottom: 1px solid $gray-100;
-        padding-bottom: $spacing-2;
+        padding-bottom: $spacing-3;
     }
 
-    &__tab-btn {
+    &__search-tab {
         font-size: $text-sm;
         font-weight: $font-medium;
-        transition: color $transition-normal;
-        color: $gray-500;
-        background: none;
-        border: none;
-        cursor: pointer;
+        color: $gray-400;
+        padding-bottom: $spacing-2;
         position: relative;
-
-        &:hover {
-            color: $gray-900;
-        }
 
         &--active {
             color: $gray-900;
@@ -107,7 +127,7 @@
             &::after {
                 content: '';
                 position: absolute;
-                bottom: -9px;
+                bottom: -#{$spacing-3};
                 left: 50%;
                 transform: translateX(-50%);
                 width: 24px;
@@ -118,139 +138,74 @@
         }
     }
 
-    // Location & Search Input
-    &__location-row {
+    // Search Row (reusable)
+    &__search-row {
         display: flex;
         align-items: center;
         gap: $spacing-3;
-        margin-bottom: $spacing-6;
+        margin-bottom: $spacing-4;
+        padding: $spacing-3 0;
+        border-bottom: 1px solid $gray-50;
     }
 
-    &__location-btn {
-        display: flex;
-        align-items: center;
+    // Search Field
+    &__search-field {
+        @include flex-col;
         gap: $spacing-1;
-        flex-shrink: 0;
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0;
-    }
-
-    &__location-text {
-        font-size: $text-xl;
-        font-weight: $font-bold;
-        color: $gray-900;
-    }
-
-    &__location-icon {
-        color: $gray-400;
-        font-size: $text-xl;
-    }
-
-    &__divider-h {
-        height: $h-6;
-        width: 1px;
-        background: $gray-200;
-    }
-
-    &__search-input-wrapper {
         flex: 1;
-        position: relative;
+
+        &--location {
+            flex: 2;
+        }
+    }
+
+    &__search-label {
+        font-size: $text-xs;
+        color: $gray-400;
+        font-weight: $font-medium;
+    }
+
+    &__input-wrapper {
         display: flex;
         align-items: center;
+        gap: $spacing-2;
+    }
+
+    &__field-icon {
+        font-size: $text-xl;
+        color: $primary;
     }
 
     &__search-input {
-        width: 100%;
+        flex: 1;
         border: none;
         padding: 0;
         font-size: $text-base;
-        font-weight: $font-medium;
-        color: $gray-700;
+        font-weight: $font-semibold;
+        color: $gray-800;
         background: transparent;
-        outline: none;
-        @include truncate;
-        padding-right: $spacing-8;
-
-        &::placeholder {
-            color: $gray-400;
-        }
     }
 
-    &__search-clear-btn,
-    &__search-location-btn {
-        position: absolute;
-        right: 0;
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0;
-        color: $gray-400;
-        @include flex-center;
-        transition: color $transition-normal;
-
-        &:hover {
-            color: $gray-600;
-        }
-    }
-
-    &__search-location-btn {
-        &:hover {
-            color: $primary;
-        }
-    }
-
-    &__search-icon {
-        font-size: 18px;
-    }
-
-    &__location-pin-icon {
-        font-size: 20px;
-    }
-
-    // Date Selector
-    &__date-selector {
-        @include flex-between;
-        margin-bottom: $spacing-6;
-        border-top: 1px solid $gray-50;
-        border-bottom: 1px solid $gray-50;
-        padding: $spacing-4 0;
-        cursor: pointer;
-        margin-left: -$spacing-2;
-        margin-right: -$spacing-2;
-        padding-left: $spacing-2;
-        padding-right: $spacing-2;
-        border-radius: $rounded-lg;
-        transition: background-color $transition-normal;
-
-        &:hover {
-            background: $gray-50;
-        }
-    }
-
-    &__date-col {
+    // Location Button
+    &__location-btn {
         @include flex-col;
-
-        &--right {
-            text-align: right;
-        }
+        align-items: center;
+        gap: $spacing-0-5;
+        flex-shrink: 0;
+        color: $primary;
     }
 
-    &__date-label {
+    &__location-text {
         font-size: $text-xs;
-        color: $gray-500;
-        margin-bottom: $spacing-1;
+        color: $primary;
+        font-weight: $font-medium;
     }
 
-    &__date-value-row {
+    // Date Display
+    &__date-display {
         display: flex;
         align-items: baseline;
         gap: $spacing-1;
-
-        &--right {
-            justify-content: flex-end;
-        }
     }
 
     &__date-value {
@@ -259,13 +214,13 @@
         color: $gray-900;
     }
 
-    &__date-day {
+    &__date-weekday {
         font-size: $text-xs;
         font-weight: $font-medium;
         color: $gray-400;
     }
 
-    &__nights-badge {
+    &__night-count {
         padding: $spacing-1 $spacing-3;
         background: $gray-50;
         border-radius: $rounded-full;
@@ -273,117 +228,55 @@
         font-weight: $font-medium;
         color: $gray-500;
         border: 1px solid $gray-100;
-    }
-
-    // Filter Row
-    &__filter-row {
-        @include flex-between;
-        margin-bottom: $spacing-4;
-        cursor: pointer;
-        margin-left: -$spacing-2;
-        margin-right: -$spacing-2;
-        padding: $spacing-2;
-        border-radius: $rounded-lg;
-        transition: background-color $transition-normal;
-
-        &:hover {
-            background: $gray-50;
-        }
-    }
-
-    &__filter-info {
-        display: flex;
-        align-items: center;
-        gap: $spacing-2;
-        overflow: hidden;
-        flex: 1;
-    }
-
-    &__filter-text {
-        font-size: $text-base;
-        font-weight: $font-bold;
-        @include truncate;
-        color: $gray-300;
-
-        &--active {
-            color: $primary;
-        }
-    }
-
-    &__filter-dot {
-        @include circle(8px);
-        background: $primary;
         flex-shrink: 0;
+        @include flex-center;
     }
 
-    &__filter-arrow {
-        color: $gray-300;
-
-        &--active {
-            color: $primary;
-        }
+    // Divider
+    &__divider {
+        height: 1px;
+        background: $gray-100;
+        margin: $spacing-1 0;
     }
 
-    // Tag Buttons
-    &__tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: $spacing-2;
-        margin-bottom: $spacing-6;
-    }
-
-    &__tag-btn {
-        padding: $spacing-1-5 $spacing-3;
+    // Filter Button
+    &__filter-btn {
+        @include flex-center;
+        @include circle($w-10);
         background: $gray-50;
-        font-size: $text-xs;
-        font-weight: $font-medium;
+        border-radius: $rounded-xl;
         color: $gray-600;
-        border-radius: $rounded-lg;
-        border: none;
-        cursor: pointer;
-        transition: background-color $transition-normal;
-
-        &:hover {
-            background: $gray-100;
-        }
+        font-size: $text-xl;
+        flex-shrink: 0;
     }
 
     // Search Button
     &__search-btn {
         width: 100%;
-        height: $h-14;
+        height: $h-12;
         @include gradient-primary;
         border-radius: $rounded-full;
         @include flex-center;
         gap: $spacing-2;
         color: $white;
         font-weight: $font-bold;
-        font-size: $text-lg;
+        font-size: $text-base;
         box-shadow: $shadow-lg, $shadow-orange-light;
         border: none;
-        cursor: pointer;
-        transition: all $transition-normal;
+        margin-top: $spacing-3;
+        line-height: $h-12;
 
-        &:hover {
-            background: linear-gradient(to right, $orange-500, $orange-600);
-        }
-
-        &:active {
-            transform: scale(0.98);
+        &::after {
+            border: none;
         }
     }
 
     // ---- Categories ----
     &__categories {
-        margin-top: $spacing-2;
-    }
-
-    &__categories-scroll {
         display: flex;
         gap: $spacing-4;
-        overflow-x: auto;
-        padding: 0 $spacing-2 $spacing-2;
-        @include hide-scrollbar;
+        white-space: nowrap;
+        padding: $spacing-2 0;
     }
 
     &__category-item {
@@ -391,76 +284,20 @@
         align-items: center;
         gap: $spacing-2;
         min-width: 70px;
-        cursor: pointer;
         flex-shrink: 0;
-    }
-
-    &__category-icon-wrapper {
-        width: 56px;
-        height: 56px;
-        border-radius: $rounded-2xl;
-        @include flex-center;
-        box-shadow: $shadow-sm;
-        transition: all $transition-normal;
-        border-width: 1px;
-        border-style: solid;
-
-        &--red {
-            background: $red-50;
-            border-color: $red-100;
-        }
-
-        &--orange {
-            background: $orange-50;
-            border-color: $orange-100;
-        }
-
-        &--blue {
-            background: $blue-50;
-            border-color: $blue-100;
-        }
-
-        &--green {
-            background: $green-50;
-            border-color: $green-100;
-        }
-
-        &--purple {
-            background: $purple-50;
-            border-color: rgba($purple-600, 0.1);
-        }
-
-        .home__category-item:hover & {
-            box-shadow: $shadow-md;
-        }
-
-        .home__category-item:active & {
-            transform: scale(0.95);
-        }
+        display: inline-flex;
     }
 
     &__category-icon {
-        font-size: 28px;
-
-        &--red {
-            color: $red-500;
-        }
-
-        &--orange {
-            color: $orange-500;
-        }
-
-        &--blue {
-            color: $blue-500;
-        }
-
-        &--green {
-            color: $green-500;
-        }
-
-        &--purple {
-            color: $purple-600;
-        }
+        width: 52px;
+        height: 52px;
+        border-radius: $rounded-2xl;
+        @include flex-center;
+        box-shadow: $shadow-sm;
+        background: $orange-50;
+        border: 1px solid $orange-100;
+        font-size: 24px;
+        color: $primary;
     }
 
     &__category-name {
@@ -469,37 +306,36 @@
         color: $gray-700;
     }
 
-    // ---- Recommendations ----
-    &__recommendations {
-        margin-bottom: $spacing-20;
+    // ---- Section (Recommendations) ----
+    &__section {
+        margin-bottom: $spacing-4;
     }
 
-    &__recommendations-header {
-        display: flex;
-        align-items: center;
-        gap: $spacing-2;
+    &__section-header {
+        @include flex-between;
         margin-bottom: $spacing-4;
         padding: 0 $spacing-1;
     }
 
-    &__recommendations-title {
+    &__section-title {
         font-size: $text-lg;
         font-weight: $font-bold;
         color: $gray-900;
     }
 
-    &__hot-badge {
-        padding: $spacing-0-5 $spacing-2;
-        border-radius: $rounded;
-        font-size: $text-10px;
-        font-weight: $font-bold;
-        background: $orange-100;
+    &__section-more {
+        font-size: $text-sm;
         color: $primary;
+        font-weight: $font-medium;
     }
 
-    &__hotel-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: $spacing-4;
+    &__hotel-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacing-3;
+
+        >view {
+            width: calc(50% - #{$spacing-2});
+        }
     }
 }
