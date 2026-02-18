@@ -190,7 +190,7 @@ const HotelDetails: React.FC = () => {
               <Text className="hotel-details__score-number">{hotel.score}</Text>
               <Text className="hotel-details__score-label">Great</Text>
             </View>
-            <View className="hotel-details__score-reviews">
+            <View className="hotel-details__score-reviews" onClick={() => Taro.navigateTo({ url: `/pages/reviews/index?id=${hotel.hotel_id}` })}>
               <Text>{hotel.reviews_count} Reviews ›</Text>
             </View>
             <Text className="hotel-details__score-subtitle">Cleanliness 4.9 · Service 4.8</Text>
@@ -525,7 +525,7 @@ const HotelDetails: React.FC = () => {
             </View>
           </View>
 
-          <View className="hotel-details__review-view-more">
+          <View className="hotel-details__review-view-more" onClick={() => Taro.navigateTo({ url: `/pages/reviews/index?id=${hotel.hotel_id}` })}>
             <View className="hotel-details__review-view-more-link">
               <Text>View More ›</Text>
             </View>
