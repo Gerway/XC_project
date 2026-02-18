@@ -26,7 +26,12 @@ const Login: React.FC = () => {
     console.log('Login attempt:', { role, ...values })
     message.loading('登录中...', 1.5).then(() => {
       message.success('登录成功！(演示)')
-      navigate('/dashboard')
+      // 根据角色跳转到不同入口
+      if (role === UserRole.ADMIN) {
+        navigate('/admin/audit')
+      } else {
+        navigate('/dashboard')
+      }
     })
   }
 
