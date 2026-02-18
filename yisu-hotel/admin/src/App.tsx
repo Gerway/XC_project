@@ -5,6 +5,7 @@ import MainLayout from './layouts/MainLayout'
 import Dashboard from './pages/Dashboard/Dashboard'
 import HotelList from './pages/HotelList/HotelList'
 import InventoryContainer from './pages/Inventory/InventoryContainer'
+import OrderList from './pages/OrderList/OrderList'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/rooms" element={<HotelList />} />
           <Route path="/inventory" element={<InventoryContainer />} />
+          <Route path="/orders" element={<OrderList />} />
         </Route>
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>

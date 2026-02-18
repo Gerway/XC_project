@@ -39,3 +39,21 @@ export interface IDayInventory {
   price: number
   stock: number
 }
+
+export enum OrderStatus {
+  PENDING = 'PENDING', // 待入住
+  CHECKED_IN = 'CHECKED_IN', // 已入住
+  COMPLETED = 'COMPLETED', // 已完成
+}
+
+export interface IOrder {
+  id: string
+  customerName: string
+  hotelName: string
+  roomType: string
+  checkInDate: string
+  checkOutDate: string
+  nights: number
+  amount: number
+  status: OrderStatus
+}
