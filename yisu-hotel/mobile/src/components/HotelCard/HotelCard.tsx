@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, Button } from '@tarojs/components';
 import { Hotel } from '../../../types/types';
-import './index.scss';
+import './HotelCard.scss';
 
 interface HotelCardProps {
     hotel: Hotel;
