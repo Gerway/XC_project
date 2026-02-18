@@ -1,6 +1,3 @@
-@use '../styles/variables' as *;
-@use '../styles/mixins' as *;
-
 .date-picker {
     @include fixed-fill;
     z-index: $z-60;
