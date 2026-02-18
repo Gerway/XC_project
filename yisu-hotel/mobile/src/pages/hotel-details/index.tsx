@@ -43,6 +43,23 @@ const HotelDetails: React.FC = () => {
   }
 
   const handleBook = (room: Room) => {
+    // Check login status first
+    const userInfo = Taro.getStorageSync('userInfo');
+    if (!userInfo) {
+      Taro.showModal({
+        title: '需要登录',
+        content: '登录后预定更多酒店',
+        confirmText: '登录',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            Taro.navigateTo({ url: '/pages/login/index' });
+          }
+        }
+      });
+      return;
+    }
+
     // 1. Create PENDING order immediately
     const nights = Math.max(1, Math.round((dates.end.getTime() - dates.start.getTime()) / (1000 * 60 * 60 * 24)));
     const totalPrice = room.price * nights;

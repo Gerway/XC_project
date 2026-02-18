@@ -9,7 +9,7 @@ export default defineAppConfig({
     'pages/profile/index',
     'pages/orders/index',
     'pages/order-details/index',
-    // 'pages/favorites/index',
+    'pages/favorites/index',
     // 'pages/coupons/index',
   ],
   window: {

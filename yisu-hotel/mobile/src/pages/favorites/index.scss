@@ -1,0 +1,290 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.favorites-page {
+    background: $gray-50;
+    min-height: 100vh;
+    @include flex-col;
+    position: relative;
+
+    // ---- Header ----
+    &__header {
+        background: $white;
+        position: sticky; // Or fixed? sticky works in scrollview context sometimes, but here main is scrollview.
+        // Better to be fixed or sticky outside scrollview.
+        // Since we structure as: Header + ScrollView Main
+        flex-shrink: 0;
+        z-index: $z-50;
+    }
+
+    &__header-inner {
+        @include flex-between;
+        padding: 0 $spacing-4;
+        position: relative;
+        height: 44px;
+    }
+
+    &__back-btn {
+        width: 32px;
+        height: 32px;
+        @include flex-center;
+        margin-left: -$spacing-2;
+    }
+
+    &__back-icon {
+        color: $gray-800;
+        font-size: 24px;
+        font-weight: bold;
+        line-height: 1;
+        margin-top: -3px;
+    }
+
+    &__title {
+        font-size: 17px;
+        font-weight: $font-bold;
+        color: $gray-900;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    &__header-actions {
+        display: flex;
+        gap: $spacing-4;
+    }
+
+    &__header-action-icon {
+        color: $gray-600;
+        font-size: 20px;
+    }
+
+    // Tabs
+    &__tabs {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: $spacing-12;
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        border-bottom: 1px solid $gray-50;
+        position: relative;
+        height: 44px;
+    }
+
+    &__tab {
+        height: 100%;
+        padding: 0 $spacing-2;
+        position: relative;
+        @include flex-center;
+        transition: color $transition-normal;
+        color: $gray-500;
+
+        &--active {
+            color: $teal-600;
+
+            text {
+                color: $teal-600;
+            }
+        }
+    }
+
+    &__tab-indicator {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 16px;
+        height: 3px;
+        background: $teal-500;
+        border-radius: $rounded-full;
+    }
+
+    // ---- Main ----
+    &__main {
+        flex: 1;
+        padding: $spacing-3;
+        box-sizing: border-box;
+    }
+
+    &__list {
+        @include flex-col;
+        gap: $spacing-3;
+    }
+
+    &__group-list {
+        @include flex-col;
+        gap: $spacing-4;
+    }
+
+    &__group-title {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+        margin-bottom: $spacing-2;
+        padding: 0 $spacing-1;
+        display: block;
+    }
+
+    &__end-text {
+        text-align: center;
+        padding: $spacing-4 0;
+        font-size: $text-xs;
+        color: $gray-400;
+        @include flex-center;
+    }
+
+    // Empty State
+    &__empty {
+        @include flex-col;
+        align-items: center;
+        justify-content: center;
+        padding-top: 100px;
+    }
+
+    &__empty-icon {
+        font-size: 64px;
+        margin-bottom: $spacing-4;
+    }
+
+    &__empty-text {
+        font-size: $text-sm;
+        color: $gray-500;
+        margin-bottom: $spacing-6;
+    }
+
+    &__login-btn {
+        padding: $spacing-3 $spacing-10;
+        background: $primary;
+        border-radius: 9999px;
+        box-shadow: $shadow-md;
+        @include flex-center;
+
+        text {
+            color: $white;
+            font-weight: $font-bold;
+            font-size: $text-sm;
+        }
+
+        &:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+    }
+
+
+    // ---- Hotel Card ----
+    &__hotel-card {
+        background: $white;
+        border-radius: $rounded-lg;
+        padding: $spacing-2;
+        display: flex;
+        gap: $spacing-3;
+        box-shadow: 0 1px 2px rgba($black, 0.05);
+        // cursor pointer not needed in mobile
+    }
+
+    &__card-image {
+        width: 100px;
+        height: 100px;
+        flex-shrink: 0;
+        position: relative;
+        border-radius: $rounded;
+        overflow: hidden;
+        background: $gray-100;
+    }
+
+    &__card-img {
+        width: 100%;
+        height: 100%;
+    }
+
+    &__card-type-tag {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: #28303F;
+        padding: 2px 6px;
+        border-radius: 0 0 $rounded 0;
+
+        text {
+            color: $white;
+            font-size: 10px;
+            line-height: 1;
+        }
+    }
+
+    &__card-content {
+        flex: 1;
+        @include flex-col;
+        justify-content: space-between;
+        padding: 2px 0;
+        min-width: 0;
+    }
+
+    &__card-name {
+        font-size: 15px;
+        font-weight: $font-bold;
+        color: $gray-900;
+        line-height: $leading-snug;
+        @include line-clamp(2);
+        margin-bottom: $spacing-1;
+        display: block; // text element is inline by default in taro? view is block.
+    }
+
+    &__card-score-row {
+        display: flex;
+        align-items: baseline;
+        gap: $spacing-1;
+        margin-bottom: $spacing-1;
+    }
+
+    &__card-score {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $blue-600;
+    }
+
+    &__card-reviews {
+        font-size: $text-xs;
+        color: $gray-500;
+    }
+
+    &__card-location {
+        font-size: $text-xs;
+        color: $gray-500;
+        @include truncate;
+        margin-bottom: $spacing-1;
+        display: block;
+    }
+
+    &__card-dates {
+        font-size: $text-xs;
+        color: $gray-500;
+        display: block;
+    }
+
+    &__card-price-row {
+        display: flex;
+        justify-content: flex-end;
+        align-items: baseline;
+    }
+
+    &__card-currency {
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        color: $orange-600;
+        margin-right: 2px;
+    }
+
+    &__card-price {
+        font-size: $text-lg;
+        font-weight: $font-bold;
+        color: $orange-600;
+    }
+
+    &__card-price-suffix {
+        font-size: $text-xs;
+        color: $gray-400;
+        margin-left: 2px;
+    }
+}
