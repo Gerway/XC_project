@@ -1,0 +1,169 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.search-page {
+    @include flex-col;
+    min-height: 100vh;
+    background: $background;
+
+    // ---- Header ----
+    &__header {
+        background: $white;
+        box-shadow: $shadow-sm;
+        padding-top: env(safe-area-inset-top, 0);
+        padding-bottom: $spacing-1;
+    }
+
+    &__search-bar {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+        padding: $spacing-3 $spacing-4;
+    }
+
+    &__back-btn {
+        @include flex-center;
+        width: $w-8;
+        height: $h-8;
+        flex-shrink: 0;
+        font-size: $text-xl;
+        color: $gray-700;
+    }
+
+    &__input-wrapper {
+        flex: 1;
+        height: $h-10;
+        background: $gray-50;
+        border: 1px solid $gray-200;
+        border-radius: $rounded-full;
+        display: flex;
+        align-items: center;
+        padding: 0 $spacing-3;
+        gap: $spacing-2;
+    }
+
+    &__search-icon {
+        font-size: $text-sm;
+        flex-shrink: 0;
+    }
+
+    &__input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        padding: 0;
+        font-size: $text-sm;
+        color: $gray-700;
+    }
+
+    &__clear-btn {
+        @include flex-center;
+        width: $w-6;
+        height: $h-6;
+        flex-shrink: 0;
+        color: $gray-400;
+        font-size: $text-xs;
+    }
+
+    // ---- Sort Options ----
+    &__filter-bar {
+        background: $white;
+        border-bottom: 1px solid $gray-100;
+    }
+
+    &__sort-options {
+        display: flex;
+        align-items: center;
+        padding: $spacing-2 $spacing-4;
+        gap: $spacing-4;
+        white-space: nowrap;
+    }
+
+    &__sort-option {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+        font-size: $text-sm;
+        font-weight: $font-medium;
+        color: $gray-500;
+        padding: $spacing-1 0;
+        flex-shrink: 0;
+
+        &--active {
+            color: $primary;
+            font-weight: $font-bold;
+        }
+    }
+
+    &__sort-icon {
+        font-size: $text-xs;
+        color: $primary;
+    }
+
+    // ---- Quick Filters ----
+    &__quick-filters {
+        background: $white;
+    }
+
+    &__quick-filters-inner {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+        padding: $spacing-2 $spacing-4;
+        white-space: nowrap;
+    }
+
+    &__quick-filter-chip {
+        padding: $spacing-1-5 $spacing-3;
+        font-size: $text-xs;
+        font-weight: $font-medium;
+        border-radius: $rounded-full;
+        border: 1px solid $gray-200;
+        background: $white;
+        color: $gray-600;
+        flex-shrink: 0;
+    }
+
+    // ---- Hotel List ----
+    &__list {
+        flex: 1;
+        height: 0;
+    }
+
+    &__list-inner {
+        padding: $spacing-3;
+        @include flex-col;
+        gap: $spacing-3;
+    }
+
+    // ---- Empty State ----
+    &__empty {
+        @include flex-col;
+        align-items: center;
+        justify-content: center;
+        padding: $spacing-16 0;
+        color: $gray-400;
+    }
+
+    &__empty-icon {
+        font-size: 48px;
+        margin-bottom: $spacing-4;
+    }
+
+    &__empty-text {
+        font-size: $text-base;
+        font-weight: $font-medium;
+        color: $gray-500;
+    }
+
+    &__empty-clear-btn {
+        margin-top: $spacing-4;
+        padding: $spacing-2 $spacing-6;
+        background: $orange-50;
+        color: $primary;
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        border-radius: $rounded-full;
+        border: 1px solid $orange-200;
+    }
+}

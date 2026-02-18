@@ -11,7 +11,7 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
     // 创建日期
     date: '2026-2-8',
     // 设计稿尺寸
-    designWidth: 750,
+    designWidth: 375,
     // 设计稿尺寸换算规则
     deviceRatio: {
       640: 2.34 / 2,

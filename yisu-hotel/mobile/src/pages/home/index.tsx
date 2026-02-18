@@ -1,11 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { View, Text, Image, ScrollView, Input, Button } from '@tarojs/components';
-import Taro, { useDidShow } from '@tarojs/taro';
-import HotelCard from '../../components/HotelCard/HotelCard';
+import Taro from '@tarojs/taro';
 import DatePicker from '../../components/DatePicker/DatePicker';
 import FilterModal from '../../components/FilterModal/FilterModal';
 import { useAppContext } from '../../context';
-import { HOTELS } from '../../constants';
 
 import './index.scss';
 
@@ -19,25 +17,43 @@ const Home: React.FC = () => {
   });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('domestic');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const hasFilter = priceRange[0] > 0 || priceRange[1] < 1000 || selectedBrands.length > 0;
 
-  const categories = [
-    { name: 'Hotels', icon: '🏨' },
-    { name: 'Homestays', icon: '🏡' },
-    { name: 'Flight+Hotel', icon: '✈️' },
-    { name: 'Hourly', icon: '⏰' },
-    { name: 'Guide', icon: '🗺️' },
+  const tabs = [
+    { key: 'domestic', label: 'Domestic' },
+    { key: 'international', label: 'International' },
+    { key: 'hourly', label: 'Hourly' },
+    { key: 'homestay', label: 'Homestay' },
   ];
 
-  const recommendedHotels = useMemo(() => {
-    return HOTELS.filter(h => h.score >= 4.8);
-  }, []);
+  const tags = ['Jiefangbei', 'Hongyadong', 'Guanyin Bridge', 'Airport'];
+
+  const categories = [
+    { name: 'Coupons', icon: '🎫', color: 'red' },
+    { name: 'Favorites', icon: '❤️', color: 'orange' },
+    { name: 'History', icon: '🕐', color: 'blue' },
+    { name: 'Flights', icon: '✈️', color: 'green' },
+    { name: 'Trains', icon: '🚄', color: 'purple' },
+  ];
 
   const handleSearch = () => {
-    // Navigate with params
-    // Note: Dates object is complex, better to pass timestamp or store in global/storage
-    // For tutorial simplicity, we pass minimal params
-    Taro.navigateTo({
-      url: `/pages/search/index?keyword=${keyword}&location=${location}`
+    // Store search params for the search page to read
+    const searchParams = {
+      keyword,
+      location,
+      checkIn: dates.start.getTime(),
+      checkOut: dates.end.getTime(),
+      priceMin: priceRange[0],
+      priceMax: priceRange[1],
+      brands: selectedBrands,
+      tab: activeTab,
+    };
+    Taro.setStorageSync('searchParams', JSON.stringify(searchParams));
+    Taro.switchTab({
+      url: '/pages/search/index'
     });
   };
 
@@ -46,8 +62,15 @@ const Home: React.FC = () => {
   };
 
   const handleFilterConfirm = (range: [number, number], brands: string[]) => {
-    // In a real app, you might apply this filter to current view or pass to search
-    console.log('Filter:', range, brands);
+    setPriceRange(range);
+    setSelectedBrands(brands);
+  };
+
+  const handleTagClick = (tag: string) => {
+    setKeyword(prev => {
+      if (prev.includes(tag)) return prev;
+      return prev ? `${prev} ${tag}` : tag;
+    });
   };
 
   const navigateToProfile = () => {
@@ -55,7 +78,8 @@ const Home: React.FC = () => {
   };
 
   const formatDate = (date: Date) => {
-    return `${date.getMonth() + 1}.${date.getDate()}`;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[date.getMonth()]} ${date.getDate()}`;
   };
 
   const getWeekDay = (date: Date) => {
@@ -63,140 +87,141 @@ const Home: React.FC = () => {
     return days[date.getDay()];
   };
 
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+  };
+
   const nightCount = Math.round((dates.end.getTime() - dates.start.getTime()) / (1000 * 60 * 60 * 24));
 
   return (
     <View className="home">
-      {/* Header / Banner */}
+      {/* Header */}
       <View className="home__header">
         <View className="home__header-content">
-          <View className="home__logo">
-            <Text className="home__logo-text">YiSu</Text>
-            <Text className="home__logo-dot">.</Text>
+          <View className="home__logo-section">
+            <View className="home__logo">
+              <Text className="home__logo-letter">Y</Text>
+            </View>
+            <Text className="home__brand-name">YiSu</Text>
           </View>
-          <View className="home__user-actions">
-            <View className="home__action-btn">
-              <Text>❓</Text>
-            </View>
-            <View className="home__avatar-container" onClick={navigateToProfile}>
-              <Image
-                src={user?.avatar || 'https://ui-avatars.com/api/?name=Guest&background=random'}
-                className="home__avatar"
-                mode="aspectFill"
-              />
-              {user && <View className="home__status-dot"></View>}
-            </View>
+          <View className="home__avatar-btn" onClick={navigateToProfile}>
+            <Image
+              src={user?.avatar || 'https://ui-avatars.com/api/?name=GU&background=f0c040&color=fff&size=80'}
+              className="home__avatar-img"
+              mode="aspectFill"
+            />
           </View>
         </View>
       </View>
 
       <ScrollView scrollY className="home__scroll-container">
         <View className="home__content">
-          <Text className="home__hero-title">Find your perfect place to stay</Text>
-
           {/* Search Box */}
           <View className="home__search-box">
             {/* Tabs */}
-            <View className="home__search-tabs">
-              <Text className="home__search-tab home__search-tab--active">Overnight</Text>
-              <Text className="home__search-tab">Hourly</Text>
+            <View className="home__tabs">
+              {tabs.map(tab => (
+                <Text
+                  key={tab.key}
+                  className={`home__tab-btn ${activeTab === tab.key ? 'home__tab-btn--active' : ''}`}
+                  onClick={() => setActiveTab(tab.key)}
+                >
+                  {tab.label}
+                </Text>
+              ))}
             </View>
 
-            {/* Location */}
-            <View className="home__search-row">
-              <View className="home__search-field home__search-field--location">
-                <Text className="home__search-label">Location</Text>
-                <View className="home__input-wrapper">
-                  <Text className="home__field-icon">📍</Text>
-                  <Input
-                    className="home__search-input"
-                    value={location}
-                    onInput={e => setLocation(e.detail.value)}
-                    placeholder="Where to?"
-                  />
-                </View>
-              </View>
+            {/* Location & Search */}
+            <View className="home__location-row">
               <View className="home__location-btn">
-                <Text>📌</Text>
-                <Text className="home__location-text">Current</Text>
+                <Text className="home__location-text">{location}</Text>
+                <Text className="home__location-icon">▼</Text>
               </View>
-            </View>
-
-            {/* Date Picker Trigger */}
-            <View className="home__search-row" onClick={() => setIsDatePickerOpen(true)}>
-              <View className="home__search-field">
-                <Text className="home__search-label">Check-in</Text>
-                <View className="home__date-display">
-                  <Text className="home__date-value">{formatDate(dates.start)}</Text>
-                  <Text className="home__date-weekday">{getWeekDay(dates.start)}</Text>
-                </View>
-              </View>
-              <View className="home__night-count">
-                <Text>{nightCount} night{nightCount > 1 ? 's' : ''}</Text>
-              </View>
-              <View className="home__search-field">
-                <Text className="home__search-label">Check-out</Text>
-                <View className="home__date-display">
-                  <Text className="home__date-value">{formatDate(dates.end)}</Text>
-                  <Text className="home__date-weekday">{getWeekDay(dates.end)}</Text>
-                </View>
-              </View>
-            </View>
-
-            <View className="home__divider"></View>
-
-            {/* Keyword & Filter */}
-            <View className="home__search-row">
-              <View className="home__search-field" style={{ flex: 1 }}>
-                <Text className="home__search-label">Keyword / Hotel / Brand</Text>
+              <View className="home__divider-v"></View>
+              <View className="home__search-input-wrapper">
                 <Input
                   className="home__search-input"
                   value={keyword}
                   onInput={e => setKeyword(e.detail.value)}
-                  placeholder="Prices, business district, brand"
+                  placeholder="Search"
                 />
-              </View>
-              <View className="home__filter-btn" onClick={() => setIsFilterOpen(true)}>
-                <Text>⚙</Text>
+                <View className="home__search-locate-btn">
+                  <Text>◎</Text>
+                </View>
               </View>
             </View>
 
+            {/* Date Selector */}
+            <View className="home__date-selector" onClick={() => setIsDatePickerOpen(true)}>
+              <View className="home__date-col">
+                <Text className="home__date-label">Check-in</Text>
+                <View className="home__date-value-row">
+                  <Text className="home__date-value">{formatDate(dates.start)}</Text>
+                  <Text className="home__date-day">{isToday(dates.start) ? 'Today' : getWeekDay(dates.start)}</Text>
+                </View>
+              </View>
+              <View className="home__nights-badge">
+                <Text>{nightCount} Night{nightCount > 1 ? 's' : ''}</Text>
+              </View>
+              <View className="home__date-col home__date-col--right">
+                <Text className="home__date-label">Check-out</Text>
+                <View className="home__date-value-row home__date-value-row--right">
+                  <Text className="home__date-value">{formatDate(dates.end)}</Text>
+                  <Text className="home__date-day">{getWeekDay(dates.end)}</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Filter Row */}
+            <View className="home__filter-row" onClick={() => setIsFilterOpen(true)}>
+              <View className="home__filter-info">
+                {hasFilter && <View className="home__filter-dot"></View>}
+                <Text className={`home__filter-text ${hasFilter ? 'home__filter-text--active' : ''}`}>
+                  {hasFilter
+                    ? `¥${priceRange[0]}-${priceRange[1]}${selectedBrands.length > 0 ? ` · ${selectedBrands.length} brands` : ''}`
+                    : 'Price & Star Rating'
+                  }
+                </Text>
+              </View>
+              <Text className={`home__filter-arrow ${hasFilter ? 'home__filter-arrow--active' : ''}`}>›</Text>
+            </View>
+
+            {/* Tags */}
+            <View className="home__tags">
+              {tags.map(tag => (
+                <Text
+                  key={tag}
+                  className={`home__tag-btn ${keyword.includes(tag) ? 'home__tag-btn--active' : ''}`}
+                  onClick={() => handleTagClick(tag)}
+                >
+                  {tag}
+                </Text>
+              ))}
+            </View>
+
+            {/* Search Button */}
             <Button className="home__search-btn" onClick={handleSearch}>
               Search Hotels
             </Button>
           </View>
 
           {/* Categories */}
-          <ScrollView scrollX className="home__categories" showScrollbar={false}>
+          <View className="home__categories-grid">
             {categories.map(cat => (
               <View key={cat.name} className="home__category-item">
-                <View className="home__category-icon">
-                  <Text>{cat.icon}</Text>
+                <View className={`home__category-icon-wrapper home__category-icon-wrapper--${cat.color}`}>
+                  <Text className="home__category-emoji">{cat.icon}</Text>
                 </View>
                 <Text className="home__category-name">{cat.name}</Text>
               </View>
             ))}
-          </ScrollView>
-
-          {/* Recommendations */}
-          <View className="home__section">
-            <View className="home__section-header">
-              <Text className="home__section-title">Recommended for you</Text>
-              <Text className="home__section-more">See All</Text>
-            </View>
-            <View className="home__hotel-list">
-              {recommendedHotels.map(hotel => (
-                <HotelCard
-                  key={hotel.hotel_id}
-                  hotel={hotel}
-                  onClick={() => Taro.navigateTo({ url: `/pages/hotel-details/index?id=${hotel.hotel_id}` })}
-                />
-              ))}
-            </View>
           </View>
 
-          {/* Spacer for TabBar */}
-          <View style={{ height: '120px' }}></View>
+          {/* Bottom Spacer for TabBar */}
+          <View style={{ height: '60px' }}></View>
         </View>
       </ScrollView>
 
@@ -212,8 +237,8 @@ const Home: React.FC = () => {
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         onConfirm={handleFilterConfirm}
-        initialRange={[0, 1000]}
-        initialBrands={[]}
+        initialRange={priceRange}
+        initialBrands={selectedBrands}
       />
     </View>
   );

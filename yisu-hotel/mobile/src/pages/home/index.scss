@@ -13,84 +13,65 @@
 
     &__header-content {
         @include flex-between;
-        padding: $spacing-3 $spacing-4;
+        padding: $spacing-4 $spacing-5;
+    }
+
+    &__logo-section {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
     }
 
     &__logo {
-        display: flex;
-        align-items: center;
-        gap: $spacing-1;
-    }
-
-    &__logo-text {
-        font-size: $text-xl;
-        font-weight: $font-bold;
-        color: $primary;
-    }
-
-    &__logo-dot {
-        font-size: $text-xl;
-        font-weight: $font-bold;
-        color: $primary;
-    }
-
-    &__user-actions {
-        display: flex;
-        align-items: center;
-        gap: $spacing-3;
-    }
-
-    &__action-btn {
+        width: $w-9;
+        height: $h-9;
+        border-radius: $rounded-xl;
+        @include gradient-primary-br;
         @include flex-center;
-        @include circle($w-9);
-        background: $gray-100;
-        border-radius: $rounded-full;
-        font-size: $text-lg;
-        color: $gray-600;
+        color: $white;
+        font-weight: $font-bold;
+        font-size: $text-xl;
+        box-shadow: $shadow-md, 0 4px 6px -1px rgba($orange-200, 1);
     }
 
-    &__avatar-container {
+    &__logo-letter {
+        color: $white;
+        font-weight: $font-bold;
+        font-size: $text-lg;
+    }
+
+    &__brand-name {
+        font-size: $text-xl;
+        font-weight: $font-bold;
+        letter-spacing: -0.025em;
+        color: $gray-900;
+    }
+
+    &__avatar-btn {
         position: relative;
         @include circle($w-10);
         border-radius: $rounded-full;
         overflow: hidden;
         border: 2px solid $white;
         box-shadow: $shadow-sm;
+        outline: 1px solid $gray-100;
     }
 
-    &__avatar {
+    &__avatar-img {
         width: 100%;
         height: 100%;
     }
 
-    &__status-dot {
-        position: absolute;
-        bottom: 2px;
-        right: 2px;
-        @include circle(10px);
-        background: $green-500;
-        border: 2px solid $white;
-    }
-
     // ---- Scroll Container ----
     &__scroll-container {
-        height: calc(100vh - 100px);
+        height: calc(100vh - 80px);
     }
 
     // ---- Main Content ----
     &__content {
         padding: 0 $spacing-4;
         @include flex-col;
-        gap: $spacing-5;
-    }
-
-    // ---- Hero Title ----
-    &__hero-title {
-        font-size: $text-2xl;
-        font-weight: $font-bold;
-        color: $gray-900;
-        padding: $spacing-2 0;
-        line-height: $leading-tight;
+        gap: $spacing-6;
     }
 
     // ---- Search Box ----
@@ -103,22 +84,21 @@
         overflow: visible;
     }
 
-    // Search Tabs
-    &__search-tabs {
-        display: flex;
-        gap: $spacing-4;
+    // Tabs
+    &__tabs {
+        @include flex-between;
         padding: 0 $spacing-1;
-        margin-bottom: $spacing-5;
+        margin-bottom: $spacing-6;
         border-bottom: 1px solid $gray-100;
-        padding-bottom: $spacing-3;
+        padding-bottom: $spacing-2;
     }
 
-    &__search-tab {
+    &__tab-btn {
         font-size: $text-sm;
         font-weight: $font-medium;
-        color: $gray-400;
-        padding-bottom: $spacing-2;
+        color: $gray-500;
         position: relative;
+        padding-bottom: $spacing-2;
 
         &--active {
             color: $gray-900;
@@ -127,7 +107,7 @@
             &::after {
                 content: '';
                 position: absolute;
-                bottom: -#{$spacing-3};
+                bottom: -#{$spacing-2};
                 left: 50%;
                 transform: translateX(-50%);
                 width: 24px;
@@ -138,74 +118,94 @@
         }
     }
 
-    // Search Row (reusable)
-    &__search-row {
+    // Location & Search Input
+    &__location-row {
         display: flex;
         align-items: center;
         gap: $spacing-3;
-        margin-bottom: $spacing-4;
-        padding: $spacing-3 0;
-        border-bottom: 1px solid $gray-50;
+        margin-bottom: $spacing-6;
     }
 
-    // Search Field
-    &__search-field {
-        @include flex-col;
-        gap: $spacing-1;
-        flex: 1;
-
-        &--location {
-            flex: 2;
-        }
-    }
-
-    &__search-label {
-        font-size: $text-xs;
-        color: $gray-400;
-        font-weight: $font-medium;
-    }
-
-    &__input-wrapper {
+    &__location-btn {
         display: flex;
         align-items: center;
-        gap: $spacing-2;
-    }
-
-    &__field-icon {
-        font-size: $text-xl;
-        color: $primary;
-    }
-
-    &__search-input {
-        flex: 1;
-        border: none;
-        padding: 0;
-        font-size: $text-base;
-        font-weight: $font-semibold;
-        color: $gray-800;
-        background: transparent;
-    }
-
-    // Location Button
-    &__location-btn {
-        @include flex-col;
-        align-items: center;
-        gap: $spacing-0-5;
+        gap: $spacing-1;
         flex-shrink: 0;
-        color: $primary;
     }
 
     &__location-text {
-        font-size: $text-xs;
-        color: $primary;
-        font-weight: $font-medium;
+        font-size: $text-xl;
+        font-weight: $font-bold;
+        color: $gray-900;
     }
 
-    // Date Display
-    &__date-display {
+    &__location-icon {
+        color: $gray-400;
+        font-size: $text-sm;
+    }
+
+    &__divider-v {
+        height: $h-6;
+        width: 1px;
+        background: $gray-200;
+    }
+
+    &__search-input-wrapper {
+        flex: 1;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    &__search-input {
+        width: 100%;
+        border: none;
+        padding: 0;
+        font-size: $text-base;
+        font-weight: $font-medium;
+        color: $gray-700;
+        background: transparent;
+    }
+
+    &__search-locate-btn {
+        position: absolute;
+        right: 0;
+        color: $gray-400;
+        @include flex-center;
+        font-size: $text-lg;
+    }
+
+    // Date Selector
+    &__date-selector {
+        @include flex-between;
+        margin-bottom: $spacing-6;
+        border-top: 1px solid $gray-50;
+        border-bottom: 1px solid $gray-50;
+        padding: $spacing-4 0;
+    }
+
+    &__date-col {
+        @include flex-col;
+
+        &--right {
+            text-align: right;
+        }
+    }
+
+    &__date-label {
+        font-size: $text-xs;
+        color: $gray-500;
+        margin-bottom: $spacing-1;
+    }
+
+    &__date-value-row {
         display: flex;
         align-items: baseline;
         gap: $spacing-1;
+
+        &--right {
+            justify-content: flex-end;
+        }
     }
 
     &__date-value {
@@ -214,13 +214,13 @@
         color: $gray-900;
     }
 
-    &__date-weekday {
+    &__date-day {
         font-size: $text-xs;
         font-weight: $font-medium;
         color: $gray-400;
     }
 
-    &__night-count {
+    &__nights-badge {
         padding: $spacing-1 $spacing-3;
         background: $gray-50;
         border-radius: $rounded-full;
@@ -228,43 +228,87 @@
         font-weight: $font-medium;
         color: $gray-500;
         border: 1px solid $gray-100;
+    }
+
+    // Filter Row
+    &__filter-row {
+        @include flex-between;
+        margin-bottom: $spacing-4;
+        padding: $spacing-2;
+        border-radius: $rounded-lg;
+    }
+
+    &__filter-info {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+        overflow: hidden;
+        flex: 1;
+    }
+
+    &__filter-text {
+        font-size: $text-base;
+        font-weight: $font-bold;
+        color: $gray-300;
+        @include truncate;
+
+        &--active {
+            color: $primary;
+        }
+    }
+
+    &__filter-dot {
+        @include circle(8px);
+        background: $primary;
         flex-shrink: 0;
-        @include flex-center;
     }
 
-    // Divider
-    &__divider {
-        height: 1px;
-        background: $gray-100;
-        margin: $spacing-1 0;
-    }
-
-    // Filter Button
-    &__filter-btn {
-        @include flex-center;
-        @include circle($w-10);
-        background: $gray-50;
-        border-radius: $rounded-xl;
-        color: $gray-600;
+    &__filter-arrow {
+        color: $gray-300;
         font-size: $text-xl;
-        flex-shrink: 0;
+
+        &--active {
+            color: $primary;
+        }
+    }
+
+    // Tag Buttons
+    &__tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacing-2;
+        margin-bottom: $spacing-6;
+    }
+
+    &__tag-btn {
+        padding: $spacing-1-5 $spacing-3;
+        background: $gray-50;
+        font-size: $text-xs;
+        font-weight: $font-medium;
+        color: $gray-600;
+        border-radius: $rounded-lg;
+
+        &--active {
+            background: $orange-50;
+            color: $primary;
+            border: 1px solid $orange-200;
+        }
     }
 
     // Search Button
     &__search-btn {
         width: 100%;
-        height: $h-12;
+        height: $h-14;
         @include gradient-primary;
         border-radius: $rounded-full;
         @include flex-center;
         gap: $spacing-2;
         color: $white;
         font-weight: $font-bold;
-        font-size: $text-base;
+        font-size: $text-lg;
         box-shadow: $shadow-lg, $shadow-orange-light;
         border: none;
-        margin-top: $spacing-3;
-        line-height: $h-12;
+        line-height: $h-14;
 
         &::after {
             border: none;
@@ -272,70 +316,60 @@
     }
 
     // ---- Categories ----
-    &__categories {
+    &__categories-grid {
         display: flex;
-        gap: $spacing-4;
-        white-space: nowrap;
-        padding: $spacing-2 0;
+        justify-content: space-between;
+        padding: $spacing-2 $spacing-2;
     }
 
     &__category-item {
         @include flex-col;
         align-items: center;
         gap: $spacing-2;
-        min-width: 70px;
-        flex-shrink: 0;
-        display: inline-flex;
     }
 
-    &__category-icon {
-        width: 52px;
-        height: 52px;
+    &__category-icon-wrapper {
+        width: 56px;
+        height: 56px;
         border-radius: $rounded-2xl;
         @include flex-center;
         box-shadow: $shadow-sm;
-        background: $orange-50;
-        border: 1px solid $orange-100;
+        border-width: 1px;
+        border-style: solid;
+
+        &--red {
+            background: $red-50;
+            border-color: $red-100;
+        }
+
+        &--orange {
+            background: $orange-50;
+            border-color: $orange-100;
+        }
+
+        &--blue {
+            background: $blue-50;
+            border-color: $blue-100;
+        }
+
+        &--green {
+            background: $green-50;
+            border-color: $green-100;
+        }
+
+        &--purple {
+            background: $purple-50;
+            border-color: rgba($purple-600, 0.1);
+        }
+    }
+
+    &__category-emoji {
         font-size: 24px;
-        color: $primary;
     }
 
     &__category-name {
         font-size: $text-xs;
         font-weight: $font-bold;
         color: $gray-700;
-    }
-
-    // ---- Section (Recommendations) ----
-    &__section {
-        margin-bottom: $spacing-4;
-    }
-
-    &__section-header {
-        @include flex-between;
-        margin-bottom: $spacing-4;
-        padding: 0 $spacing-1;
-    }
-
-    &__section-title {
-        font-size: $text-lg;
-        font-weight: $font-bold;
-        color: $gray-900;
-    }
-
-    &__section-more {
-        font-size: $text-sm;
-        color: $primary;
-        font-weight: $font-medium;
-    }
-
-    &__hotel-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: $spacing-3;
-
-        >view {
-            width: calc(50% - #{$spacing-2});
-        }
     }
 }
