@@ -8,6 +8,7 @@ import HotelList from './pages/HotelList/HotelList'
 import InventoryContainer from './pages/Inventory/InventoryContainer'
 import OrderList from './pages/OrderList/OrderList'
 import HotelAudit from './pages/HotelAudit/HotelAudit'
+import CouponManager from './pages/CouponManager/CouponManager'
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/audit" replace />} />
           <Route path="audit" element={<HotelAudit />} />
+          <Route path="coupons" element={<CouponManager />} />
         </Route>
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
