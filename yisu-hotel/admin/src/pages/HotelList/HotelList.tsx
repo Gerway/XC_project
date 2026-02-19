@@ -133,6 +133,7 @@ const HotelList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingHotel, setEditingHotel] = useState<IHotel | null>(null) // null = Add mode
   const [confirmLoading, setConfirmLoading] = useState(false)
+  const [editedHotelIds, setEditedHotelIds] = useState<Set<string>>(new Set())
   const [form] = Form.useForm<HotelFormValues>()
 
   const isEditMode = editingHotel !== null
@@ -158,6 +159,18 @@ const HotelList: React.FC = () => {
   }
 
   const handleSubmitReview = (hotel: IHotel) => {
+    // Update status to PENDING and clear rejection reason
+    setHotels((prev) =>
+      prev.map((h) =>
+        h.id === hotel.id ? { ...h, status: HotelStatus.PENDING, rejectionReason: undefined } : h,
+      ),
+    )
+    // Remove from edited set after submitting review
+    setEditedHotelIds((prev) => {
+      const next = new Set(prev)
+      next.delete(hotel.id)
+      return next
+    })
     message.success(`已提交"${hotel.name}"的审核申请`)
     // TODO: Call API to submit review
   }
@@ -209,6 +222,8 @@ const HotelList: React.FC = () => {
               : h,
           ),
         )
+        // Mark hotel as edited so "提交审核" button becomes enabled
+        setEditedHotelIds((prev) => new Set(prev).add(editingHotel.id))
         message.success(`酒店"${values.name}"的信息已更新`)
       } else {
         // --- Add mode ---
@@ -289,7 +304,8 @@ const HotelList: React.FC = () => {
       width: 220,
       render: (_: unknown, record: IHotel) => {
         const isRejected = record.status === HotelStatus.REJECTED
-        const canSubmit = isRejected
+        const isEdited = editedHotelIds.has(record.id)
+        const canSubmit = isRejected || isEdited
 
         return (
           <div className={styles.actions}>
