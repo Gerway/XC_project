@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Table, Tag, Button, Tooltip, Modal, message } from 'antd'
+import { Table, Tag, Button, Tooltip, Modal, message, Form, Input, Select } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import {
   PlusOutlined,
@@ -12,8 +12,8 @@ import {
 import { HotelStatus, type IHotel } from '@yisu/shared'
 import styles from './HotelList.module.scss'
 
-// Mock Data
-const mockHotels: IHotel[] = [
+// Initial Mock Data
+const initialHotels: IHotel[] = [
   {
     id: 'H-2023-001',
     name: '易宿广场大酒店',
@@ -58,6 +58,34 @@ const mockHotels: IHotel[] = [
   },
 ]
 
+// Hotel type options
+const hotelTypeOptions = [
+  { label: '豪华型', value: '豪华型' },
+  { label: '度假型', value: '度假型' },
+  { label: '经济型', value: '经济型' },
+  { label: '商务型', value: '商务型' },
+  { label: '民宿', value: '民宿' },
+]
+
+// Star rating options
+const starRatingOptions = [
+  { label: '5星级', value: '5星级' },
+  { label: '4星级', value: '4星级' },
+  { label: '3星级', value: '3星级' },
+  { label: '2星级', value: '2星级' },
+  { label: '1星级', value: '1星级' },
+  { label: '精选', value: '精选' },
+]
+
+// Form values type
+interface AddHotelFormValues {
+  name: string
+  type: string
+  starRating: string
+  address: string
+  description?: string
+}
+
 // Map hotel ID to icon
 const getHotelIcon = (id: string): React.ReactNode => {
   const iconMap: Record<string, React.ReactNode> = {
@@ -70,7 +98,27 @@ const getHotelIcon = (id: string): React.ReactNode => {
   return iconMap[id] || <BankOutlined style={{ fontSize: 20 }} />
 }
 
+// Generate a unique hotel ID based on current year and sequence
+let hotelIdCounter = 13
+
+const generateHotelId = (): string => {
+  const year = new Date().getFullYear()
+  const seq = String(hotelIdCounter++).padStart(3, '0')
+  return `H-${year}-${seq}`
+}
+
+// Format current date in Chinese
+const formatDateCN = (): string => {
+  const now = new Date()
+  return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`
+}
+
 const HotelList: React.FC = () => {
+  const [hotels, setHotels] = useState<IHotel[]>(initialHotels)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [confirmLoading, setConfirmLoading] = useState(false)
+  const [form] = Form.useForm<AddHotelFormValues>()
+
   const [pagination, setPagination] = useState<TablePaginationConfig>({
     current: 1,
     pageSize: 5,
@@ -94,6 +142,44 @@ const HotelList: React.FC = () => {
   const handleSubmitReview = (hotel: IHotel) => {
     message.success(`已提交"${hotel.name}"的审核申请`)
     // TODO: Call API to submit review
+  }
+
+  // --- Add Hotel Modal handlers ---
+  const handleOpenModal = () => {
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    form.resetFields()
+  }
+
+  const handleAddHotel = async () => {
+    try {
+      const values = await form.validateFields()
+      setConfirmLoading(true)
+
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 600))
+
+      const newHotel: IHotel = {
+        id: generateHotelId(),
+        name: values.name,
+        description: `${values.type} · ${values.starRating}`,
+        address: values.address,
+        submissionDate: formatDateCN(),
+        status: HotelStatus.PENDING,
+      }
+
+      setHotels((prev) => [newHotel, ...prev])
+      setPagination((prev) => ({ ...prev, total: (prev.total || 0) + 1 }))
+      message.success(`酒店"${values.name}"已成功添加，等待审核`)
+      handleCloseModal()
+    } catch {
+      // Form validation failed — do nothing, AntD will show inline errors
+    } finally {
+      setConfirmLoading(false)
+    }
   }
 
   const columns: ColumnsType<IHotel> = [
@@ -201,7 +287,7 @@ const HotelList: React.FC = () => {
       <div className={styles.innerContainer}>
         <div className={styles.pageHeader}>
           <h2>我的酒店</h2>
-          <Button type="primary" icon={<PlusOutlined />} size="large">
+          <Button type="primary" icon={<PlusOutlined />} size="large" onClick={handleOpenModal}>
             添加新酒店
           </Button>
         </div>
@@ -209,7 +295,7 @@ const HotelList: React.FC = () => {
         <div className={styles.tableCard}>
           <Table<IHotel>
             columns={columns}
-            dataSource={mockHotels}
+            dataSource={hotels}
             rowKey="id"
             pagination={pagination}
             onChange={handleTableChange}
@@ -219,6 +305,77 @@ const HotelList: React.FC = () => {
 
         <div className={styles.footer}>© 2026 易宿酒店平台。保留所有权利。</div>
       </div>
+
+      {/* Add Hotel Modal */}
+      <Modal
+        title="添加新酒店"
+        open={isModalOpen}
+        onOk={handleAddHotel}
+        onCancel={handleCloseModal}
+        confirmLoading={confirmLoading}
+        okText="确认添加"
+        cancelText="取消"
+        width={560}
+        destroyOnClose
+        className={styles.addHotelModal}
+      >
+        <Form form={form} layout="vertical" requiredMark="optional" className={styles.addHotelForm}>
+          <Form.Item
+            label="酒店名称"
+            name="name"
+            rules={[
+              { required: true, message: '请输入酒店名称' },
+              { max: 50, message: '酒店名称不能超过50个字符' },
+            ]}
+          >
+            <Input placeholder="请输入酒店名称" maxLength={50} showCount />
+          </Form.Item>
+
+          <div className={styles.formRow}>
+            <Form.Item
+              label="酒店类型"
+              name="type"
+              rules={[{ required: true, message: '请选择酒店类型' }]}
+              className={styles.formRowItem}
+            >
+              <Select placeholder="请选择类型" options={hotelTypeOptions} />
+            </Form.Item>
+
+            <Form.Item
+              label="星级"
+              name="starRating"
+              rules={[{ required: true, message: '请选择星级' }]}
+              className={styles.formRowItem}
+            >
+              <Select placeholder="请选择星级" options={starRatingOptions} />
+            </Form.Item>
+          </div>
+
+          <Form.Item
+            label="酒店地址"
+            name="address"
+            rules={[
+              { required: true, message: '请输入酒店地址' },
+              { max: 100, message: '地址不能超过100个字符' },
+            ]}
+          >
+            <Input placeholder="请输入详细地址，如：北京市朝阳区建国路88号" maxLength={100} />
+          </Form.Item>
+
+          <Form.Item
+            label="详细描述"
+            name="description"
+            rules={[{ max: 200, message: '描述不能超过200个字符' }]}
+          >
+            <Input.TextArea
+              placeholder="请输入酒店描述信息（选填）"
+              rows={3}
+              maxLength={200}
+              showCount
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   )
 }
