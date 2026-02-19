@@ -3,7 +3,7 @@ import Register from './pages/Register/Register'
 import Login from './pages/Login/Login'
 import MainLayout from './layouts/MainLayout'
 import AdminLayout from './layouts/AdminLayout'
-import Dashboard from './pages/Dashboard/Dashboard'
+
 import HotelList from './pages/HotelList/HotelList'
 import InventoryContainer from './pages/Inventory/InventoryContainer'
 import OrderList from './pages/OrderList/OrderList'
@@ -19,7 +19,6 @@ function App() {
         <Route path="/login" element={<Login />} />
         {/* 商户端路由 */}
         <Route element={<MainLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/rooms" element={<HotelList />} />
           <Route path="/inventory" element={<InventoryContainer />} />
           <Route path="/orders" element={<OrderList />} />

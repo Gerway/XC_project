@@ -30,7 +30,7 @@ const Login: React.FC = () => {
       if (role === UserRole.ADMIN) {
         navigate('/admin/audit')
       } else {
-        navigate('/dashboard')
+        navigate('/rooms')
       }
     })
   }

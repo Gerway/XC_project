@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { Layout, Menu, Avatar, Badge, Input, Breadcrumb, Dropdown, theme } from 'antd'
 import type { MenuProps } from 'antd'
 import {
-  DashboardOutlined,
   AppstoreOutlined,
   FileTextOutlined,
   NotificationOutlined,
@@ -76,15 +75,9 @@ const MainLayout: React.FC = () => {
         <Menu
           theme="dark"
           mode="inline"
-          defaultSelectedKeys={['dashboard']}
-          selectedKeys={[location.pathname.replace('/', '') || 'dashboard']}
+          defaultSelectedKeys={['rooms']}
+          selectedKeys={[location.pathname.replace('/', '') || 'rooms']}
           items={[
-            {
-              key: 'dashboard',
-              icon: <DashboardOutlined />,
-              label: '仪表盘',
-              onClick: () => navigate('/dashboard'),
-            },
             {
               key: 'management',
               label: '管理',
@@ -130,9 +123,7 @@ const MainLayout: React.FC = () => {
                         ? '房型与库存管理'
                         : location.pathname === '/orders'
                           ? '订单管理'
-                          : location.pathname === '/dashboard'
-                            ? '仪表盘概览'
-                            : location.pathname.replace('/', '') || '仪表盘概览',
+                          : location.pathname.replace('/', '') || '酒店管理',
                 },
               ]}
             />
