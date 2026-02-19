@@ -1,0 +1,348 @@
+// ===== AuditDrawer Design Tokens =====
+$primary-color: #137fec;
+$primary-light: rgba(19, 127, 236, 0.1);
+$green-color: #16a34a;
+$green-hover: #15803d;
+$green-bg: #f0fdf4;
+$green-border: #bbf7d0;
+$red-color: #dc2626;
+$red-hover: #b91c1c;
+$red-bg: #fef2f2;
+$red-border: #fecaca;
+$background-white: #ffffff;
+$background-section: #f8fafc;
+$text-primary: #1f2937;
+$text-secondary: #6b7280;
+$text-muted: #9ca3af;
+$border-color: #e5e7eb;
+$border-radius: 8px;
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+// ===== Drawer Overrides =====
+.drawer {
+  :global {
+    .ant-drawer-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid $border-color;
+    }
+
+    .ant-drawer-body {
+      padding: 0;
+      background: $background-section;
+    }
+
+    .ant-drawer-footer {
+      padding: 0;
+      border-top: 1px solid $border-color;
+    }
+  }
+}
+
+// ===== Header =====
+.headerTitle {
+  h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: $text-primary;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  p {
+    font-size: 12px;
+    color: $text-secondary;
+    margin: 2px 0 0;
+  }
+}
+
+// ===== Scrollable Body =====
+.drawerBody {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #e2e8f0;
+    border-radius: 3px;
+  }
+}
+
+// ===== Section Card =====
+.sectionCard {
+  background: $background-white;
+  border-radius: $border-radius;
+  border: 1px solid $border-color;
+  box-shadow: $shadow-sm;
+  padding: 20px;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: $text-primary;
+  margin-bottom: 16px;
+}
+
+.titleBar {
+  width: 3px;
+  height: 16px;
+  background: $primary-color;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+// ===== Descriptions Override =====
+.descriptions {
+  :global {
+    .ant-descriptions-item-label {
+      color: $text-secondary !important;
+      font-size: 14px;
+      width: 80px;
+    }
+
+    .ant-descriptions-item-content {
+      color: $text-primary;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .ant-descriptions-row > th,
+    .ant-descriptions-row > td {
+      padding-bottom: 12px;
+    }
+  }
+}
+
+// ===== Credential Images =====
+.credentialGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.credentialItem {
+  .credentialLabel {
+    font-size: 12px;
+    font-weight: 500;
+    color: $text-secondary;
+    margin-bottom: 8px;
+  }
+}
+
+.imageWrapper {
+  position: relative;
+  border-radius: $border-radius;
+  border: 1px solid $border-color;
+  overflow: hidden;
+  background: #f1f5f9;
+  aspect-ratio: 4 / 3;
+  cursor: pointer;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .imageOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    color: white;
+    font-size: 28px;
+  }
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+
+    .imageOverlay {
+      opacity: 1;
+    }
+  }
+}
+
+// ===== Scene Photos =====
+.sceneLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: $text-secondary;
+  margin: 16px 0 8px;
+}
+
+.sceneGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.sceneImageWrapper {
+  border-radius: $border-radius;
+  border: 1px solid $border-color;
+  overflow: hidden;
+  aspect-ratio: 1;
+  cursor: pointer;
+  background: #f1f5f9;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s ease;
+  }
+
+  &:hover img {
+    transform: scale(1.1);
+  }
+}
+
+// ===== Facilities =====
+.facilityDescription {
+  font-size: 14px;
+  line-height: 1.8;
+  color: $text-secondary;
+  margin-bottom: 16px;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  :global {
+    .ant-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      background: #f1f5f9;
+      color: $text-secondary;
+      border: 1px solid $border-color;
+      margin: 0;
+    }
+  }
+}
+
+// ===== Timeline =====
+.timeline {
+  :global {
+    .ant-timeline-item-tail {
+      border-inline-start: 2px solid $border-color;
+    }
+
+    .ant-timeline-item-head {
+      width: 10px;
+      height: 10px;
+    }
+
+    .ant-timeline-item-content {
+      .timelineDate {
+        font-size: 12px;
+        color: $text-secondary;
+      }
+
+      .timelineText {
+        font-size: 14px;
+        color: $text-primary;
+        margin-top: 2px;
+      }
+    }
+  }
+}
+
+// ===== Footer =====
+.footerContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+}
+
+.remarkInput {
+  flex: 1;
+
+  :global {
+    .ant-input {
+      resize: none;
+      border-radius: 6px;
+      font-size: 14px;
+
+      &:focus {
+        border-color: $primary-color;
+        box-shadow: 0 0 0 2px $primary-light;
+      }
+    }
+  }
+}
+
+.footerActions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.rejectBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 24px;
+  height: auto;
+  border-radius: $border-radius;
+  font-size: 14px;
+  font-weight: 500;
+  color: $red-color;
+  background: $red-bg;
+  border: 1px solid $red-border;
+  transition: all 0.2s;
+
+  &:hover {
+    color: $red-hover !important;
+    background: darken($red-bg, 2%) !important;
+    border-color: $red-color !important;
+  }
+}
+
+.approveBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 24px;
+  height: auto;
+  border-radius: $border-radius;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  background: $green-color;
+  border: 1px solid $green-color;
+  box-shadow: $shadow-sm;
+  transition: all 0.2s;
+
+  &:hover {
+    background: $green-hover !important;
+    border-color: $green-hover !important;
+  }
+}
