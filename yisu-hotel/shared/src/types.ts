@@ -29,6 +29,7 @@ export interface IStatCardData {
 
 export interface IRoom {
   id: string
+  hotelId: string
   name: string
   basePrice: number
   isActive: boolean // true=在售, false=下架
