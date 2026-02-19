@@ -8,6 +8,7 @@ import {
   ShopOutlined,
   CoffeeOutlined,
   ApartmentOutlined,
+  EditOutlined,
 } from '@ant-design/icons'
 import { HotelStatus, type IHotel } from '@yisu/shared'
 import styles from './HotelList.module.scss'
@@ -77,13 +78,20 @@ const starRatingOptions = [
   { label: '精选', value: '精选' },
 ]
 
-// Form values type
-interface AddHotelFormValues {
+// Form values type (shared between Add & Edit)
+interface HotelFormValues {
   name: string
   type: string
   starRating: string
   address: string
   description?: string
+}
+
+// Parse "豪华型 · 5星级" back into { type, starRating }
+const parseDescription = (desc?: string): { type?: string; starRating?: string } => {
+  if (!desc) return {}
+  const parts = desc.split('·').map((s) => s.trim())
+  return { type: parts[0] || undefined, starRating: parts[1] || undefined }
 }
 
 // Map hotel ID to icon
@@ -113,11 +121,21 @@ const formatDateCN = (): string => {
   return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`
 }
 
+// Status config (reused in table & edit modal)
+const statusConfig: Record<HotelStatus, { color: string; text: string }> = {
+  [HotelStatus.PUBLISHED]: { color: 'success', text: '已通过' },
+  [HotelStatus.REJECTED]: { color: 'error', text: '已驳回' },
+  [HotelStatus.PENDING]: { color: 'processing', text: '待审核' },
+}
+
 const HotelList: React.FC = () => {
   const [hotels, setHotels] = useState<IHotel[]>(initialHotels)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingHotel, setEditingHotel] = useState<IHotel | null>(null) // null = Add mode
   const [confirmLoading, setConfirmLoading] = useState(false)
-  const [form] = Form.useForm<AddHotelFormValues>()
+  const [form] = Form.useForm<HotelFormValues>()
+
+  const isEditMode = editingHotel !== null
 
   const [pagination, setPagination] = useState<TablePaginationConfig>({
     current: 1,
@@ -144,17 +162,32 @@ const HotelList: React.FC = () => {
     // TODO: Call API to submit review
   }
 
-  // --- Add Hotel Modal handlers ---
-  const handleOpenModal = () => {
+  // --- Modal handlers (Add + Edit) ---
+  const handleOpenAddModal = () => {
+    setEditingHotel(null)
+    setIsModalOpen(true)
+  }
+
+  const handleOpenEditModal = (hotel: IHotel) => {
+    setEditingHotel(hotel)
+    const { type, starRating } = parseDescription(hotel.description)
+    form.setFieldsValue({
+      name: hotel.name,
+      type,
+      starRating,
+      address: hotel.address || '',
+      description: undefined, // description field is for extra notes, not the type·star string
+    })
     setIsModalOpen(true)
   }
 
   const handleCloseModal = () => {
     setIsModalOpen(false)
+    setEditingHotel(null)
     form.resetFields()
   }
 
-  const handleAddHotel = async () => {
+  const handleSubmit = async () => {
     try {
       const values = await form.validateFields()
       setConfirmLoading(true)
@@ -162,18 +195,36 @@ const HotelList: React.FC = () => {
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 600))
 
-      const newHotel: IHotel = {
-        id: generateHotelId(),
-        name: values.name,
-        description: `${values.type} · ${values.starRating}`,
-        address: values.address,
-        submissionDate: formatDateCN(),
-        status: HotelStatus.PENDING,
+      if (isEditMode) {
+        // --- Edit mode ---
+        setHotels((prev) =>
+          prev.map((h) =>
+            h.id === editingHotel.id
+              ? {
+                  ...h,
+                  name: values.name,
+                  description: `${values.type} · ${values.starRating}`,
+                  address: values.address,
+                }
+              : h,
+          ),
+        )
+        message.success(`酒店"${values.name}"的信息已更新`)
+      } else {
+        // --- Add mode ---
+        const newHotel: IHotel = {
+          id: generateHotelId(),
+          name: values.name,
+          description: `${values.type} · ${values.starRating}`,
+          address: values.address,
+          submissionDate: formatDateCN(),
+          status: HotelStatus.PENDING,
+        }
+        setHotels((prev) => [newHotel, ...prev])
+        setPagination((prev) => ({ ...prev, total: (prev.total || 0) + 1 }))
+        message.success(`酒店"${values.name}"已成功添加，等待审核`)
       }
 
-      setHotels((prev) => [newHotel, ...prev])
-      setPagination((prev) => ({ ...prev, total: (prev.total || 0) + 1 }))
-      message.success(`酒店"${values.name}"已成功添加，等待审核`)
       handleCloseModal()
     } catch {
       // Form validation failed — do nothing, AntD will show inline errors
@@ -222,11 +273,6 @@ const HotelList: React.FC = () => {
       key: 'status',
       width: 120,
       render: (status: HotelStatus) => {
-        const statusConfig: Record<HotelStatus, { color: string; text: string }> = {
-          [HotelStatus.PUBLISHED]: { color: 'success', text: '已通过' },
-          [HotelStatus.REJECTED]: { color: 'error', text: '已驳回' },
-          [HotelStatus.PENDING]: { color: 'processing', text: '待审核' },
-        }
         const config = statusConfig[status]
         return (
           <Tag color={config.color} style={{ borderRadius: 12, padding: '0 10px' }}>
@@ -250,7 +296,7 @@ const HotelList: React.FC = () => {
             <button
               type="button"
               className={styles.actionBtn}
-              onClick={() => message.info('编辑详情')}
+              onClick={() => handleOpenEditModal(record)}
             >
               编辑详情
             </button>
@@ -282,12 +328,29 @@ const HotelList: React.FC = () => {
     },
   ]
 
+  // --- Modal title with status badge for Edit mode ---
+  const modalTitle = isEditMode ? (
+    <div className={styles.editModalTitle}>
+      <EditOutlined className={styles.editTitleIcon} />
+      <span>编辑酒店详情</span>
+      <Tag
+        color={statusConfig[editingHotel.status].color}
+        style={{ borderRadius: 12, padding: '0 10px', marginLeft: 12 }}
+      >
+        <span style={{ marginRight: 4 }}>•</span>
+        {statusConfig[editingHotel.status].text}
+      </Tag>
+    </div>
+  ) : (
+    '添加新酒店'
+  )
+
   return (
     <div className={styles.container}>
       <div className={styles.innerContainer}>
         <div className={styles.pageHeader}>
           <h2>我的酒店</h2>
-          <Button type="primary" icon={<PlusOutlined />} size="large" onClick={handleOpenModal}>
+          <Button type="primary" icon={<PlusOutlined />} size="large" onClick={handleOpenAddModal}>
             添加新酒店
           </Button>
         </div>
@@ -306,19 +369,34 @@ const HotelList: React.FC = () => {
         <div className={styles.footer}>© 2026 易宿酒店平台。保留所有权利。</div>
       </div>
 
-      {/* Add Hotel Modal */}
+      {/* Add / Edit Hotel Modal */}
       <Modal
-        title="添加新酒店"
+        title={modalTitle}
         open={isModalOpen}
-        onOk={handleAddHotel}
+        onOk={handleSubmit}
         onCancel={handleCloseModal}
         confirmLoading={confirmLoading}
-        okText="确认添加"
+        okText={isEditMode ? '保存修改' : '确认添加'}
         cancelText="取消"
         width={560}
         destroyOnClose
         className={styles.addHotelModal}
       >
+        {/* Edit mode: show hotel ID and submission date */}
+        {isEditMode && (
+          <div className={styles.editInfoBar}>
+            <span className={styles.editInfoItem}>
+              <span className={styles.editInfoLabel}>酒店ID</span>
+              <span className={styles.editInfoValue}>{editingHotel.id}</span>
+            </span>
+            <span className={styles.editInfoDivider} />
+            <span className={styles.editInfoItem}>
+              <span className={styles.editInfoLabel}>提交日期</span>
+              <span className={styles.editInfoValue}>{editingHotel.submissionDate}</span>
+            </span>
+          </div>
+        )}
+
         <Form form={form} layout="vertical" requiredMark="optional" className={styles.addHotelForm}>
           <Form.Item
             label="酒店名称"
@@ -375,6 +453,16 @@ const HotelList: React.FC = () => {
             />
           </Form.Item>
         </Form>
+
+        {/* Edit mode: show rejection reason if exists */}
+        {isEditMode &&
+          editingHotel.status === HotelStatus.REJECTED &&
+          editingHotel.rejectionReason && (
+            <div className={styles.rejectionNotice}>
+              <div className={styles.rejectionTitle}>驳回原因</div>
+              <div className={styles.rejectionContent}>{editingHotel.rejectionReason}</div>
+            </div>
+          )}
       </Modal>
     </div>
   )
