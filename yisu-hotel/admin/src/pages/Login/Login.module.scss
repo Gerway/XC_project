@@ -1,0 +1,317 @@
+@use "sass:color";
+
+$primary-color: #135bec;
+$primary-hover: #0f4bc2;
+$text-color: #333;
+$secondary-text: #666;
+$border-radius: 8px;
+
+.container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+}
+
+.leftPanel {
+  flex: 1;
+  background-color: #1a1a1a;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url("https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80");
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px;
+  color: white;
+  position: relative;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.7) 100%
+    );
+  }
+
+  .brand {
+    position: absolute;
+    top: 40px;
+    left: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 10;
+    font-size: 20px;
+    font-weight: 500;
+
+    .logo {
+      background: white;
+      color: #000;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+  }
+
+  .content {
+    z-index: 10;
+    max-width: 480px;
+
+    h1 {
+      font-size: 64px;
+      line-height: 1.1;
+      font-weight: 600;
+      margin-bottom: 24px;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      font-size: 18px;
+      line-height: 1.6;
+      opacity: 0.9;
+      margin-bottom: 40px;
+    }
+
+    .testimonial {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      .avatars {
+        display: flex;
+
+        img {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          border: 2px solid rgba(255, 255, 255, 0.8);
+          margin-right: -10px;
+        }
+      }
+
+      span {
+        font-weight: 500;
+        font-size: 14px;
+      }
+    }
+  }
+
+  .copyright {
+    position: absolute;
+    bottom: 40px;
+    left: 40px;
+    opacity: 0.6;
+    font-size: 12px;
+  }
+}
+
+.rightPanel {
+  flex: 1;
+  min-width: 400px;
+  max-width: 600px;
+  background-color: #f8f9fa; // Match Register
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 30px; // Match Register (was 32px/64px in Login)
+  overflow-y: auto;
+  transition: all 0.3s ease;
+
+  @media (max-width: 992px) {
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+.formWrapper {
+  // Match Register class name
+  width: 100%;
+  max-width: 400px;
+
+  :global(.ant-form-item) {
+    margin-bottom: 16px;
+  }
+}
+
+.title {
+  // Match Register class name
+  font-size: 28px;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  // Match Register class name
+  font-size: 14px;
+  color: $secondary-text;
+  margin-bottom: 24px;
+}
+
+.roleSwitcher {
+  // Match Register style exactly
+  margin-bottom: 24px;
+  background: rgba(0, 0, 0, 0.03);
+  padding: 4px;
+  border-radius: $border-radius;
+  display: block;
+
+  :global(.ant-radio-group) {
+    display: flex;
+    width: 100%;
+  }
+
+  :global(.ant-radio-button-wrapper) {
+    flex: 1;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+// Password group styles from Register (if needed, Login might not use them but good to have)
+.passwordGroup {
+  display: flex;
+  gap: 12px;
+
+  .passwordField {
+    flex: 1;
+    margin-bottom: 0;
+  }
+}
+
+.optionsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  :global(.ant-checkbox-wrapper) {
+    font-size: 14px;
+    color: #475569;
+  }
+
+  a {
+    font-size: 14px;
+    font-weight: 500;
+    color: $primary-color;
+
+    &:hover {
+      color: $primary-hover;
+    }
+  }
+}
+
+.submitButton {
+  height: 48px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  background-color: $primary-color;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  margin-top: 8px;
+
+  &:hover {
+    background-color: $primary-hover !important;
+  }
+}
+
+.divider {
+  // Login specific, keep style but check if it fits match?
+  position: relative;
+  margin: 32px 0;
+  text-align: center;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #e2e8f0;
+  }
+
+  span {
+    position: relative;
+    background-color: #f8f9fa; // Update to match new bg color
+    padding: 0 12px;
+    color: #64748b;
+    font-size: 14px;
+  }
+}
+
+.signupLink {
+  // Matches Register's footer roughly but Login has "Signup Link" vs "Footer"
+  text-align: center;
+  margin-top: 24px;
+  font-size: 14px;
+  color: #475569;
+
+  a {
+    color: $primary-color;
+    font-weight: 600;
+    margin-left: 4px;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// Login specific mobile header (keep it?)
+.mobileHeader {
+  position: absolute;
+  top: 32px;
+  left: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+
+  .logo {
+    background-color: $primary-color;
+    color: white;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 18px;
+  }
+
+  span {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+  }
+}

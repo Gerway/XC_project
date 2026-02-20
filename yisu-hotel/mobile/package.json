@@ -29,7 +29,8 @@
     "dev:rn": "npm run build:rn -- --watch",
     "dev:qq": "npm run build:qq -- --watch",
     "dev:jd": "npm run build:jd -- --watch",
-    "dev:harmony-hybrid": "npm run build:harmony-hybrid -- --watch"
+    "dev:harmony-hybrid": "npm run build:harmony-hybrid -- --watch",
+    "lint": "eslint ."
   },
   "browserslist": [
     "defaults and fully supports es6-module",
@@ -71,6 +72,7 @@
     "@vitejs/plugin-react": "^4.3.0",
     "babel-preset-taro": "4.1.11",
     "eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-config-taro": "4.1.11",
     "eslint-plugin-react": "^7.34.1",
     "eslint-plugin-react-hooks": "^4.4.0",
