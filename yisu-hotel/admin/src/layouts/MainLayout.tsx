@@ -23,6 +23,16 @@ const MainLayout: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
 
+  React.useEffect(() => {
+    const titleMap: Record<string, string> = {
+      '/rooms': '酒店管理',
+      '/inventory': '房型与库存管理',
+      '/orders': '订单管理',
+    }
+    const pageTitle = titleMap[location.pathname] || '易宿酒店'
+    document.title = `${pageTitle} - 商家端`
+  }, [location.pathname])
+
   // Mock User
   const user = {
     name: '张莎拉',

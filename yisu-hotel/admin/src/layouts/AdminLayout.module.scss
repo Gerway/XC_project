@@ -1,6 +1,5 @@
 // ===== Admin Layout Design Tokens =====
-$admin-sidebar-bg: #001529;
-$admin-sidebar-header: #002140;
+$admin-sidebar-bg: #101922; // Match Merchant
 $admin-primary: #137fec;
 $admin-primary-hover: #1890ff;
 $background-light: #f6f7f8;
@@ -20,40 +19,13 @@ $border-color: #e5e7eb;
 // ===== Sidebar =====
 .sider {
   background: $admin-sidebar-bg !important;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   z-index: 20;
 
   :global(.ant-menu) {
     background: $admin-sidebar-bg;
     border-inline-end: none !important;
   }
-
-  :global(.ant-menu-item) {
-    margin: 4px 0;
-    padding-left: 24px !important;
-    height: 48px;
-    line-height: 48px;
-    border-radius: 0;
-    color: rgba(255, 255, 255, 0.65);
-    font-size: 14px;
-    font-weight: 500;
-
-    &:hover {
-      color: #ffffff;
-      background: rgba(255, 255, 255, 0.08) !important;
-    }
-  }
-
-  :global(.ant-menu-item-selected) {
-    background: $admin-primary-hover !important;
-    color: #ffffff !important;
-    border-radius: 0;
-  }
-
-  :global(.ant-layout-sider-children) {
-    display: flex;
-    flex-direction: column;
-  }
+  // Removed custom menu item overrides to match Merchant style (default AntD dark)
 }
 
 .logo {
@@ -62,14 +34,16 @@ $border-color: #e5e7eb;
   display: flex;
   align-items: center;
   gap: 12px;
-  background: $admin-sidebar-header;
+  // Match Merchant logo style
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 16px;
   flex-shrink: 0;
 
   .logoIcon {
     width: 32px;
     height: 32px;
     background: $admin-primary;
-    border-radius: 8px;
+    border-radius: 4px; // Match Merchant radius
     display: flex;
     align-items: center;
     justify-content: center;
@@ -84,7 +58,7 @@ $border-color: #e5e7eb;
 
     h1 {
       color: white;
-      font-size: 16px;
+      font-size: 18px; // Match Merchant font size
       font-weight: 700;
       margin: 0;
       line-height: 1.3;

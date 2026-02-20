@@ -25,6 +25,7 @@ import {
   DownloadOutlined,
 } from '@ant-design/icons'
 import styles from './CouponManager.module.scss'
+import CreateCouponModal from './CreateCouponModal'
 
 // ===== 类型定义 =====
 
@@ -137,6 +138,7 @@ const CouponManager: React.FC = () => {
   const [data, setData] = useState<ICoupon[]>([])
   const [searchText, setSearchText] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [createModalOpen, setCreateModalOpen] = useState(false)
   const [pagination, setPagination] = useState<TablePaginationConfig>({
     current: 1,
     pageSize: 5,
@@ -189,13 +191,16 @@ const CouponManager: React.FC = () => {
     message.success(checked ? `「${record.name}」已上线` : `「${record.name}」已下线`)
   }
 
-  // 创建新优惠券 (预留)
+  // 创建新优惠券
   const handleCreate = () => {
-    Modal.info({
-      title: '创建新优惠券',
-      content: '创建优惠券功能（待实现）',
-      okText: '确定',
-    })
+    setCreateModalOpen(true)
+  }
+
+  // 创建提交
+  const handleCreateSubmit = (coupon: ICoupon) => {
+    setData((prev) => [coupon, ...prev])
+    setCreateModalOpen(false)
+    message.success(`优惠券「${coupon.name}」创建成功`)
   }
 
   // 编辑 (预留)
@@ -439,6 +444,13 @@ const CouponManager: React.FC = () => {
             scroll={{ x: 800 }}
           />
         </div>
+
+        {/* ===== 创建优惠券弹窗 ===== */}
+        <CreateCouponModal
+          open={createModalOpen}
+          onCancel={() => setCreateModalOpen(false)}
+          onSubmit={handleCreateSubmit}
+        />
       </div>
     </div>
   )

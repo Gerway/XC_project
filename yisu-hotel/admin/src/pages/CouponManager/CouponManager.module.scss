@@ -462,3 +462,109 @@ $trend-green-bg: #f0fdf4;
     text-decoration: underline;
   }
 }
+
+// ===== 创建优惠券弹窗 =====
+.createModal {
+  :global(.ant-modal-header) {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid $border-color;
+  }
+
+  :global(.ant-modal-title) {
+    font-size: 18px;
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  :global(.ant-modal-body) {
+    padding: 24px;
+  }
+
+  :global(.ant-modal-footer) {
+    padding: 12px 24px 20px;
+    border-top: 1px solid $border-color;
+  }
+}
+
+.createForm {
+  :global(.ant-form-item-label > label) {
+    font-weight: 500;
+    color: $text-primary;
+    font-size: 14px;
+  }
+}
+
+.discountTypeRadio {
+  :global(.ant-radio-button-wrapper) {
+    min-width: 80px;
+    text-align: center;
+    border-radius: $border-radius !important;
+    font-weight: 500;
+
+    &:first-child {
+      border-radius: $border-radius 0 0 $border-radius !important;
+    }
+
+    &:last-child {
+      border-radius: 0 $border-radius $border-radius 0 !important;
+    }
+  }
+}
+
+.discountRuleRow {
+  display: flex;
+  gap: 16px;
+}
+
+.ruleField {
+  flex: 1;
+  min-width: 0;
+}
+
+.quantityRow {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.quantityField {
+  flex: 1;
+  min-width: 0;
+}
+
+.unlimitedSwitch {
+  flex-shrink: 0;
+  padding-bottom: 4px;
+}
+
+.colorRadioGroup {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  :global(.ant-radio-wrapper) {
+    margin-right: 0;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid $border-color;
+    transition: all 0.2s;
+
+    &:hover {
+      border-color: $primary-color;
+    }
+  }
+
+  :global(.ant-radio-wrapper-checked) {
+    border-color: $primary-color;
+    background: $primary-light;
+  }
+}
+
+.colorDot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  vertical-align: middle;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
+}

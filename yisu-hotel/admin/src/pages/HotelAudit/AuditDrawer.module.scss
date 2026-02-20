@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 // ===== AuditDrawer Design Tokens =====
 $primary-color: #137fec;
 $primary-light: rgba(19, 127, 236, 0.1);
@@ -321,7 +323,9 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
   &:hover {
     color: $red-hover !important;
-    background: darken($red-bg, 2%) !important;
+    color: $red-hover !important;
+    background: color.adjust($red-bg, $lightness: -2%) !important;
+    border-color: $red-color !important;
     border-color: $red-color !important;
   }
 }
