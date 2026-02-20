@@ -1,8 +1,10 @@
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
+import path from 'path';
 
 // 加载 .env 环境变量
-dotenv.config();
+// 1. 执行配置并获取结果
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // 创建数据库连接池
 const pool = mysql.createPool({
