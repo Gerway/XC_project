@@ -15,6 +15,7 @@ const { RangePicker } = DatePicker
 interface InventoryCalendarProps {
   room: IRoom | null
   inventoryData: IDayInventory[]
+  onUpdateDay?: (date: string, price: number, stock: number) => void
 }
 
 interface CalendarCell {
@@ -36,11 +37,20 @@ const WEEKDAY_OPTIONS = [
   { label: '周日', value: 0 },
 ]
 
-const InventoryCalendar: React.FC<InventoryCalendarProps> = ({ room, inventoryData }) => {
+const InventoryCalendar: React.FC<InventoryCalendarProps> = ({
+  room,
+  inventoryData,
+  onUpdateDay,
+}) => {
   const [currentYear, setCurrentYear] = useState(2023)
   const [currentMonth, setCurrentMonth] = useState(10) // 1-indexed
   const [batchModalOpen, setBatchModalOpen] = useState(false)
   const [form] = Form.useForm()
+
+  // Day edit modal state
+  const [dayEditOpen, setDayEditOpen] = useState(false)
+  const [editingDate, setEditingDate] = useState<string | null>(null)
+  const [dayForm] = Form.useForm()
 
   // Build calendar grid
   const calendarCells = useMemo<CalendarCell[]>(() => {
@@ -118,6 +128,32 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({ room, inventoryDa
 
   const isLowStock = (stock: number): boolean => stock <= 1
 
+  // Day edit handlers
+  const handleDayEdit = (cell: CalendarCell) => {
+    if (!cell.isCurrentMonth) return
+    setEditingDate(cell.date)
+    dayForm.setFieldsValue({
+      price: cell.inventory?.price ?? room?.basePrice ?? 0,
+      stock: cell.inventory?.stock ?? 0,
+    })
+    setDayEditOpen(true)
+  }
+
+  const handleDayEditSubmit = () => {
+    dayForm
+      .validateFields()
+      .then((values) => {
+        if (editingDate && onUpdateDay) {
+          onUpdateDay(editingDate, values.price, values.stock)
+        }
+        message.success(`${editingDate} 库存已更新`)
+        setDayEditOpen(false)
+        setEditingDate(null)
+        dayForm.resetFields()
+      })
+      .catch(() => {})
+  }
+
   return (
     <div className={styles.calendarPanel}>
       <div className={styles.calendarHeader}>
@@ -169,7 +205,15 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({ room, inventoryDa
               >
                 <div className={styles.dayCellTop}>
                   <span className={styles.dayNumber}>{cell.day}</span>
-                  {cell.isCurrentMonth && <EditOutlined className={styles.editIcon} />}
+                  {cell.isCurrentMonth && (
+                    <EditOutlined
+                      className={styles.editIcon}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDayEdit(cell)
+                      }}
+                    />
+                  )}
                 </div>
                 {cell.isCurrentMonth && inv && (
                   <div className={styles.dayCellBottom}>
@@ -215,6 +259,48 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({ room, inventoryDa
           </Form.Item>
           <Form.Item label="设置库存" name="stock">
             <InputNumber min={0} style={{ width: '100%' }} placeholder="留空则不修改" />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Single Day Edit Modal */}
+      <Modal
+        title={
+          editingDate ? (
+            <span>
+              编辑库存{' '}
+              <span style={{ color: '#9ca3af', fontSize: 13, fontWeight: 400 }}>{editingDate}</span>
+            </span>
+          ) : (
+            '编辑库存'
+          )
+        }
+        open={dayEditOpen}
+        onOk={handleDayEditSubmit}
+        onCancel={() => {
+          setDayEditOpen(false)
+          setEditingDate(null)
+          dayForm.resetFields()
+        }}
+        okText="保存"
+        cancelText="取消"
+        width={400}
+        destroyOnClose
+      >
+        <Form form={dayForm} layout="vertical" style={{ marginTop: 16 }}>
+          <Form.Item
+            label="价格 (¥)"
+            name="price"
+            rules={[{ required: true, message: '请输入价格' }]}
+          >
+            <InputNumber min={0} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item
+            label="库存数量"
+            name="stock"
+            rules={[{ required: true, message: '请输入库存' }]}
+          >
+            <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
         </Form>
       </Modal>

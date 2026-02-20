@@ -1,6 +1,6 @@
 import React from 'react'
-import { Input, Button } from 'antd'
-import { SearchOutlined, PlusOutlined, EditOutlined } from '@ant-design/icons'
+import { Input } from 'antd'
+import { SearchOutlined, EditOutlined } from '@ant-design/icons'
 import type { IRoom } from '@yisu/shared'
 import styles from './Inventory.module.scss'
 
@@ -8,9 +8,10 @@ interface RoomListProps {
   rooms: IRoom[]
   selectedRoomId: string | null
   onSelectRoom: (roomId: string) => void
+  onEditRoom: (room: IRoom) => void
 }
 
-const RoomList: React.FC<RoomListProps> = ({ rooms, selectedRoomId, onSelectRoom }) => {
+const RoomList: React.FC<RoomListProps> = ({ rooms, selectedRoomId, onSelectRoom, onEditRoom }) => {
   return (
     <div className={styles.roomListPanel}>
       <div className={styles.roomListHeader}>
@@ -20,11 +21,6 @@ const RoomList: React.FC<RoomListProps> = ({ rooms, selectedRoomId, onSelectRoom
             prefix={<SearchOutlined style={{ color: '#9ca3af' }} />}
             placeholder="搜索房型..."
             className={styles.roomSearchInput}
-          />
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            style={{ borderRadius: 8, height: 36, width: 36, padding: 0 }}
           />
         </div>
       </div>
@@ -46,7 +42,14 @@ const RoomList: React.FC<RoomListProps> = ({ rooms, selectedRoomId, onSelectRoom
                   <p className={styles.roomPrice}>基础价: ¥{room.basePrice}</p>
                   <p className={styles.roomId}>ID: {room.id}</p>
                 </div>
-                <button type="button" className={styles.editBtn}>
+                <button
+                  type="button"
+                  className={styles.editBtn}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEditRoom(room)
+                  }}
+                >
                   <EditOutlined style={{ fontSize: 14 }} />
                 </button>
               </div>
@@ -57,10 +60,6 @@ const RoomList: React.FC<RoomListProps> = ({ rooms, selectedRoomId, onSelectRoom
             </div>
           )
         })}
-      </div>
-
-      <div className={styles.roomListFooter}>
-        <button type="button">加载更多...</button>
       </div>
     </div>
   )
