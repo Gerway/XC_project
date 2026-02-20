@@ -22,6 +22,10 @@ const Login: React.FC = () => {
     message.info(`已切换至 ${e.target.value === UserRole.MERCHANT ? '商家' : '管理员'} 登录`)
   }
 
+  React.useEffect(() => {
+    document.title = '易宿酒店管理 - 登录'
+  }, [])
+
   const handleLogin = async (values: LoginFormValues) => {
     console.log('Login attempt:', { role, ...values })
     message.loading('登录中...', 1.5).then(() => {

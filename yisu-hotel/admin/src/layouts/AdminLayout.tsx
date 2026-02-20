@@ -27,6 +27,11 @@ const AdminLayout: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
 
+  React.useEffect(() => {
+    const pageTitle = breadcrumbMap[location.pathname] || '酒店审核'
+    document.title = `${pageTitle} - 管理员端`
+  }, [location.pathname])
+
   // 当前选中菜单 key
   const selectedKey = location.pathname.replace('/admin/', '') || 'audit'
 
