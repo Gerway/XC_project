@@ -1,0 +1,627 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+// Local variable definitions for small sizes not in global variables
+$text-8px: 8px;
+$text-9px: 9px;
+$text-10px: 10px;
+$text-11px: 11px;
+$spacing-3-5: 14px;
+
+.search-page {
+    @include flex-col;
+    min-height: 100vh;
+    background: $background;
+    position: relative;
+
+    // ---- Header ----
+    &__header {
+        position: sticky;
+        top: 0;
+        z-index: $z-50;
+        background: $white;
+        box-shadow: $shadow-sm;
+        padding-bottom: $spacing-1;
+        padding-top: env(safe-area-inset-top, 0);
+    }
+
+    &__top-bar {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+        padding: $spacing-3;
+        background: $white;
+        position: relative;
+        z-index: $z-20;
+    }
+
+    &__back-btn {
+        @include flex-center;
+        width: 36px;
+        height: 36px;
+        border-radius: $rounded-full;
+        background: $gray-50;
+        flex-shrink: 0;
+    }
+
+    &__back-icon {
+        color: $gray-700;
+        font-size: 24px;
+        font-weight: $font-bold;
+        line-height: 1;
+    }
+
+    // ---- Search Pill ----
+    &__search-pill {
+        flex: 1;
+        height: $h-11;
+        background: $white;
+        border: 1px solid $orange-200;
+        border-radius: $rounded-full;
+        display: flex;
+        align-items: center;
+        padding: 0 $spacing-4;
+        gap: $spacing-3;
+        box-shadow: $shadow-sm;
+        position: relative;
+        z-index: $z-20;
+    }
+
+    &__search-info {
+        @include flex-col;
+        align-items: flex-start;
+        justify-content: center;
+        line-height: 1;
+        padding-right: $spacing-3;
+        border-right: 1px solid $gray-200;
+        flex-shrink: 0;
+    }
+
+    &__search-location {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $primary;
+    }
+
+    &__search-dates {
+        font-size: $text-10px;
+        color: $gray-500;
+        font-weight: $font-medium;
+        margin-top: 2px;
+    }
+
+    &__search-input {
+        width: 100%;
+        background: transparent;
+        border: none;
+        padding: 0;
+        font-size: $text-sm;
+        color: $gray-700;
+    }
+
+    &__search-clear-btn {
+        color: $gray-400;
+        padding: 0;
+        @include flex-center;
+    }
+
+    &__search-clear-icon {
+        font-size: 16px;
+    }
+
+    // ---- Map Button ----
+    &__map-btn {
+        @include flex-col;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        min-width: 32px;
+        margin-left: $spacing-1;
+    }
+
+    &__map-icon-wrapper {
+        @include circle($w-8);
+        background: $orange-50;
+        @include flex-center;
+        color: $primary;
+    }
+
+    &__map-icon {
+        font-size: 20px;
+    }
+
+    &__map-label {
+        font-size: $text-10px;
+        font-weight: $font-bold;
+        color: $gray-600;
+    }
+
+    // ---- Filter Bar ----
+    &__filter-bar {
+        position: relative;
+        z-index: $z-20;
+        background: $white;
+    }
+
+    &__filter-bar-inner {
+        @include flex-between;
+        padding: $spacing-2 $spacing-4;
+        border-bottom: 1px solid $gray-100;
+    }
+
+    &__sort-btn {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $primary;
+    }
+
+    &__sort-arrow {
+        font-size: $text-xs;
+        transition: transform 0.2s;
+
+        &--open {
+            transform: rotate(180deg);
+        }
+    }
+
+    &__filter-btn {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        font-size: $text-sm;
+        font-weight: $font-medium;
+        color: $gray-600;
+
+        &--active {
+            color: $gray-900;
+        }
+    }
+
+    &__filter-arrow {
+        font-size: $text-xs;
+        transition: transform 0.2s;
+
+        &--open {
+            transform: rotate(180deg);
+        }
+    }
+
+    // ---- Dropdown ----
+    &__dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: $white;
+        box-shadow: $shadow-xl;
+        border-radius: 0 0 $rounded-2xl $rounded-2xl;
+        overflow: hidden;
+        z-index: $z-50;
+        border-top: 1px solid $gray-100;
+    }
+
+    &__dropdown-list {
+        @include flex-col;
+        padding: $spacing-1 0;
+    }
+
+    &__dropdown-option {
+        @include flex-between;
+        padding: $spacing-3-5 $spacing-6;
+        font-size: $text-sm;
+        text-align: left;
+        color: $gray-700;
+        font-weight: $font-medium;
+
+        &--active {
+            color: $primary;
+            font-weight: $font-bold;
+            background: rgba($orange-50, 0.5);
+        }
+    }
+
+    &__dropdown-check-icon {
+        font-size: $text-lg;
+        color: $primary;
+    }
+
+    &__dropdown-placeholder {
+        padding: $spacing-6;
+        text-align: center;
+    }
+
+    &__dropdown-placeholder-text {
+        color: $gray-500;
+        font-size: $text-sm;
+        font-weight: $font-medium;
+    }
+
+    // ---- Quick Filter Chips ----
+    &__chips-scroll {
+        background: $white;
+        position: relative;
+        z-index: $z-10;
+    }
+
+    &__chips {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+        padding: $spacing-2 $spacing-4;
+        white-space: nowrap;
+    }
+
+    &__chip {
+        padding: $spacing-1-5 $spacing-3;
+        font-size: $text-xs;
+        font-weight: $font-medium;
+        border-radius: $rounded-md;
+        border: 1px solid $gray-100;
+        background: $gray-50;
+        color: $gray-600;
+        flex-shrink: 0;
+
+        &--special {
+            background: $red-50;
+            color: $red-500;
+            font-weight: $font-bold;
+            border-color: $red-100;
+        }
+    }
+
+    // ---- Backdrop ----
+    &__backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba($black, 0.4);
+        z-index: $z-40;
+    }
+
+    // ---- Main Content ----
+    &__main {
+        flex: 1;
+        height: 0;
+    }
+
+    &__main-inner {
+        padding: $spacing-3;
+        gap: $spacing-3;
+        @include flex-col;
+    }
+
+    // ---- Empty State ----
+    &__empty {
+        @include flex-col;
+        align-items: center;
+        justify-content: center;
+        padding: $spacing-16 0;
+        color: $gray-400;
+    }
+
+    &__empty-icon {
+        font-size: 48px;
+        margin-bottom: $spacing-4;
+        color: $gray-200;
+    }
+
+    &__empty-title {
+        font-weight: $font-bold;
+        color: $gray-500;
+    }
+
+    &__empty-text {
+        font-size: $text-xs;
+        margin-top: $spacing-1;
+    }
+
+    &__empty-clear-btn {
+        margin-top: $spacing-4;
+        padding: $spacing-2 $spacing-4;
+        background: rgba($primary, 0.1);
+        color: $primary;
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        border-radius: $rounded-full;
+    }
+
+    // ---- Hotel List Card ----
+    &__hotel-card {
+        background: $white;
+        border-radius: $rounded-lg;
+        overflow: hidden;
+        box-shadow: $shadow-sm;
+        border: 1px solid $gray-100;
+        display: flex;
+        padding: $spacing-2;
+        gap: $spacing-2;
+        margin-bottom: $spacing-3;
+    }
+
+    &__hotel-image-col {
+        width: 110px;
+        height: 150px;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    &__hotel-image-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: $rounded;
+        overflow: hidden;
+        background: $gray-100;
+    }
+
+    &__hotel-image {
+        width: 100%;
+        height: 100%;
+    }
+
+    &__hotel-brand-tag {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: rgba($black, 0.5);
+        color: $white;
+        font-size: $text-8px;
+        padding: 2px $spacing-1-5;
+        border-radius: 0 0 $rounded 0;
+    }
+
+    &__hotel-play-btn {
+        position: absolute;
+        bottom: $spacing-1;
+        right: $spacing-1;
+        @include circle(16px);
+        background: rgba($black, 0.4);
+        @include flex-center;
+    }
+
+    &__hotel-play-icon {
+        color: $white;
+        font-size: 10px;
+    }
+
+    // ---- Hotel Content ----
+    &__hotel-content {
+        flex: 1;
+        @include flex-col;
+        justify-content: space-between;
+        min-width: 0;
+        gap: 2px;
+    }
+
+    &__hotel-content-top {
+        @include flex-col;
+        gap: 2px;
+    }
+
+    &__hotel-name-row {
+        display: flex;
+        align-items: flex-start;
+        gap: $spacing-1;
+    }
+
+    &__hotel-name {
+        font-weight: $font-bold;
+        font-size: $text-sm;
+        line-height: $leading-tight;
+        color: $gray-900;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+    }
+
+    &__hotel-badges {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+        flex-wrap: wrap;
+    }
+
+    &__hotel-badge {
+        font-size: $text-9px;
+        padding: 1px $spacing-1;
+        border-radius: 2px;
+
+        &--purple {
+            background: $purple-50;
+            color: $purple-600;
+        }
+
+        &--orange {
+            background: $orange-50;
+            color: $orange-600;
+        }
+
+        &--blue {
+            background: $blue-50;
+            color: $blue-600;
+        }
+    }
+
+    &__hotel-preferred-badge {
+        font-size: $text-9px;
+        padding: 1px $spacing-1;
+        border-radius: 2px;
+        background: $orange-50;
+        color: $orange-600;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        border: 1px solid $orange-100;
+    }
+
+    &__hotel-preferred-icon {
+        font-size: 9px;
+    }
+
+    // ---- Rating Row ----
+    &__hotel-rating-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1-5;
+        margin-top: 2px;
+    }
+
+    &__hotel-score-badge {
+        @include flex-center;
+        background: $blue-500;
+        color: $white;
+        font-size: $text-10px;
+        font-weight: $font-bold;
+        padding: 1px $spacing-1;
+        border-radius: 2px;
+        min-width: 24px;
+    }
+
+    &__hotel-score-label {
+        font-size: $text-10px;
+        font-weight: $font-bold;
+        color: $blue-500;
+    }
+
+    &__hotel-divider-v {
+        width: 1px;
+        height: 8px;
+        background: $gray-300;
+    }
+
+    &__hotel-reviews {
+        font-size: $text-10px;
+        color: $gray-500;
+    }
+
+    &__hotel-favs {
+        font-size: $text-10px;
+        color: $gray-500;
+    }
+
+    // ---- Quote ----
+    &__hotel-quote {
+        font-size: $text-11px;
+        font-weight: $font-bold;
+        color: $gray-700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-style: italic;
+        line-height: $leading-tight;
+    }
+
+    // ---- Distance ----
+    &__hotel-distance {
+        font-size: $text-10px;
+        color: $gray-500;
+        @include truncate;
+        line-height: $leading-tight;
+    }
+
+    // ---- Feature Tags ----
+    &__hotel-features {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+        overflow: hidden;
+    }
+
+    &__hotel-feature-tag {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        font-size: $text-9px;
+        padding: 1px $spacing-1;
+        border-radius: 2px;
+
+        &--blue {
+            color: $blue-500;
+            background: $blue-50;
+        }
+
+        &--gray {
+            color: $gray-500;
+            background: $gray-100;
+        }
+    }
+
+    &__hotel-feature-icon {
+        font-size: 9px;
+    }
+
+    // ---- Price Row ----
+    &__hotel-price-row {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        margin-top: 2px;
+        padding-top: 2px;
+    }
+
+    &__hotel-stock {
+        font-size: $text-9px;
+        color: $orange-600;
+        font-weight: $font-medium;
+    }
+
+    &__hotel-price-col {
+        @include flex-col;
+        align-items: flex-end;
+        line-height: 1;
+    }
+
+    &__hotel-original-price-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+        margin-bottom: 1px;
+    }
+
+    &__hotel-original-price {
+        font-size: $text-9px;
+        color: $gray-400;
+        text-decoration: line-through;
+    }
+
+    &__hotel-save-badge {
+        font-size: $text-8px;
+        background: $orange-50;
+        color: $orange-600;
+        padding: 0 $spacing-1;
+        border-radius: 2px;
+        border: 1px solid $orange-100;
+    }
+
+    &__hotel-current-price {
+        display: flex;
+        align-items: baseline;
+        gap: 1px;
+        color: $primary;
+    }
+
+    &__hotel-currency {
+        font-size: $text-10px;
+        font-weight: $font-bold;
+    }
+
+    &__hotel-price-value {
+        font-size: 17px;
+        font-weight: $font-bold;
+    }
+
+    &__hotel-price-suffix {
+        font-size: $text-9px;
+        color: $gray-500;
+        font-weight: $font-normal;
+        margin-left: 2px;
+    }
+}

@@ -1,0 +1,260 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.date-picker {
+    @include fixed-fill;
+    z-index: $z-60;
+    background: $white;
+    @include flex-col;
+    animation: fadeIn 0.2s ease-out;
+
+    // ---- Header ----
+    &__header {
+        @include flex-between;
+        padding: $spacing-4;
+        background: $white;
+        position: sticky;
+        top: 0;
+        z-index: $z-20;
+        box-shadow: $shadow-sm;
+    }
+
+    &__close-btn {
+        padding: $spacing-1;
+        border-radius: $rounded-full;
+        border: none;
+        background: none;
+        cursor: pointer;
+        transition: background-color $transition-normal;
+        @include flex-center;
+
+        &:hover {
+            background: $gray-100;
+        }
+    }
+
+    &__close-icon {
+        color: $gray-800;
+    }
+
+    &__title {
+        font-size: $text-lg;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__clear-btn {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $primary;
+        background: none;
+        border: none;
+        cursor: pointer;
+
+        &:hover {
+            color: $primary-dark;
+        }
+    }
+
+    // ---- Week Header ----
+    &__week-header {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        padding: $spacing-2 $spacing-4;
+        background: $white;
+        border-bottom: 1px solid $gray-50;
+    }
+
+    &__week-day {
+        text-align: center;
+        font-size: $text-xs;
+        font-weight: $font-medium;
+        color: $gray-400;
+    }
+
+    // ---- Calendar Body ----
+    &__body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0 $spacing-4 $spacing-32;
+        @include hide-scrollbar;
+    }
+
+    &__month {
+        margin-bottom: $spacing-8;
+    }
+
+    &__month-title {
+        font-size: $text-lg;
+        font-weight: $font-bold;
+        color: $gray-900;
+        margin: $spacing-6 0;
+        text-align: left;
+        position: sticky;
+        top: 0;
+        background: rgba($white, 0.95);
+        @include backdrop-blur-sm;
+        padding: $spacing-2 0;
+        z-index: $z-10;
+    }
+
+    &__days-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        row-gap: $spacing-6;
+    }
+
+    // ---- Day Cell ----
+    &__day {
+        position: relative;
+        height: $h-14;
+        @include flex-center;
+        cursor: pointer;
+        user-select: none;
+
+        &--past {
+            pointer-events: none;
+            opacity: 0.3;
+        }
+    }
+
+    &__day-connectors {
+        @include absolute-fill;
+        top: $spacing-2;
+        bottom: $spacing-2;
+        display: flex;
+        opacity: 0.8;
+    }
+
+    &__day-connector-half {
+        flex: 1;
+        transition: background-color $transition-normal;
+        background: transparent;
+
+        &--active {
+            background: $orange-50;
+        }
+    }
+
+    &__day-content {
+        width: 100%;
+        height: 100%;
+        @include flex-col;
+        align-items: center;
+        justify-content: center;
+        border-radius: $rounded-xl;
+        position: relative;
+        z-index: $z-10;
+        transition: all $transition-normal;
+
+        &--start {
+            background: linear-gradient(to bottom right, $primary, $primary-dark);
+            color: $white;
+            box-shadow: $shadow-lg, 0 10px 15px -3px rgba(249, 115, 22, 0.3);
+            transform: scale(1.05);
+        }
+
+        &--end {
+            background: $orange-100;
+            color: $primary;
+            transform: scale(1.05);
+        }
+
+        &--hoverable:not(.date-picker__day-content--start):not(.date-picker__day-content--end) {
+            &:hover {
+                background: $gray-50;
+            }
+        }
+    }
+
+    &__day-holiday {
+        position: absolute;
+        top: -12px;
+        font-size: $text-9px;
+        font-weight: $font-bold;
+        white-space: nowrap;
+        color: $primary;
+    }
+
+    &__day-number {
+        font-size: $text-base;
+        font-weight: $font-medium;
+        line-height: $leading-none;
+        color: $gray-700;
+
+        &--start {
+            color: $white;
+        }
+
+        &--end {
+            color: $gray-900;
+        }
+    }
+
+    &__day-label {
+        font-size: $text-10px;
+        font-weight: $font-bold;
+        margin-top: $spacing-0-5;
+        line-height: $leading-none;
+
+        &--start {
+            color: rgba($white, 0.9);
+        }
+
+        &--end {
+            color: $primary;
+        }
+    }
+
+    // ---- Footer ----
+    &__footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: $white;
+        padding: $spacing-6;
+        padding-bottom: $spacing-8;
+        border-top: 1px solid $gray-100;
+        z-index: $z-30;
+        box-shadow: $shadow-top;
+    }
+
+    &__footer-info {
+        @include flex-between;
+        margin-bottom: $spacing-4;
+    }
+
+    &__nights-text {
+        font-size: $text-sm;
+        font-weight: $font-medium;
+        color: $gray-500;
+    }
+
+    &__price-badge {
+        background: $orange-50;
+        color: $primary;
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        padding: $spacing-1 $spacing-2;
+        border-radius: $rounded;
+    }
+
+    &__done-btn {
+        width: 100%;
+        height: $h-12;
+        border-radius: $rounded-full;
+        @include gradient-primary-reverse;
+        color: $white;
+        font-weight: $font-bold;
+        font-size: $text-lg;
+        box-shadow: $shadow-lg, $shadow-orange-light;
+        border: none;
+        cursor: pointer;
+        transition: transform $transition-normal;
+
+        &:active {
+            transform: scale(0.95);
+        }
+    }
+}

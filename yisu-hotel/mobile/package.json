@@ -50,6 +50,7 @@
     "@tarojs/plugin-platform-swan": "4.1.11",
     "@tarojs/plugin-platform-tt": "4.1.11",
     "@tarojs/plugin-platform-weapp": "4.1.11",
+    "@tarojs/plugin-sass": "^2.2.10",
     "@tarojs/react": "4.1.11",
     "@tarojs/runtime": "4.1.11",
     "@tarojs/shared": "4.1.11",

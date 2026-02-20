@@ -1,0 +1,28 @@
+/* Reset & Global */
+page {
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica,
+        Segoe UI, Arial, Roboto, 'PingFang SC', 'miui', 'Hiragino Sans GB', 'Microsoft Yahei',
+        sans-serif;
+    background-color: #f5f6f8;
+    box-sizing: border-box;
+}
+
+view,
+text,
+image,
+button,
+input {
+    box-sizing: border-box;
+}
+
+/* Material Icons Fallback or Font Face Setup Here */
+.material-symbols-outlined {
+    font-family: 'Material Icons';
+    /* You need to load this font via wx.loadFontFace or CSS */
+    font-weight: normal;
+    font-style: normal;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+}

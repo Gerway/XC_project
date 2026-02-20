@@ -1,0 +1,853 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+// Local variable definitions
+$text-9px: 9px;
+$text-10px: 10px;
+
+.booking-page {
+    background: $gray-100;
+    min-height: 100vh;
+    @include flex-col;
+    position: relative;
+
+    // ---- Header ----
+    &__header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: $z-20;
+        background: $white;
+        border-bottom: 1px solid $gray-100;
+        box-shadow: $shadow-sm;
+        padding-top: 44px; // status bar safe area
+    }
+
+    &__header-inner {
+        display: flex;
+        align-items: center;
+        gap: $spacing-3;
+        padding: $spacing-3 $spacing-4;
+    }
+
+    &__back-btn {
+        @include flex-center;
+        width: $w-8;
+        height: $h-8;
+        margin-left: -$spacing-1;
+    }
+
+    &__back-icon {
+        font-size: 28px;
+        font-weight: $font-bold;
+        color: $gray-700;
+    }
+
+    &__title {
+        font-size: $text-lg;
+        font-weight: $font-bold;
+        color: $gray-900;
+        @include truncate;
+        flex: 1;
+    }
+
+    &__header-actions {
+        display: flex;
+        gap: $spacing-4;
+        padding-right: $spacing-1;
+    }
+
+    &__more-icon {
+        color: $gray-600;
+        font-size: $text-xl;
+    }
+
+    // ---- Main ----
+    &__main {
+        flex: 1;
+        margin-top: 92px; // header height (44 status + 48 header)
+    }
+
+    // ---- Section (white card) ----
+    &__section {
+        background: $white;
+        margin-bottom: $spacing-2;
+
+        &--padded {
+            padding: $spacing-4;
+            padding-bottom: $spacing-5;
+        }
+    }
+
+    // ---- Room Info ----
+    &__date-row {
+        display: flex;
+        align-items: center;
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+        margin-bottom: $spacing-2;
+    }
+
+    &__date-main {
+        margin-right: $spacing-2;
+        font-size: $text-lg;
+    }
+
+    &__date-label {
+        font-size: $text-xs;
+        font-weight: $font-normal;
+        color: $gray-500;
+        margin-right: $spacing-2;
+    }
+
+    &__nights-tag {
+        background: $gray-100;
+        padding: 2px $spacing-1-5;
+        border-radius: $rounded;
+        font-size: $text-10px;
+        font-weight: $font-normal;
+        color: $gray-600;
+        margin-right: $spacing-2;
+    }
+
+    &__room-name {
+        font-size: $text-lg;
+        font-weight: $font-bold;
+        color: $gray-900;
+        margin-bottom: $spacing-2;
+    }
+
+    &__policy {
+        display: flex;
+        align-items: flex-start;
+        gap: $spacing-1-5;
+        font-size: $text-xs;
+        color: $gray-500;
+        margin-top: $spacing-2;
+    }
+
+    &__policy-icon {
+        font-size: 14px;
+        margin-top: 2px;
+    }
+
+    &__policy-content {
+        flex: 1;
+    }
+
+    &__policy-title {
+        font-weight: $font-bold;
+        color: $gray-700;
+        margin-bottom: 2px;
+    }
+
+    // ---- Confirmation Banner ----
+    &__confirm-banner {
+        background: $teal-50;
+        padding: $spacing-3 $spacing-4;
+        @include flex-between;
+        margin-bottom: $spacing-2;
+    }
+
+    &__confirm-info {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+    }
+
+    &__confirm-icon {
+        font-size: $text-sm;
+    }
+
+    &__confirm-text {
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        color: $teal-700;
+    }
+
+    &__confirm-arrow {
+        color: $gray-300;
+        font-size: $text-xl;
+        font-weight: $font-bold;
+    }
+
+    // ---- Form Row ----
+    &__form-row {
+        @include flex-between;
+        padding: $spacing-4;
+        border-bottom: 1px solid $gray-50;
+
+        &--no-border {
+            border-bottom: none;
+        }
+    }
+
+    &__form-label {
+        font-size: $text-sm;
+        color: $gray-500;
+    }
+
+    &__form-label-with-help {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+    }
+
+    &__form-label-help {
+        color: $gray-300;
+        font-size: 14px;
+    }
+
+    &__form-value {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+    }
+
+    &__form-value-text {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__form-value-plain {
+        font-size: $text-sm;
+        color: $gray-900;
+    }
+
+    &__form-arrow {
+        color: $gray-300;
+        font-size: $text-xl;
+        font-weight: $font-bold;
+    }
+
+    &__form-input {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+        text-align: right;
+        width: 100%;
+        background: transparent;
+    }
+
+    &__form-input-right {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+        flex: 1;
+        justify-content: flex-end;
+    }
+
+    &__phone-prefix {
+        font-size: $text-sm;
+        color: $gray-900;
+    }
+
+    &__phone-expand {
+        color: $gray-300;
+        font-size: $text-xs;
+    }
+
+    &__phone-input {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+        text-align: right;
+        width: 128px;
+        background: transparent;
+    }
+
+    &__notes-input {
+        font-size: $text-sm;
+        color: $gray-900;
+        text-align: right;
+        flex: 1;
+        margin-left: $spacing-4;
+        background: transparent;
+    }
+
+    // ---- Membership Banner ----
+    &__membership {
+        background: $white;
+        padding: $spacing-3 $spacing-4;
+        margin-bottom: $spacing-2;
+        @include flex-between;
+    }
+
+    &__membership-info {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+    }
+
+    &__membership-icon {
+        font-size: $text-sm;
+    }
+
+    &__membership-text {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__membership-arrow {
+        color: $gray-300;
+        font-size: $text-xl;
+        font-weight: $font-bold;
+    }
+
+    // ---- Add-ons & Points ----
+    &__addons {
+        background: $white;
+        margin-bottom: $spacing-2;
+        overflow: hidden;
+    }
+
+    &__expand-icon {
+        color: $gray-300;
+        font-size: $text-sm;
+
+        &--open {
+            // rotate handled by text direction
+        }
+    }
+
+    // ---- Breakfast Accordion ----
+    &__breakfast-content {
+        background: rgba($gray-50, 0.5);
+        border-bottom: 1px solid $gray-50;
+    }
+
+    &__breakfast-inner {
+        padding: $spacing-4;
+        @include flex-col;
+        gap: $spacing-4;
+    }
+
+    &__breakfast-header {
+        @include flex-between;
+        margin-bottom: $spacing-2;
+    }
+
+    &__breakfast-title-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+    }
+
+    &__breakfast-title-icon {
+        font-size: $text-lg;
+    }
+
+    &__breakfast-title-text {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-800;
+    }
+
+    &__breakfast-note {
+        font-size: $text-xs;
+        color: $gray-500;
+    }
+
+    &__breakfast-row {
+        @include flex-between;
+    }
+
+    &__breakfast-date {
+        font-size: $text-sm;
+        color: $gray-600;
+        font-weight: $font-medium;
+    }
+
+    &__breakfast-controls {
+        display: flex;
+        align-items: center;
+        gap: $spacing-3;
+    }
+
+    &__breakfast-price {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $primary;
+    }
+
+    &__breakfast-price-unit {
+        font-size: $text-xs;
+        font-weight: $font-normal;
+    }
+
+    &__breakfast-counter {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+    }
+
+    &__breakfast-btn {
+        width: 24px;
+        height: 24px;
+        border-radius: $rounded-full;
+        border: 1px solid $gray-400;
+        @include flex-center;
+        background: $white;
+
+        &--minus {
+            border-color: $gray-400;
+            color: $gray-600;
+        }
+
+        &--plus {
+            border-color: $blue-600;
+            color: $blue-600;
+        }
+
+        &--disabled {
+            border-color: $gray-200;
+            color: $gray-200;
+        }
+    }
+
+    &__breakfast-btn-icon {
+        font-size: 16px;
+        font-weight: $font-bold;
+    }
+
+    &__breakfast-count {
+        font-size: $text-sm;
+        font-weight: $font-medium;
+        width: 16px;
+        text-align: center;
+    }
+
+    // ---- Points highlight ----
+    &__points-highlight {
+        color: $orange-500;
+    }
+
+    // ---- Coupons ----
+    &__coupons-trigger {
+        background: $white;
+        padding: $spacing-4;
+        margin-bottom: $spacing-4;
+        @include flex-between;
+    }
+
+    &__coupon-discount {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $red-500;
+    }
+
+    // ---- Disclaimer ----
+    &__disclaimer {
+        padding: 0 $spacing-4;
+        font-size: $text-10px;
+        color: $gray-400;
+        line-height: $leading-relaxed;
+        margin-bottom: $spacing-6;
+    }
+
+    // ---- Bottom Bar ----
+    &__bottom-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: $white;
+        border-top: 1px solid $gray-100;
+        padding: $spacing-3;
+        padding-bottom: calc(#{$spacing-3} + env(safe-area-inset-bottom));
+        z-index: $z-60;
+        box-shadow: 0 -4px 20px -5px rgba($black, 0.05);
+    }
+
+    &__bottom-inner {
+        @include flex-between;
+    }
+
+    &__total-section {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+    }
+
+    &__total-label {
+        font-size: $text-sm;
+        color: $gray-900;
+        font-weight: $font-bold;
+    }
+
+    &__total-amount {
+        font-size: $text-xl;
+        font-weight: $font-bold;
+        color: $red-600;
+    }
+
+    &__detail-toggle {
+        display: flex;
+        align-items: center;
+        font-size: $text-xs;
+        color: $gray-500;
+        margin-left: $spacing-1;
+    }
+
+    &__detail-icon {
+        font-size: $text-xs;
+    }
+
+    &__pay-btn {
+        @include gradient-primary;
+        height: $h-11;
+        padding: 0 $spacing-8;
+        border-radius: $rounded-full;
+        @include flex-center;
+        box-shadow: $shadow-md, $shadow-orange-light;
+
+        &--disabled {
+            opacity: 0.7;
+        }
+    }
+
+    &__pay-btn-text {
+        color: $white;
+        font-weight: $font-bold;
+        font-size: $text-base;
+    }
+
+    // ---- Modals (Bottom Sheets) ----
+    &__modal {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: $z-50;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    &__modal-backdrop {
+        @include absolute-fill;
+        background: rgba($black, 0.5);
+    }
+
+    &__modal-content {
+        position: relative;
+        width: 100%;
+        background: $white;
+        border-radius: $rounded-2xl $rounded-2xl 0 0;
+        padding: $spacing-4;
+        padding-bottom: $spacing-24;
+
+        &--tall {
+            max-height: 70vh;
+            @include flex-col;
+        }
+    }
+
+    &__modal-header {
+        @include flex-between;
+        margin-bottom: $spacing-4;
+        flex-shrink: 0;
+    }
+
+    &__modal-title {
+        font-size: $text-lg;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__modal-close {
+        padding: $spacing-1;
+        border-radius: $rounded-full;
+        background: $gray-100;
+        @include flex-center;
+        width: 32px;
+        height: 32px;
+    }
+
+    &__modal-close-icon {
+        color: $gray-600;
+        font-size: $text-lg;
+    }
+
+    &__modal-list {
+        @include flex-col;
+        gap: $spacing-1;
+    }
+
+    &__modal-option {
+        width: 100%;
+        padding: $spacing-3 0;
+        text-align: center;
+        font-weight: $font-medium;
+        border-radius: $rounded-lg;
+        color: $gray-700;
+
+        &--active {
+            background: $orange-50;
+            color: $primary;
+            font-weight: $font-bold;
+        }
+    }
+
+    &__modal-scrollable {
+        max-height: 50vh;
+    }
+
+    &__modal-scroll-content {
+        flex: 1;
+        padding-bottom: $spacing-24;
+    }
+
+    &__modal-empty {
+        text-align: center;
+        padding: $spacing-8 0;
+        color: $gray-400;
+        font-size: $text-sm;
+    }
+
+    // ---- Coupon Card ----
+    &__coupon-card {
+        position: relative;
+        border: 1px solid $gray-100;
+        border-radius: $rounded-xl;
+        padding: $spacing-3;
+        display: flex;
+        align-items: center;
+        gap: $spacing-3;
+        margin-bottom: $spacing-3;
+
+        &--selected {
+            background: $orange-50;
+            border-color: $primary;
+        }
+    }
+
+    &__coupon-value {
+        width: 80px;
+        background: $orange-100;
+        border-radius: $rounded-lg;
+        padding: $spacing-2 0;
+        @include flex-col;
+        align-items: center;
+        justify-content: center;
+        color: $primary;
+        flex-shrink: 0;
+    }
+
+    &__coupon-amount {
+        font-size: $text-xl;
+        font-weight: $font-bold;
+    }
+
+    &__coupon-label-text {
+        font-size: $text-10px;
+    }
+
+    &__coupon-info {
+        flex: 1;
+    }
+
+    &__coupon-title {
+        font-weight: $font-bold;
+        color: $gray-900;
+        font-size: $text-sm;
+    }
+
+    &__coupon-min-spend {
+        font-size: $text-xs;
+        color: $gray-500;
+        margin-top: 2px;
+    }
+
+    &__coupon-expiry {
+        font-size: $text-10px;
+        color: $gray-400;
+        margin-top: $spacing-1;
+    }
+
+    &__coupon-check {
+        width: 20px;
+        height: 20px;
+        border-radius: $rounded-full;
+        border: 1px solid $gray-300;
+        @include flex-center;
+
+        &--selected {
+            background: $primary;
+            border-color: $primary;
+        }
+    }
+
+    &__coupon-check-icon {
+        color: $white;
+        font-size: 14px;
+    }
+
+    // ---- Price Detail Modal ----
+    &__price-detail-header {
+        position: relative;
+        padding: $spacing-4;
+        text-align: center;
+    }
+
+    &__price-detail-title {
+        font-size: $text-lg;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__price-detail-subtitle {
+        font-size: $text-xs;
+        color: $gray-500;
+        margin-top: $spacing-1;
+    }
+
+    &__price-detail-close {
+        position: absolute;
+        right: $spacing-4;
+        top: $spacing-4;
+        padding: $spacing-1;
+    }
+
+    &__price-detail-close-icon {
+        color: $gray-900;
+        font-size: $text-2xl;
+    }
+
+    &__price-detail-body {
+        flex: 1;
+        padding: 0 $spacing-4 $spacing-4;
+    }
+
+    &__price-total-row {
+        @include flex-between;
+        padding: $spacing-4 0;
+        border-bottom: 1px solid $gray-50;
+    }
+
+    &__price-total-label {
+        font-size: $text-base;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__price-total-value {
+        font-size: $text-xl;
+        font-weight: $font-bold;
+        color: $red-600;
+    }
+
+    &__price-section {
+        margin-top: $spacing-4;
+    }
+
+    &__price-section-header {
+        @include flex-between;
+        align-items: baseline;
+        margin-bottom: $spacing-2;
+    }
+
+    &__price-section-title {
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__price-section-avg {
+        text-align: right;
+        font-size: $text-xs;
+    }
+
+    &__price-avg-label {
+        color: $gray-500;
+        margin-right: $spacing-1;
+    }
+
+    &__price-avg-value {
+        color: $red-600;
+        font-weight: $font-bold;
+    }
+
+    &__price-avg-unit {
+        color: $gray-500;
+    }
+
+    &__price-subtotal {
+        text-align: right;
+        margin-bottom: $spacing-2;
+        font-size: $text-xs;
+        color: $gray-400;
+    }
+
+    &__price-breakdown {
+        background: rgba($orange-50, 0.3);
+        border-radius: $rounded-lg;
+        padding: $spacing-3;
+        @include flex-col;
+        gap: $spacing-2;
+
+        &--gray {
+            background: $gray-50;
+        }
+    }
+
+    &__price-breakdown-row {
+        @include flex-between;
+        font-size: $text-xs;
+        color: $gray-600;
+    }
+
+    &__price-section-border {
+        margin-top: $spacing-4;
+        padding-top: $spacing-4;
+        border-top: 1px solid $gray-50;
+    }
+
+    &__price-coupon-value {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $red-600;
+    }
+
+    // ---- Points Section ----
+    &__points-section {
+        margin-top: $spacing-6;
+        padding-top: $spacing-4;
+        border-top: 1px dashed $gray-200;
+    }
+
+    &__points-row {
+        @include flex-between;
+    }
+
+    &__points-label {
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__points-detail {
+        font-size: $text-xs;
+        color: $gray-500;
+        margin-top: 2px;
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+    }
+
+    &__points-speed-badge {
+        background: #FFF1E0;
+        color: #B98959;
+        padding: 0 $spacing-1;
+        border-radius: 2px;
+        font-size: $text-10px;
+    }
+
+    &__points-value {
+        font-size: $text-sm;
+        color: $gray-500;
+    }
+}

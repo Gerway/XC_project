@@ -1,0 +1,439 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.reviews-page {
+    background: $white;
+    min-height: 100vh;
+    @include flex-col;
+
+    // ---- Header ----
+    &__header {
+        background: $white;
+        position: sticky;
+        top: 0;
+        z-index: $z-50;
+        border-bottom: 1px solid $gray-50;
+    }
+
+    &__header-inner {
+        @include flex-between;
+        padding: 0 $spacing-4;
+        height: 44px;
+        align-items: center;
+    }
+
+    &__back-btn {
+        width: 32px;
+        height: 32px;
+        @include flex-center;
+        margin-left: -$spacing-2;
+    }
+
+    &__back-icon {
+        color: $gray-900;
+        font-size: 24px;
+        font-weight: bold;
+        line-height: 1;
+        margin-top: -3px;
+    }
+
+    &__title {
+        font-size: 17px;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__spacer {
+        width: 32px;
+    }
+
+    &__content {
+        flex: 1;
+        height: 100%; // Important for ScrollView
+    }
+
+    // ---- Summary Section ----
+    &__summary {
+        padding: $spacing-4;
+    }
+
+    &__summary-inner {
+        @include flex-between;
+        align-items: flex-start;
+    }
+
+    &__summary-left {
+        display: flex;
+        align-items: flex-start;
+        gap: $spacing-3;
+    }
+
+    &__summary-score {
+        font-size: 32px;
+        font-weight: $font-bold;
+        color: $primary;
+        line-height: 1;
+    }
+
+    &__summary-meta {
+        @include flex-col;
+        gap: 2px;
+    }
+
+    &__summary-label-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+    }
+
+    &__summary-label {
+        font-size: 16px;
+        font-weight: $font-bold;
+        color: $primary;
+    }
+
+    &__summary-stars {
+        display: flex;
+        gap: 2px;
+        margin-left: $spacing-1;
+    }
+
+    &__summary-star {
+        width: 12px;
+        height: 12px;
+        background: $primary;
+        border-radius: 1px;
+        @include flex-center;
+    }
+
+    &__summary-star-icon {
+        color: $white;
+        font-size: 8px;
+        line-height: 1;
+    }
+
+    &__summary-count {
+        font-size: $text-xs;
+        color: $gray-400;
+    }
+
+    &__summary-rules {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+        font-size: $text-xs;
+        color: $gray-400;
+        margin-top: $spacing-1;
+    }
+
+    &__summary-rules-icon {
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    // ---- Sticky Tabs ----
+    &__sticky-tabs {
+        position: sticky;
+        top: 0; // In ScrollView context, this might need adjust or use sticky-header in Page
+        z-index: $z-30;
+        background: $white;
+        padding: 0 $spacing-4 $spacing-2;
+        border-bottom: 1px solid $gray-50;
+    }
+
+    &__tabs-inner {
+        @include flex-between;
+    }
+
+    &__tabs-list {
+        white-space: nowrap; // For horizontal scrolling
+        width: calc(100% - 60px); // Space for filter btn
+    }
+
+    &__tab {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        padding: $spacing-2 0;
+        position: relative;
+        margin-right: $spacing-6;
+        vertical-align: top;
+
+        &--active {
+            // styles handled in children
+        }
+    }
+
+    &__tab-label-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    &__tab-label {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-500;
+
+        .reviews-page__tab--active & {
+            color: $gray-900;
+        }
+    }
+
+    &__tab-count {
+        font-size: $text-xs;
+        font-weight: $font-normal;
+        color: $gray-500;
+
+        .reviews-page__tab--active & {
+            color: $gray-900;
+        }
+    }
+
+    &__tab-indicator {
+        position: absolute;
+        bottom: 0;
+        width: 24px;
+        height: 3px;
+        background: $primary;
+        border-radius: $rounded-full;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    &__filter-btn {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        color: $gray-600;
+        padding-left: $spacing-4;
+        border-left: 1px solid $gray-100;
+        background: $white;
+        height: 30px;
+        align-self: center;
+    }
+
+    &__filter-icon {
+        font-size: 16px;
+    }
+
+    // ---- Tags Cloud ----
+    &__tags {
+        padding: $spacing-4;
+    }
+
+    &__tags-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacing-2;
+    }
+
+    &__tag {
+        background: $gray-50;
+        padding: 6px $spacing-3;
+        border-radius: 4px;
+        border: 1px solid $gray-100;
+        display: flex;
+        align-items: center;
+
+        text {
+            color: $gray-600;
+            font-size: $text-xs;
+            font-weight: $font-medium;
+        }
+    }
+
+    &__tag-count {
+        color: $gray-400;
+        margin-left: 2px;
+    }
+
+    // ---- Review List ----
+    &__list {
+        padding: 0 $spacing-4 $spacing-12;
+        @include flex-col;
+        gap: $spacing-6;
+    }
+
+    &__review-item {
+        @include flex-col;
+        gap: $spacing-3;
+        padding-bottom: $spacing-6;
+        border-bottom: 1px solid $gray-50;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    // Reviewer Info
+    &__reviewer-info {
+        display: flex;
+        align-items: center;
+        gap: $spacing-3;
+    }
+
+    &__reviewer-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 9999px; // circle
+        background: $orange-50;
+        @include flex-center;
+        flex-shrink: 0;
+    }
+
+    &__reviewer-avatar-icon {
+        color: $orange-300;
+        font-size: 24px;
+    }
+
+    &__reviewer-name {
+        font-weight: $font-bold;
+        color: $gray-900;
+        font-size: $text-sm;
+    }
+
+    &__reviewer-badge {
+        font-size: 10px;
+        color: $primary;
+        border: 1px solid $orange-200;
+        padding: 0 $spacing-1;
+        border-radius: 2px;
+        margin-left: 4px;
+    }
+
+    &__reviewer-stay {
+        font-size: 11px;
+        color: $gray-400;
+        margin-top: 2px;
+        display: block; // text to block
+    }
+
+    // Score & Badges
+    &__score-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+        flex-wrap: wrap;
+    }
+
+    &__score-badge {
+        background: $primary;
+        width: 20px;
+        height: 20px;
+        @include flex-center;
+        border-radius: 4px;
+        flex-shrink: 0;
+
+        text {
+            color: $white;
+            font-size: 10px;
+            font-weight: $font-bold;
+        }
+    }
+
+    &__review-tag {
+        font-size: 10px;
+        color: $gray-500;
+        background: $gray-50;
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid $gray-100;
+    }
+
+    // Review Content
+    &__review-content {
+        font-size: $text-sm;
+        color: $gray-800;
+        line-height: $leading-relaxed;
+        text-align: justify;
+        display: block;
+    }
+
+    // Hotel Reply
+    &__reply-box {
+        background: $gray-50;
+        border-radius: $rounded-lg;
+        padding: $spacing-3;
+        position: relative;
+        margin-top: $spacing-1;
+    }
+
+    &__reply-text-container {
+
+        // container for text clamping
+        &--clamped {
+            @include line-clamp(2);
+        }
+    }
+
+    &__reply-text {
+        font-size: $text-xs;
+        color: $gray-600;
+        line-height: $leading-relaxed;
+    }
+
+    &__reply-label {
+        font-weight: $font-bold;
+        color: $gray-700;
+        font-size: $text-xs;
+    }
+
+    &__reply-toggle {
+        position: absolute;
+        bottom: $spacing-3;
+        right: $spacing-3;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        background: $gray-50; // Mask background
+        padding-left: $spacing-2;
+
+        text {
+            font-size: 10px;
+            color: $gray-400;
+        }
+    }
+
+    &__reply-toggle-icon {
+        font-size: 12px;
+        transition: transform $transition-normal;
+
+        &--expanded {
+            transform: rotate(180deg);
+        }
+    }
+
+    // Actions
+    &__review-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: $spacing-1;
+    }
+
+    &__helpful-btn {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+
+        text {
+            font-size: $text-xs;
+            color: $gray-400;
+        }
+    }
+
+    &__helpful-icon {
+        font-size: 16px;
+    }
+
+    // End
+    &__end-text {
+        text-align: center;
+        padding: $spacing-4 0;
+        font-size: $text-xs;
+        color: $gray-400;
+        @include flex-center;
+    }
+}

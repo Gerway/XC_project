@@ -1,0 +1,180 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.login-page {
+    min-height: 100vh;
+    background: $white;
+    @include flex-col;
+
+    // ---- Hero ----
+    &__hero {
+        position: relative;
+        height: 256px; // $h-64 approx
+        overflow: hidden;
+    }
+
+    &__hero-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-size: cover;
+        background-position: center;
+    }
+
+    &__hero-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to bottom, rgba($primary, 0.8), $primary);
+    }
+
+    &__hero-text {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        padding: $spacing-8;
+        color: $white;
+    }
+
+    &__hero-title {
+        font-size: $text-3xl;
+        font-weight: $font-bold;
+        margin-bottom: $spacing-2;
+        display: block; // Text is inline by default
+    }
+
+    &__hero-subtitle {
+        opacity: 0.9;
+        font-size: $text-sm;
+        display: block;
+    }
+
+    &__back-btn {
+        position: absolute;
+        left: $spacing-6;
+        color: $white;
+        background: rgba($white, 0.2);
+        // backdrop-filter not supported well in wxss
+        border-radius: 9999px; // $rounded-full
+        width: 32px;
+        height: 32px;
+        border: none;
+        @include flex-center;
+        z-index: $z-20;
+    }
+
+    &__back-icon {
+        font-size: 24px;
+        line-height: 1;
+        margin-top: -4px;
+    }
+
+    // ---- Form Area ----
+    &__form-area {
+        flex: 1;
+        background: $white;
+        border-radius: $rounded-3xl $rounded-3xl 0 0;
+        margin-top: -$spacing-6;
+        padding: $spacing-8;
+        position: relative;
+        z-index: $z-10;
+    }
+
+    // ---- Toggle Tabs ----
+    &__toggle {
+        display: flex;
+        background: $gray-50;
+        padding: $spacing-1;
+        border-radius: $rounded-xl;
+        margin-bottom: $spacing-8;
+    }
+
+    &__toggle-btn {
+        flex: 1;
+        padding: $spacing-2-5 0;
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        border-radius: $rounded-lg;
+        transition: all $transition-normal;
+        color: $gray-500;
+        background: transparent;
+        @include flex-center;
+
+        &--active {
+            background: $white;
+            box-shadow: $shadow;
+
+            text {
+                color: $primary;
+            }
+        }
+    }
+
+    // ---- Form ----
+    &__form {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-6;
+    }
+
+    &__field-label {
+        display: block;
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        color: $gray-500;
+        text-transform: uppercase;
+        margin-bottom: $spacing-2;
+    }
+
+    &__field-input {
+        width: 100%;
+        background: $gray-50;
+        border: 1px solid $gray-100;
+        border-radius: $rounded-xl;
+        padding: 0 $spacing-4;
+        font-size: $text-sm;
+        box-sizing: border-box; // Important for input width
+        height: 48px; // Fix height for input
+        line-height: 48px;
+    }
+
+    &__submit-btn {
+        width: 100%;
+        background: $primary;
+        color: $white;
+        font-weight: $font-bold;
+        padding: 0; // Reset button padding
+        line-height: 56px; // Center vertically
+        height: 56px;
+        border-radius: $rounded-xl;
+        box-shadow: $shadow-lg; // $shadow-orange-light custom
+        border: none;
+        font-size: $text-base;
+        margin-top: $spacing-4;
+
+        &::after {
+            border: none;
+        }
+
+        &:active {
+            // :hover not supported on mobile touch same way
+            background: $primary-dark;
+            transform: scale(0.98);
+        }
+    }
+
+    // ---- Footer ----
+    &__footer {
+        margin-top: $spacing-8;
+        text-align: center;
+    }
+
+    &__footer-text {
+        font-size: $text-xs;
+        color: $gray-400;
+    }
+}

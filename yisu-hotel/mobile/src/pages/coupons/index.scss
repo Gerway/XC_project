@@ -1,0 +1,295 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.coupons-page {
+    background: $gray-50; // Using variable instead of strict $background
+    min-height: 100vh;
+    @include flex-col;
+
+    // ---- Header ----
+    &__header {
+        position: sticky;
+        top: 0;
+        z-index: $z-50;
+        background: rgba($white, 0.95);
+        // backdrop-blur not supported in some mini-programs, using rgba is good
+        border-bottom: 1px solid $orange-100;
+    }
+
+    &__header-inner {
+        padding: $spacing-2 $spacing-4;
+        @include flex-between;
+        height: 44px;
+        align-items: center;
+    }
+
+    &__header-left {
+        display: flex;
+        align-items: center;
+        gap: $spacing-3;
+    }
+
+    &__back-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: $rounded-full;
+        @include flex-center;
+        margin-left: -$spacing-2;
+    }
+
+    &__back-icon {
+        color: $gray-900;
+        font-size: 24px;
+        font-weight: bold;
+        line-height: 1;
+        margin-top: -3px;
+    }
+
+    &__title {
+        font-size: 17px;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    &__help-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: $rounded-full;
+        @include flex-center;
+    }
+
+    &__help-icon {
+        color: $gray-600;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    // ---- Main ----
+    &__main {
+        flex: 1;
+        padding: $spacing-4;
+        box-sizing: border-box;
+    }
+
+    // Hero Banner
+    &__hero {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        border-radius: $rounded-2xl;
+        background: linear-gradient(to bottom right, #FF6B6B, #FF8E53);
+        color: $white;
+        box-shadow: 0 10px 15px -3px rgba($orange-500, 0.2);
+        padding: $spacing-6;
+        box-sizing: border-box;
+        margin-bottom: $spacing-6;
+    }
+
+    &__hero-inner {
+        position: relative;
+        z-index: $z-10;
+        @include flex-col;
+        align-items: flex-start;
+    }
+
+    &__hero-badge {
+        display: inline-block;
+        border-radius: $rounded-full;
+        background: rgba($white, 0.2);
+        padding: 4px $spacing-3;
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        letter-spacing: 0.05em;
+        color: $white;
+        border: 1px solid rgba($white, 0.3);
+        margin-bottom: $spacing-2; // Adjust spacing
+    }
+
+    &__hero-title {
+        font-size: 32px; // text-4xl approx
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        margin-bottom: $spacing-1;
+        display: block;
+    }
+
+    &__hero-subtitle {
+        font-size: $text-sm;
+        font-weight: $font-medium;
+        color: rgba($white, 0.9);
+        margin-bottom: $spacing-4;
+        display: block;
+    }
+
+    &__hero-collect-btn {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+        border-radius: $rounded-full;
+        background: $white;
+        padding: 6px $spacing-5;
+        box-shadow: $shadow-lg;
+
+        text {
+            color: $primary;
+            font-size: $text-xs;
+            font-weight: $font-bold;
+        }
+
+        &:active {
+            transform: scale(0.95);
+            opacity: 0.9;
+        }
+    }
+
+    &__hero-decor {
+        position: absolute;
+        right: -40px;
+        top: -40px;
+        width: 160px;
+        height: 160px;
+        border-radius: $rounded-full;
+        background: rgba($white, 0.1);
+        // filter blur not supported well, use opacity/gradient overlay if needed
+    }
+
+    // Coupon List Section
+    &__section-title {
+        font-size: $text-lg;
+        font-weight: $font-bold;
+        color: $gray-800;
+        display: block;
+        margin-bottom: $spacing-2;
+    }
+
+    &__tabs {
+        display: flex;
+        padding: 4px;
+        background: $gray-200;
+        border-radius: $rounded-xl;
+        margin-bottom: $spacing-4;
+        gap: $spacing-1;
+    }
+
+    &__tab-btn {
+        flex: 1;
+        padding: $spacing-2 0;
+        border-radius: $rounded-lg;
+        @include flex-center;
+
+        text {
+            font-size: $text-sm;
+            font-weight: $font-medium;
+            color: $gray-500;
+        }
+
+        &--active {
+            background: $white;
+            box-shadow: $shadow-sm;
+
+            text {
+                font-weight: $font-bold;
+                color: $primary;
+            }
+        }
+    }
+
+    // Coupon Card
+    &__coupon-card {
+        position: relative;
+        display: flex;
+        width: 100%;
+        background: $white;
+        border-radius: $rounded-xl;
+        box-shadow: $shadow-sm;
+        border: 1px solid $gray-100;
+        overflow: hidden;
+        margin-bottom: $spacing-3;
+    }
+
+    &__coupon-value {
+        position: relative;
+        width: 96px;
+        @include flex-col;
+        align-items: center;
+        justify-content: center;
+        background: $orange-50;
+        padding: $spacing-2;
+        text-align: center;
+        border-right: 1px dashed $orange-200;
+        flex-shrink: 0;
+    }
+
+    &__coupon-amount {
+        font-size: 24px;
+        font-weight: 800;
+        color: $primary;
+        display: block;
+    }
+
+    &__coupon-off {
+        font-size: 10px;
+        font-weight: $font-bold;
+        text-transform: uppercase;
+        color: $primary;
+        letter-spacing: 0.05em;
+        display: block;
+    }
+
+    &__coupon-info {
+        flex: 1;
+        @include flex-col;
+        justify-content: space-between;
+        padding: $spacing-3 $spacing-3 $spacing-3 $spacing-4;
+    }
+
+    &__coupon-title {
+        font-weight: $font-bold;
+        color: $gray-900;
+        line-height: $leading-tight;
+        font-size: 15px;
+        display: block;
+    }
+
+    &__coupon-min-spend {
+        margin-top: $spacing-1;
+        font-size: $text-xs;
+        color: $gray-500;
+        display: block;
+    }
+
+    &__coupon-bottom {
+        margin-top: $spacing-2;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    &__coupon-expiry {
+        font-size: 10px;
+        color: $gray-400;
+    }
+
+    &__coupon-use-btn {
+        background: $orange-50;
+        padding: 4px $spacing-3;
+        border-radius: $rounded-full;
+
+        text {
+            font-size: $text-xs;
+            font-weight: $font-bold;
+            color: $primary;
+        }
+
+        &:active {
+            background: $orange-100;
+        }
+    }
+
+    &__empty {
+        padding: $spacing-8;
+        text-align: center;
+        color: $gray-400;
+        font-size: $text-sm;
+    }
+}
