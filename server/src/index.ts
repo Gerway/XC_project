@@ -7,6 +7,7 @@ import express from "express"
 import cookieParser from "cookie-parser"
 import cors from "cors"
 import AuthRouter from "./route/auth.route"
+import UserRouter from "./route/user.route";
 
 // 数据库连接测试函数
 import { checkConnection } from "./db";
@@ -21,6 +22,7 @@ app.use(cookieParser())
 app.use(cors({ origin: true, credentials: true }));
 
 app.use('/api/auth/', AuthRouter)
+app.use('/api/user/', UserRouter);
 
 
 app.listen(8800, async () => {
