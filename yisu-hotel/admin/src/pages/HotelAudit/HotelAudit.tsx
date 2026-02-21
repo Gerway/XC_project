@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Table, Button, Input, Card, Statistic, message } from 'antd'
+import { Table, Button, Input, Card, Statistic, App } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import {
   SearchOutlined,
@@ -119,6 +119,7 @@ const HotelAudit: React.FC = () => {
   // 抽屉状态
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [currentDetail, setCurrentDetail] = useState<IAuditDetail | null>(null)
+  const { message } = App.useApp()
 
   // 模拟异步加载
   useEffect(() => {
@@ -255,8 +256,10 @@ const HotelAudit: React.FC = () => {
           </div>
           <div className={styles.pageActions}>
             <Input
+              placeholder="搜索酒店名称/ID"
               prefix={<SearchOutlined style={{ color: '#9ca3af' }} />}
-              placeholder="搜索酒店或商家..."
+              variant="borderless"
+              style={{ width: 240 }}
               className={styles.searchInput}
               allowClear
               onChange={(e) => handleSearch(e.target.value)}
@@ -270,30 +273,30 @@ const HotelAudit: React.FC = () => {
 
         {/* ===== 统计卡片 ===== */}
         <div className={styles.statGrid}>
-          <Card className={styles.statCard} bordered={false}>
+          <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>待审核总数</p>
-              <Statistic value={24} valueStyle={{ fontSize: 28, fontWeight: 700 }} />
+              <Statistic value={24} styles={{ content: { fontSize: 28, fontWeight: 700 } }} />
             </div>
             <div className={`${styles.statIcon} ${styles.blue}`}>
               <FieldTimeOutlined />
             </div>
           </Card>
 
-          <Card className={styles.statCard} bordered={false}>
+          <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>今日新增</p>
-              <Statistic value={8} valueStyle={{ fontSize: 28, fontWeight: 700 }} />
+              <Statistic value={8} styles={{ content: { fontSize: 28, fontWeight: 700 } }} />
             </div>
             <div className={`${styles.statIcon} ${styles.green}`}>
               <ArrowUpOutlined />
             </div>
           </Card>
 
-          <Card className={styles.statCard} bordered={false}>
+          <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>平均处理时长</p>
-              <Statistic value="2.5 小时" valueStyle={{ fontSize: 28, fontWeight: 700 }} />
+              <Statistic value="2.5 小时" styles={{ content: { fontSize: 28, fontWeight: 700 } }} />
             </div>
             <div className={`${styles.statIcon} ${styles.orange}`}>
               <ClockCircleOutlined />

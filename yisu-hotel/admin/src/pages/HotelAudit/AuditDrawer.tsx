@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
-import { Drawer, Descriptions, Image, Tag, Timeline, Input, Button, message } from 'antd'
+import { Drawer, Descriptions, Image, Tag, Timeline, Input, Button, App } from 'antd'
 import {
   CloseOutlined,
   CheckOutlined,
-  ZoomInOutlined,
   WifiOutlined,
   CarOutlined,
   CoffeeOutlined,
@@ -78,6 +77,7 @@ const AuditDrawer: React.FC<AuditDrawerProps> = ({
 }) => {
   const [remark, setRemark] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const { message } = App.useApp()
 
   // 重置
   const handleClose = () => {
@@ -167,7 +167,7 @@ const AuditDrawer: React.FC<AuditDrawerProps> = ({
     <Drawer
       open={open}
       onClose={handleClose}
-      width="40%"
+      size="large"
       title={drawerTitle}
       footer={drawerFooter}
       className={styles.drawer}
@@ -184,7 +184,7 @@ const AuditDrawer: React.FC<AuditDrawerProps> = ({
             column={1}
             colon={false}
             className={styles.descriptions}
-            labelStyle={{ width: 80 }}
+            styles={{ label: { width: 80 } }}
           >
             <Descriptions.Item label="酒店名称">{detail.hotelName}</Descriptions.Item>
             <Descriptions.Item label="所属商家">
@@ -213,13 +213,6 @@ const AuditDrawer: React.FC<AuditDrawerProps> = ({
                     width="100%"
                     height="100%"
                     style={{ objectFit: 'cover' }}
-                    preview={{
-                      mask: (
-                        <div className={styles.imageOverlay} style={{ opacity: 1 }}>
-                          <ZoomInOutlined />
-                        </div>
-                      ),
-                    }}
                   />
                 </div>
               </div>
@@ -232,13 +225,6 @@ const AuditDrawer: React.FC<AuditDrawerProps> = ({
                     width="100%"
                     height="100%"
                     style={{ objectFit: 'cover' }}
-                    preview={{
-                      mask: (
-                        <div className={styles.imageOverlay} style={{ opacity: 1 }}>
-                          <ZoomInOutlined />
-                        </div>
-                      ),
-                    }}
                   />
                 </div>
               </div>
@@ -289,7 +275,7 @@ const AuditDrawer: React.FC<AuditDrawerProps> = ({
             items={[
               {
                 color: 'gray',
-                children: (
+                content: (
                   <>
                     <div className="timelineDate">{detail.applyTime}</div>
                     <div className="timelineText">商家提交入驻申请</div>
@@ -298,7 +284,7 @@ const AuditDrawer: React.FC<AuditDrawerProps> = ({
               },
               {
                 color: '#137fec',
-                children: (
+                content: (
                   <>
                     <div className="timelineDate">当前</div>
                     <div className="timelineText">等待管理员审核</div>

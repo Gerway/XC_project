@@ -6,8 +6,6 @@ import {
   TagsOutlined,
   TeamOutlined,
   BellOutlined,
-  UserOutlined,
-  SettingOutlined,
   LogoutOutlined,
   DownOutlined,
 } from '@ant-design/icons'
@@ -35,20 +33,32 @@ const AdminLayout: React.FC = () => {
   // 当前选中菜单 key
   const selectedKey = location.pathname.replace('/admin/', '') || 'audit'
 
-  // 管理员信息 (Mock)
-  const admin = {
-    name: 'Admin User',
-    email: 'admin@yisu.com',
-    avatar:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCR2ipYwb56F00LcUNttR1JhpiSuxZ6qFsiX8a9D3KnfPTC1VXurTmQ3gm4g54ih8Zo9EfzrhObdJgT5Ge1rhdONdnNjRlym-io_VujQUfSV15858TqT1cm26qsCBs6ivfAmjviOHLHbP8TdUa-9Mt7PRqq-HfVZEVbvklleVgWprpW6JJyDjCrZKCHadZfXQw-wDS8z5DvSk3NiaulaE49wLmuI5Y4DPo00VznZtkFYPidtPNHu9axto_gTy-M_0_uAc101R7HuIar',
-  }
+  // 管理员信息
+  const [admin, setAdmin] = React.useState({
+    name: '未知管理',
+    email: '-',
+    avatar: '',
+  })
+
+  React.useEffect(() => {
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      try {
+        const userData = JSON.parse(userStr)
+        setAdmin({
+          name: userData.username || userData.account || '管理员',
+          email: userData.email || '-',
+          avatar: userData.avatar || '',
+        })
+      } catch (err) {
+        console.error('Failed to parse admin info', err)
+      }
+    }
+  }, [])
 
   // 用户下拉菜单
   const userMenu: MenuProps = {
     items: [
-      { key: 'profile', label: '个人中心', icon: <UserOutlined /> },
-      { key: 'settings', label: '设置', icon: <SettingOutlined /> },
-      { type: 'divider' },
       {
         key: 'logout',
         label: '退出登录',
@@ -124,7 +134,17 @@ const AdminLayout: React.FC = () => {
                   <div className={styles.userName}>{admin.name}</div>
                   <div className={styles.userEmail}>{admin.email}</div>
                 </div>
-                <Avatar src={admin.avatar} size={36} style={{ border: '1px solid #e5e7eb' }} />
+                <Avatar
+                  src={admin.avatar || undefined}
+                  size={36}
+                  style={{
+                    border: '1px solid #e5e7eb',
+                    backgroundColor: admin.avatar ? 'transparent' : '#135bec',
+                    color: 'white',
+                  }}
+                >
+                  {admin.name ? admin.name.charAt(0).toUpperCase() : 'A'}
+                </Avatar>
                 <DownOutlined style={{ fontSize: 12, color: '#9ca3af' }} />
               </div>
             </Dropdown>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { Button, Modal, DatePicker, Checkbox, InputNumber, Form, message } from 'antd'
+import { Button, Modal, DatePicker, Checkbox, InputNumber, Form, App } from 'antd'
 import {
   LeftOutlined,
   RightOutlined,
@@ -51,6 +51,7 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({
   const [dayEditOpen, setDayEditOpen] = useState(false)
   const [editingDate, setEditingDate] = useState<string | null>(null)
   const [dayForm] = Form.useForm()
+  const { message } = App.useApp()
 
   // Build calendar grid
   const calendarCells = useMemo<CalendarCell[]>(() => {
@@ -285,7 +286,7 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({
         okText="保存"
         cancelText="取消"
         width={400}
-        destroyOnClose
+        forceRender
       >
         <Form form={dayForm} layout="vertical" style={{ marginTop: 16 }}>
           <Form.Item

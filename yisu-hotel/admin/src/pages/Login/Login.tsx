@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
-import { Form, Input, Button, Radio, Checkbox, message, ConfigProvider } from 'antd'
+import { Form, Input, Button, Radio, Checkbox, ConfigProvider, App } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router-dom'
 import styles from './Login.module.scss'
 import { UserRole } from '@yisu/shared/enums/UserRole'
 import type { RadioChangeEvent } from 'antd'
+import { loginApi } from '../../api/auth'
 
 interface LoginFormValues {
   username: string
@@ -16,6 +17,7 @@ const Login: React.FC = () => {
   const [role, setRole] = useState<UserRole>(UserRole.MERCHANT)
   const [form] = Form.useForm()
   const navigate = useNavigate()
+  const { message } = App.useApp()
 
   const onRoleChange = (e: RadioChangeEvent) => {
     setRole(e.target.value)
@@ -27,16 +29,29 @@ const Login: React.FC = () => {
   }, [])
 
   const handleLogin = async (values: LoginFormValues) => {
-    console.log('Login attempt:', { role, ...values })
-    message.loading('登录中...', 1.5).then(() => {
-      message.success('登录成功！(演示)')
+    try {
+      message.loading({ content: '登录中...', key: 'login' })
+      const res = (await loginApi({
+        account: values.username,
+        password: values.password,
+        role: role === UserRole.MERCHANT ? '商户' : '管理',
+        remember: values.remember,
+      })) as unknown as { message?: string; user?: Record<string, unknown> }
+
+      message.success({ content: res.message || '登录成功！', key: 'login', duration: 2 })
+      localStorage.setItem('user', JSON.stringify(res.user))
+
       // 根据角色跳转到不同入口
       if (role === UserRole.ADMIN) {
         navigate('/admin/audit')
       } else {
         navigate('/rooms')
       }
-    })
+    } catch (error: unknown) {
+      console.error('登录错误:', error)
+      const err = error as { message?: string }
+      message.error({ content: err.message || '登录失败！', key: 'login', duration: 2 })
+    }
   }
 
   return (
@@ -136,7 +151,6 @@ const Login: React.FC = () => {
                 <Form.Item name="remember" valuePropName="checked" noStyle>
                   <Checkbox>记住我</Checkbox>
                 </Form.Item>
-                <a href="#">忘记密码？</a>
               </div>
 
               <Form.Item>

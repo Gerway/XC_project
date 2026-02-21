@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react'
-import { Select, Empty, Modal, Form, Input, InputNumber, Switch, message } from 'antd'
+import { Select, Empty, Modal, Form, Input, InputNumber, Switch, App } from 'antd'
 import { ShopOutlined } from '@ant-design/icons'
 import { HotelStatus, type IHotel, type IRoom, type IDayInventory } from '@yisu/shared'
 import RoomList from './RoomList'
@@ -73,6 +73,7 @@ const InventoryContainer: React.FC = () => {
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editingRoom, setEditingRoom] = useState<IRoom | null>(null)
   const [editForm] = Form.useForm()
+  const { message } = App.useApp()
 
   // Available rooms for selected hotel
   const rooms = useMemo(() => {
@@ -249,8 +250,8 @@ const InventoryContainer: React.FC = () => {
         }}
         okText="保存修改"
         cancelText="取消"
-        width={480}
-        destroyOnClose
+        forceRender
+        className={styles.modal}
       >
         <Form form={editForm} layout="vertical" requiredMark="optional" style={{ marginTop: 16 }}>
           <Form.Item

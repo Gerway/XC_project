@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Table, Tag, Button, Tooltip, Modal, message, Form, Input, Select } from 'antd'
+import { Table, Tag, Button, Tooltip, Modal, Form, Input, Select, App } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import {
   PlusOutlined,
@@ -135,6 +135,7 @@ const HotelList: React.FC = () => {
   const [confirmLoading, setConfirmLoading] = useState(false)
   const [editedHotelIds, setEditedHotelIds] = useState<Set<string>>(new Set())
   const [form] = Form.useForm<HotelFormValues>()
+  const { message, modal } = App.useApp()
 
   const isEditMode = editingHotel !== null
 
@@ -151,7 +152,7 @@ const HotelList: React.FC = () => {
   }
 
   const handleViewReason = (reason: string) => {
-    Modal.error({
+    modal.error({
       title: '驳回原因',
       content: reason,
       okText: '我知道了',
@@ -395,7 +396,7 @@ const HotelList: React.FC = () => {
         okText={isEditMode ? '保存修改' : '确认添加'}
         cancelText="取消"
         width={560}
-        destroyOnClose
+        forceRender
         className={styles.addHotelModal}
       >
         {/* Edit mode: show hotel ID and submission date */}
