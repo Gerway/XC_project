@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Table, Button, Input, Card, Statistic, Select, Switch, Progress, Modal, App } from 'antd'
+import { Table, Button, Input, Card, Statistic, Select, Switch, Progress, App } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import {
   PlusOutlined,
@@ -134,7 +134,7 @@ const CouponManager: React.FC = () => {
     total: 12,
     showTotal: (total, range) => `显示 ${range[0]} 到 ${range[1]} 条，共 ${total} 条结果`,
   })
-  const { message } = App.useApp()
+  const { message, modal } = App.useApp()
 
   // 模拟异步加载
   useEffect(() => {
@@ -200,7 +200,7 @@ const CouponManager: React.FC = () => {
 
   // 删除 (预留)
   const handleDelete = (record: ICoupon) => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认删除',
       content: `确定要删除优惠券「${record.name}」吗？此操作不可恢复。`,
       okText: '删除',
@@ -354,10 +354,10 @@ const CouponManager: React.FC = () => {
 
         {/* ===== 统计卡片 ===== */}
         <div className={styles.statGrid}>
-          <Card className={styles.statCard} bordered={false}>
+          <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>进行中优惠券</p>
-              <Statistic value={12} valueStyle={{ fontSize: 30, fontWeight: 700 }} />
+              <Statistic value={12} styles={{ content: { fontSize: 30, fontWeight: 700 } }} />
               <div className={styles.trendUp}>
                 <ArrowUpOutlined style={{ fontSize: 12 }} />
                 较上周 +2
@@ -368,10 +368,10 @@ const CouponManager: React.FC = () => {
             </div>
           </Card>
 
-          <Card className={styles.statCard} bordered={false}>
+          <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>今日领取数</p>
-              <Statistic value={1286} valueStyle={{ fontSize: 30, fontWeight: 700 }} />
+              <Statistic value={1286} styles={{ content: { fontSize: 30, fontWeight: 700 } }} />
               <div className={styles.trendUp}>
                 <ArrowUpOutlined style={{ fontSize: 12 }} />
                 环比 +15%
@@ -382,10 +382,10 @@ const CouponManager: React.FC = () => {
             </div>
           </Card>
 
-          <Card className={styles.statCard} bordered={false}>
+          <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>累计核销率</p>
-              <Statistic value="68.4%" valueStyle={{ fontSize: 30, fontWeight: 700 }} />
+              <Statistic value="68.4%" styles={{ content: { fontSize: 30, fontWeight: 700 } }} />
               <div className={styles.trendNeutral}>总发放: 45,200</div>
             </div>
             <div className={`${styles.statIcon} ${styles.emerald}`}>

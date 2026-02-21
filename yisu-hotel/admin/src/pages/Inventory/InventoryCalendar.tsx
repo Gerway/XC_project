@@ -286,7 +286,7 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({
         okText="保存"
         cancelText="取消"
         width={400}
-        destroyOnHidden
+        forceRender
       >
         <Form form={dayForm} layout="vertical" style={{ marginTop: 16 }}>
           <Form.Item

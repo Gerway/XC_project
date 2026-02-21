@@ -250,7 +250,7 @@ const InventoryContainer: React.FC = () => {
         }}
         okText="保存修改"
         cancelText="取消"
-        destroyOnHidden
+        forceRender
         className={styles.modal}
       >
         <Form form={editForm} layout="vertical" requiredMark="optional" style={{ marginTop: 16 }}>

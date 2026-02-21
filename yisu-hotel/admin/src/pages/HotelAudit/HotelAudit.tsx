@@ -273,30 +273,30 @@ const HotelAudit: React.FC = () => {
 
         {/* ===== 统计卡片 ===== */}
         <div className={styles.statGrid}>
-          <Card className={styles.statCard} bordered={false}>
+          <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>待审核总数</p>
-              <Statistic value={24} valueStyle={{ fontSize: 28, fontWeight: 700 }} />
+              <Statistic value={24} styles={{ content: { fontSize: 28, fontWeight: 700 } }} />
             </div>
             <div className={`${styles.statIcon} ${styles.blue}`}>
               <FieldTimeOutlined />
             </div>
           </Card>
 
-          <Card className={styles.statCard} bordered={false}>
+          <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>今日新增</p>
-              <Statistic value={8} valueStyle={{ fontSize: 28, fontWeight: 700 }} />
+              <Statistic value={8} styles={{ content: { fontSize: 28, fontWeight: 700 } }} />
             </div>
             <div className={`${styles.statIcon} ${styles.green}`}>
               <ArrowUpOutlined />
             </div>
           </Card>
 
-          <Card className={styles.statCard} bordered={false}>
+          <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>平均处理时长</p>
-              <Statistic value="2.5 小时" valueStyle={{ fontSize: 28, fontWeight: 700 }} />
+              <Statistic value="2.5 小时" styles={{ content: { fontSize: 28, fontWeight: 700 } }} />
             </div>
             <div className={`${styles.statIcon} ${styles.orange}`}>
               <ClockCircleOutlined />

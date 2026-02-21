@@ -110,7 +110,7 @@ const CreateCouponModal: React.FC<CreateCouponModalProps> = ({ open, onCancel, o
       okText="创建"
       cancelText="取消"
       width={520}
-      destroyOnHidden
+      forceRender
       className={styles.modal}
     >
       <Form

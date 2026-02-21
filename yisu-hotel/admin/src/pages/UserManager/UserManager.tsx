@@ -329,40 +329,40 @@ const UserManager: React.FC = () => {
 
         {/* ===== 统计卡片 ===== */}
         <div className={styles.statGrid}>
-          <Card className={styles.statCard} bordered={false}>
+          <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>用户总数</p>
-              <Statistic value={12543} valueStyle={{ fontSize: 24, fontWeight: 700 }} />
+              <Statistic value={12543} styles={{ content: { fontSize: 24, fontWeight: 700 } }} />
             </div>
             <div className={`${styles.statIcon} ${styles.blue}`}>
               <TeamOutlined />
             </div>
           </Card>
 
-          <Card className={styles.statCard} bordered={false}>
+          <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>今日新增用户</p>
-              <Statistic value={128} valueStyle={{ fontSize: 24, fontWeight: 700 }} />
+              <Statistic value={128} styles={{ content: { fontSize: 24, fontWeight: 700 } }} />
             </div>
             <div className={`${styles.statIcon} ${styles.green}`}>
               <UserAddOutlined />
             </div>
           </Card>
 
-          <Card className={styles.statCard} bordered={false}>
+          <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>活跃用户</p>
-              <Statistic value={3420} valueStyle={{ fontSize: 24, fontWeight: 700 }} />
+              <Statistic value={3420} styles={{ content: { fontSize: 24, fontWeight: 700 } }} />
             </div>
             <div className={`${styles.statIcon} ${styles.purple}`}>
               <RiseOutlined />
             </div>
           </Card>
 
-          <Card className={styles.statCard} bordered={false}>
+          <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>被封禁账户</p>
-              <Statistic value={45} valueStyle={{ fontSize: 24, fontWeight: 700 }} />
+              <Statistic value={45} styles={{ content: { fontSize: 24, fontWeight: 700 } }} />
             </div>
             <div className={`${styles.statIcon} ${styles.red}`}>
               <StopOutlined />
