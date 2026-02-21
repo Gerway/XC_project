@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser"
 import cors from "cors"
 import AuthRouter from "./route/auth.route"
 import UserRouter from "./route/user.route";
+import HotelRouter from "./route/hotel.route";
 
 // 数据库连接测试函数
 import { checkConnection } from "./db";
@@ -23,6 +24,7 @@ app.use(cors({ origin: true, credentials: true }));
 
 app.use('/api/auth/', AuthRouter)
 app.use('/api/user/', UserRouter);
+app.use('/api/hotel/', HotelRouter);
 
 
 app.listen(8800, async () => {
