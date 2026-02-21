@@ -26,7 +26,6 @@ const Home: React.FC = () => {
     { key: 'domestic', label: '酒店' },
     { key: 'international', label: '民宿' },
     { key: 'hourly', label: '时租房' },
-    { key: 'homestay', label: '公寓' },
   ];
 
   const tags = ['解放碑', '洪崖洞', '观音桥', '北站'];
@@ -87,12 +86,12 @@ const Home: React.FC = () => {
   };
 
   const formatDate = (date: Date) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
     return `${months[date.getMonth()]} ${date.getDate()}`;
   };
 
   const getWeekDay = (date: Date) => {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
     return days[date.getDay()];
   };
 
