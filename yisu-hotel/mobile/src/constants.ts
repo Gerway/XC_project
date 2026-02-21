@@ -13,7 +13,7 @@ export const MOCK_USER: User = {
 
 export const HOTELS: Hotel[] = [
   {
-    hotel_id: 'h_1',
+    hotel_id: 'HTL_CQ_06',
     name: 'Grand Hotel YiSu',
     address: '123 Jiefangbei Rd, Chongqing',
     city_code: 1,
