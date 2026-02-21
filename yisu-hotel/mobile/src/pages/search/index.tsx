@@ -1,19 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Image, ScrollView, Input } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
-import { HOTELS } from '../../constants';
+import { hotelApi, SearchHotelsParams, Hotel } from '../../api/hotel';
 import './index.scss';
-
-interface SearchState {
-  location: string;
-  keyword: string;
-  checkIn: number;
-  checkOut: number;
-  priceMin: number;
-  priceMax: number;
-  brands: string[];
-  tab: string;
-}
 
 const BADGE_CLASS_MAP: Record<string, string> = {
   'Comfort': 'search-page__hotel-badge--purple',
@@ -21,8 +10,8 @@ const BADGE_CLASS_MAP: Record<string, string> = {
   'Boutique': 'search-page__hotel-badge--blue',
 };
 
-const getHotelMeta = (id: string) => {
-  const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+const getHotelMeta = (id: string | number) => {
+  const hash = id.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const quotes = [
     "Enjoy private cinema near the pedestrian street",
     "Smart facilities with high cost performance",
@@ -47,41 +36,65 @@ const getHotelMeta = (id: string) => {
 };
 
 const Search: React.FC = () => {
-  // Read search params from Taro storage (set by Home page)
-  const defaultState = useMemo<SearchState>(() => ({
-    location: 'Chongqing',
+  // Date format utility
+  const getTodayStr = () => new Date().toISOString().split('T')[0];
+  const getTomorrowStr = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  };
+
+  const defaultState = useMemo<SearchHotelsParams>(() => ({
+    city_name: 'Chongqing',
     keyword: '',
-    checkIn: Date.now(),
-    checkOut: Date.now() + 86400000,
-    priceMin: 0,
-    priceMax: 1500,
-    brands: [],
-    tab: 'domestic',
+    check_in: getTodayStr(),
+    check_out: getTomorrowStr(),
+    min_price: 0,
+    max_price: 1500,
+    star_rating: [],
+    room_type: 1,
   }), []);
 
-  const [searchState, setSearchState] = useState<SearchState>(defaultState);
+  const [searchState, setSearchState] = useState<SearchHotelsParams>(defaultState);
+  const [hotels, setHotels] = useState<Hotel[]>([]);
 
-  // useDidShow fires every time this TabBar page becomes visible,
-  // so search params from Home are always re-read on tab switch
+  const fetchHotels = async (params: SearchHotelsParams) => {
+    Taro.showLoading({ title: 'Searching...' });
+    try {
+      const res = await hotelApi.searchHotels(params);
+      setHotels(res.data || []);
+    } catch (err) {
+      console.error(err);
+      Taro.showToast({ title: 'Failed to search', icon: 'none' });
+    } finally {
+      Taro.hideLoading();
+    }
+  };
+
   useDidShow(() => {
     try {
       const raw = Taro.getStorageSync('searchParams');
       if (raw) {
-        const params = JSON.parse(raw);
-        setSearchState({
-          location: params.location || defaultState.location,
+        const params: SearchHotelsParams = JSON.parse(raw);
+        const newState = {
+          city_name: params.city_name || defaultState.city_name,
           keyword: params.keyword || '',
-          checkIn: params.checkIn || defaultState.checkIn,
-          checkOut: params.checkOut || defaultState.checkOut,
-          priceMin: params.priceMin ?? 0,
-          priceMax: params.priceMax ?? 1500,
-          brands: params.brands || [],
-          tab: params.tab || 'domestic',
-        });
-        setKeyword(params.keyword || '');
+          check_in: params.check_in || defaultState.check_in,
+          check_out: params.check_out || defaultState.check_out,
+          min_price: params.min_price ?? 0,
+          max_price: params.max_price ?? 1500,
+          star_rating: params.star_rating || [],
+          room_type: params.room_type || 1,
+        };
+        setSearchState(newState);
+        setKeyword(newState.keyword || '');
+        fetchHotels(newState);
+      } else {
+        fetchHotels(defaultState);
       }
     } catch (e) {
       console.log('No search params');
+      fetchHotels(defaultState);
     }
   });
 
@@ -98,55 +111,28 @@ const Search: React.FC = () => {
   ];
 
   const dateRangeDisplay = useMemo(() => {
-    const start = new Date(searchState.checkIn);
-    const end = new Date(searchState.checkOut);
+    if (!searchState.check_in || !searchState.check_out) return '';
+    const start = new Date(searchState.check_in);
+    const end = new Date(searchState.check_out);
     const format = (d: Date) => `${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
     return `${format(start)} - ${format(end)}`;
-  }, [searchState.checkIn, searchState.checkOut]);
+  }, [searchState.check_in, searchState.check_out]);
 
   const hotelsWithMeta = useMemo(() => {
-    return HOTELS.map(hotel => ({
+    return hotels.map(hotel => ({
       ...hotel,
       meta: getHotelMeta(hotel.hotel_id)
     }));
-  }, []);
-
-  const filteredHotels = useMemo(() => {
-    return hotelsWithMeta.filter(hotel => {
-      if (searchState.location && searchState.location !== 'All') {
-        if (!hotel.address.toLowerCase().includes(searchState.location.toLowerCase())) {
-          return false;
-        }
-      }
-      if (keyword) {
-        const k = keyword.toLowerCase();
-        const matchesName = hotel.name.toLowerCase().includes(k);
-        const matchesAddress = hotel.address.toLowerCase().includes(k);
-        const matchesTags = hotel.tags.some(t => t.toLowerCase().includes(k));
-        if (!matchesName && !matchesAddress && !matchesTags) return false;
-      }
-      const min = searchState.priceMin;
-      const max = searchState.priceMax;
-      if (hotel.min_price < min) return false;
-      if (max < 1500 && hotel.min_price > max) return false;
-      if (searchState.brands.length > 0) {
-        const matchesBrand = searchState.brands.some(brand =>
-          hotel.name.toLowerCase().includes(brand.toLowerCase())
-        );
-        if (!matchesBrand) return false;
-      }
-      return true;
-    });
-  }, [keyword, searchState, hotelsWithMeta]);
+  }, [hotels]);
 
   const sortedHotels = useMemo(() => {
-    const result = [...filteredHotels];
+    const result = [...hotelsWithMeta];
     switch (sortOption) {
       case 'distance':
         result.sort((a, b) => a.meta.distance - b.meta.distance);
         break;
       case 'score':
-        result.sort((a, b) => b.score - a.score);
+        result.sort((a, b: any) => (b.score || 0) - (a.score || 0));
         break;
       case 'price_asc':
         result.sort((a, b) => a.min_price - b.min_price);
@@ -158,7 +144,7 @@ const Search: React.FC = () => {
         break;
     }
     return result;
-  }, [filteredHotels, sortOption]);
+  }, [hotelsWithMeta, sortOption]);
 
   const toggleDropdown = (name: string) => {
     setActiveDropdown(activeDropdown === name ? null : name);
@@ -182,7 +168,7 @@ const Search: React.FC = () => {
 
           <View className="search-page__search-pill">
             <View className="search-page__search-info">
-              <Text className="search-page__search-location">{searchState.location}</Text>
+              <Text className="search-page__search-location">{searchState.city_name || 'All'}</Text>
               <Text className="search-page__search-dates">{dateRangeDisplay}</Text>
             </View>
 
@@ -191,10 +177,21 @@ const Search: React.FC = () => {
               placeholder="Location / Hotel / Keyword"
               value={keyword}
               onInput={(e) => setKeyword(e.detail.value)}
+              onConfirm={() => {
+                // If the user types a new keyword and hits enter, manually re-trigger API
+                const updated = { ...searchState, keyword };
+                setSearchState(updated);
+                fetchHotels(updated);
+              }}
             />
 
             {keyword && (
-              <View onClick={() => setKeyword('')} className="search-page__search-clear-btn">
+              <View onClick={() => {
+                setKeyword('');
+                const updated = { ...searchState, keyword: '' };
+                setSearchState(updated);
+                fetchHotels(updated);
+              }} className="search-page__search-clear-btn">
                 <Text className="search-page__search-clear-icon">✕</Text>
               </View>
             )}
@@ -300,7 +297,7 @@ const Search: React.FC = () => {
               >
                 <View className="search-page__hotel-image-col">
                   <View className="search-page__hotel-image-wrapper">
-                    <Image src={hotel.image_url} className="search-page__hotel-image" mode="aspectFill" />
+                    <Image src={hotel.image_url || 'https://images.unsplash.com/photo-1551882547-ff40c0d5bf8f?auto=format&fit=crop&w=400&q=80'} className="search-page__hotel-image" mode="aspectFill" />
                     <Text className="search-page__hotel-brand-tag">YiSu Hotel</Text>
                     <View className="search-page__hotel-play-btn">
                       <Text className="search-page__hotel-play-icon">▶</Text>
@@ -315,10 +312,12 @@ const Search: React.FC = () => {
                     </View>
                     <View className="search-page__hotel-badges">
                       <Text className={`search-page__hotel-badge ${BADGE_CLASS_MAP[meta.badge.text] || ''}`}>{meta.badge.text}</Text>
-                      <View className="search-page__hotel-preferred-badge">
-                        <Text className="search-page__hotel-preferred-icon">⭐</Text>
-                        <Text>Preferred</Text>
-                      </View>
+                      {hotel.star_rating > 3 && (
+                        <View className="search-page__hotel-preferred-badge">
+                          <Text className="search-page__hotel-preferred-icon">⭐</Text>
+                          <Text>{hotel.star_rating} Stars</Text>
+                        </View>
+                      )}
                     </View>
                   </View>
 
@@ -326,9 +325,9 @@ const Search: React.FC = () => {
                     <View className="search-page__hotel-score-badge">
                       <Text>{hotel.score}</Text>
                     </View>
-                    <Text className="search-page__hotel-score-label">Superb</Text>
+                    <Text className="search-page__hotel-score-label">{hotel.score >= 4.5 ? 'Superb' : 'Good'}</Text>
                     <View className="search-page__hotel-divider-v"></View>
-                    <Text className="search-page__hotel-reviews">{hotel.reviews_count} Reviews</Text>
+                    <Text className="search-page__hotel-reviews">{(hotel as any).reviews || 0} Reviews</Text>
                     <Text className="search-page__hotel-favs">{meta.collections} Favs</Text>
                   </View>
 

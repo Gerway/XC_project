@@ -142,7 +142,8 @@ export const searchHotels = async (
             SELECT 
                 hotel_id, name, address, city_name, latitude, longitude, 
                 star_rating, tags, description, hotel_type, score, reviews,
-                MIN(min_price) as min_price
+                MIN(min_price) as min_price,
+                (SELECT url FROM hotel_media hm WHERE hm.hotel_id = available_rooms.hotel_id AND hm.media_type = 1 ORDER BY hm.sort_order ASC LIMIT 1) as image_url
             FROM (${sql}) AS available_rooms
             GROUP BY hotel_id
             ORDER BY score DESC

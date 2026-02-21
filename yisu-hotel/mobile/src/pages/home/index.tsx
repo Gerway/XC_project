@@ -10,7 +10,7 @@ import './index.scss';
 const Home: React.FC = () => {
   const { user } = useAppContext();
   const [keyword, setKeyword] = useState('');
-  const [location, setLocation] = useState('Chongqing');
+  const [location, setLocation] = useState('重庆');
   const [dates, setDates] = useState<{ start: Date; end: Date }>({
     start: new Date(),
     end: new Date(new Date().setDate(new Date().getDate() + 1))
@@ -19,37 +19,43 @@ const Home: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('domestic');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const hasFilter = priceRange[0] > 0 || priceRange[1] < 1000 || selectedBrands.length > 0;
+  const [selectedStars, setSelectedStars] = useState<number[]>([]);
+  const hasFilter = priceRange[0] > 0 || priceRange[1] < 1000 || selectedStars.length > 0;
 
   const tabs = [
-    { key: 'domestic', label: 'Domestic' },
-    { key: 'international', label: 'International' },
-    { key: 'hourly', label: 'Hourly' },
-    { key: 'homestay', label: 'Homestay' },
+    { key: 'domestic', label: '酒店' },
+    { key: 'international', label: '民宿' },
+    { key: 'hourly', label: '时租房' },
+    { key: 'homestay', label: '公寓' },
   ];
 
-  const tags = ['Jiefangbei', 'Hongyadong', 'Guanyin Bridge', 'Airport'];
+  const tags = ['解放碑', '洪崖洞', '观音桥', '北站'];
 
   const categories = [
-    { name: 'Coupons', icon: '🎫', color: 'red' },
-    { name: 'Favorites', icon: '❤️', color: 'orange' },
-    { name: 'History', icon: '🕐', color: 'blue' },
-    { name: 'Flights', icon: '✈️', color: 'green' },
-    { name: 'Trains', icon: '🚄', color: 'purple' },
+    { name: '优惠券', icon: '🎫', color: 'red' },
+    { name: '收藏', icon: '❤️', color: 'orange' },
+    { name: '历史', icon: '🕐', color: 'blue' },
+    { name: '机票', icon: '✈️', color: 'green' },
+    { name: '火车', icon: '🚄', color: 'purple' },
   ];
 
   const handleSearch = () => {
+    // Map tab into an integer `room_type`. (Dummy logic: domestic->1, hourly->2, homestay->3, international->4)
+    let room_type = 1;
+    if (activeTab === 'hourly') room_type = 2;
+    if (activeTab === 'homestay') room_type = 3;
+    if (activeTab === 'international') room_type = 4;
+
     // Store search params for the search page to read
     const searchParams = {
       keyword,
-      location,
-      checkIn: dates.start.getTime(),
-      checkOut: dates.end.getTime(),
-      priceMin: priceRange[0],
-      priceMax: priceRange[1],
-      brands: selectedBrands,
-      tab: activeTab,
+      city_name: location,
+      check_in: `${dates.start.getFullYear()}-${String(dates.start.getMonth() + 1).padStart(2, '0')}-${String(dates.start.getDate()).padStart(2, '0')}`,
+      check_out: `${dates.end.getFullYear()}-${String(dates.end.getMonth() + 1).padStart(2, '0')}-${String(dates.end.getDate()).padStart(2, '0')}`,
+      min_price: priceRange[0],
+      max_price: priceRange[1],
+      star_rating: selectedStars,
+      room_type: room_type,
     };
     Taro.setStorageSync('searchParams', JSON.stringify(searchParams));
     Taro.switchTab({
@@ -61,9 +67,9 @@ const Home: React.FC = () => {
     setDates({ start, end });
   };
 
-  const handleFilterConfirm = (range: [number, number], brands: string[]) => {
+  const handleFilterConfirm = (range: [number, number], stars: number[]) => {
     setPriceRange(range);
-    setSelectedBrands(brands);
+    setSelectedStars(stars);
   };
 
   const handleTagClick = (tag: string) => {
@@ -184,7 +190,7 @@ const Home: React.FC = () => {
                 {hasFilter && <View className="home__filter-dot"></View>}
                 <Text className={`home__filter-text ${hasFilter ? 'home__filter-text--active' : ''}`}>
                   {hasFilter
-                    ? `¥${priceRange[0]}-${priceRange[1]}${selectedBrands.length > 0 ? ` · ${selectedBrands.length} brands` : ''}`
+                    ? `¥${priceRange[0]}-${priceRange[1]}${selectedStars.length > 0 ? ` · ${selectedStars.length} stars` : ''}`
                     : 'Price & Star Rating'
                   }
                 </Text>
@@ -241,7 +247,7 @@ const Home: React.FC = () => {
         onClose={() => setIsFilterOpen(false)}
         onConfirm={handleFilterConfirm}
         initialRange={priceRange}
-        initialBrands={selectedBrands}
+        initialStars={selectedStars}
       />
     </View>
   );
