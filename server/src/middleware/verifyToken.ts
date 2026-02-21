@@ -14,8 +14,15 @@ declare global {
 
 
 export const verifyToken = (req: Request, res: Response, next: NextFunction): void => {
-    // 从 Cookie 中获取刚才登录时种下的 token
-    const token = req.cookies.token;
+    // 先尝试从请求头中获取 Authorization: Bearer xxx
+    // 如果没有，再尝试从 Cookie 中获取 (为了兼容网页端)
+    const authHeader = req.headers.authorization;
+    let token = req.cookies.token;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        // 格式为 'Bearer <token>'，提取后面的 token 部分
+        token = authHeader.substring(7);
+    }
 
     // 如果连 token 都没有，直接拦截，返回 401 (未授权)
     if (!token) {

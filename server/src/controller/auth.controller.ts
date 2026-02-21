@@ -187,6 +187,7 @@ export const login = async (
             maxAge: age,
         }).status(200).json({
             message: "登录成功",
+            token: token,      // 给移动端返回 Token
             user: userInfo,
             expiresIn: age
         });

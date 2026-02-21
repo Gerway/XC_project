@@ -1,28 +1,70 @@
 import React, { useState } from 'react';
 import { View, Text, Button, Input, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { MOCK_USER } from '../../constants';
+import { authApi } from '../../api/auth';
+import { userApi } from '../../api/user';
+import { useAppContext } from '../../context';
 import './index.scss';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [isRegister, setIsRegister] = useState(false);
     const { statusBarHeight } = Taro.getSystemInfoSync();
+    const { login } = useAppContext();
 
-    const handleSubmit = () => {
-        // Mock Login Logic
-        if (email && password) {
-            Taro.showLoading({ title: '登录中...' });
+    const handleSubmit = async () => {
+        if (!email || !password || (isRegister && !username)) {
+            Taro.showToast({ title: 'Please fill all required fields', icon: 'none' });
+            return;
+        }
+
+        Taro.showLoading({ title: isRegister ? '注册中...' : '登录中...' });
+        try {
+            if (isRegister) {
+                const res = await authApi.register({
+                    username,
+                    email,
+                    password,
+                    role: '用户'
+                });
+                Taro.setStorageSync('token', res.token);
+            } else {
+                const res = await authApi.login({
+                    account: email,
+                    password,
+                    role: '用户',
+                    remember: true
+                });
+                Taro.setStorageSync('token', res.token);
+            }
+
+            // 获取真正的用户信息
+            const userInfo = await userApi.getUserProfile();
+            userInfo.isLoggedIn = true; // 附加前端标识
+
+            // 全局状态保存真正的 User
+            login(userInfo);
+
+            Taro.hideLoading();
             setTimeout(() => {
-                Taro.hideLoading();
-                // Save mock user
-                Taro.setStorageSync('userInfo', JSON.stringify({ ...MOCK_USER, email }));
-                // Redirect to Home (Tab Bar page)
+                Taro.showToast({ title: '登录成功', icon: 'success' });
+            }, 100);
+
+            // Redirect to Home
+            setTimeout(() => {
                 Taro.switchTab({ url: '/pages/home/index' });
             }, 1000);
-        } else {
-            Taro.showToast({ title: 'Please fill all fields', icon: 'none' });
+        } catch (error: any) {
+            Taro.hideLoading();
+            setTimeout(() => {
+                Taro.showToast({
+                    title: error?.message || (isRegister ? '注册失败' : '登录失败'),
+                    icon: 'none',
+                    duration: 2000
+                });
+            }, 100);
         }
     };
 
@@ -63,7 +105,7 @@ const Login: React.FC = () => {
                     {isRegister && (
                         <View>
                             <Text className="login-page__field-label">Username</Text>
-                            <Input type="text" className="login-page__field-input" placeholder="Choose a username" />
+                            <Input type="text" value={username} onInput={e => setUsername(e.detail.value)} className="login-page__field-input" placeholder="Choose a username" />
                         </View>
                     )}
                     <View>

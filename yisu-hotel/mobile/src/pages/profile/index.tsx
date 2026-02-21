@@ -1,30 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, Image, ScrollView, Button } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { MOCK_USER } from '../../constants';
-import { User } from '../../../types/types';
+import { useAppContext } from '../../context';
 import './index.scss';
 
 const Profile: React.FC = () => {
-  // Use mock user state
-  // Use mock user state
-  const [user, setUser] = useState<User | null>(null);
+  const { user, logout: contextLogout } = useAppContext();
   const { statusBarHeight } = Taro.getSystemInfoSync();
-
-  Taro.useDidShow(() => {
-    const stored = Taro.getStorageSync('userInfo');
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch (e) {
-        // ignore
-      }
-    } else {
-      // If no stored user, checking MOCK_USER for default dev state, or keep null
-      // For this flow, we start null if nothing in storage (User expects "Not Logged In" if they haven't logged in)
-      setUser(null);
-    }
-  });
 
   const handleAuthAction = (action: () => void) => {
     if (!user) {
@@ -35,8 +17,7 @@ const Profile: React.FC = () => {
   };
 
   const logout = () => {
-    setUser(null);
-    Taro.removeStorageSync('userInfo');
+    contextLogout();
     Taro.showToast({ title: 'Logged out', icon: 'none' });
   };
 
