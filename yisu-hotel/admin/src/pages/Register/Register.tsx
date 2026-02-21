@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { Form, Input, Button, Radio, Checkbox, message, ConfigProvider } from 'antd'
+import { Form, Input, Button, Radio, Checkbox, ConfigProvider, App } from 'antd'
 import { UserOutlined, MailOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import styles from './Register.module.scss'
 import type { RadioChangeEvent } from 'antd'
+import request from '../../utils/request'
 
 // 用户角色枚举
 enum UserRole {
@@ -23,6 +24,8 @@ interface RegisterFormValues {
 const Register: React.FC = () => {
   const [role, setRole] = useState<UserRole>(UserRole.MERCHANT)
   const [form] = Form.useForm()
+  const navigate = useNavigate()
+  const { message } = App.useApp()
 
   // 模拟密码强度计算状态
   const [passwordStrength, setPasswordStrength] = useState<number>(0)
@@ -44,9 +47,29 @@ const Register: React.FC = () => {
 
   // 注册提交处理
   const handleRegister = async (values: RegisterFormValues) => {
-    console.log('注册信息:', role, values)
-    message.success('注册成功！(演示)')
-    // TODO: 调用后端注册接口
+    try {
+      message.loading({ content: '注册中...', key: 'register' })
+      const res = (await request.post('/auth/register', {
+        username: values.username,
+        email: values.email,
+        password: values.password,
+        role: role === UserRole.MERCHANT ? '商户' : '管理',
+      })) as { message: string; user: Record<string, unknown> }
+      message.success({ content: res.message || '注册并登录成功！', key: 'register', duration: 2 })
+      // 服务器会自动 set cookie，另外也可以保存用户信息
+      localStorage.setItem('user', JSON.stringify(res.user))
+
+      // 可以直接跳转了，或者让用户重新手动登录
+      if (role === UserRole.ADMIN) {
+        navigate('/admin/audit')
+      } else {
+        navigate('/rooms')
+      }
+    } catch (error: unknown) {
+      console.error('注册错误:', error)
+      const err = error as { message?: string }
+      message.error({ content: err.message || '注册失败！', key: 'register', duration: 2 })
+    }
   }
 
   return (

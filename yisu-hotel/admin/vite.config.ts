@@ -10,4 +10,12 @@ export default defineConfig({
       '@yisu/shared': path.resolve(__dirname, '../shared/src'),
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8800',
+        changeOrigin: true,
+      },
+    },
+  },
 })

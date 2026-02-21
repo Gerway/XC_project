@@ -6,8 +6,6 @@ import {
   FileTextOutlined,
   NotificationOutlined,
   SearchOutlined,
-  UserOutlined,
-  SettingOutlined,
   LogoutOutlined,
 } from '@ant-design/icons'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
@@ -33,29 +31,32 @@ const MainLayout: React.FC = () => {
     document.title = `${pageTitle} - 商家端`
   }, [location.pathname])
 
-  // Mock User
-  const user = {
-    name: '张莎拉',
+  const [user, setUser] = useState({
+    name: '未知用户',
     role: '商家管理员',
-    avatar:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBDDLWDXONs999Kd3hGrnTvx5b3MT0qIAFtFX-EmUlXOcHFWvy3oOhAh5vnzn6ksLEmJKwb-m34ENzBGWWbG-d5zQ9coUKHP6gLouNl_vtxkPNdnXtLQCF9m7m44p_WcmOO5FEFYG7fjPTl6cljv1sT5DtmfzacEQI7Se8XJMt6AHmDAhChu_67v44jfHtYyoBOgMruVwgV-m1cHpsmO4iJG7PtDmKTn8a_CuPkfC8ovz5E00YPlJI6VCUYrv-U5M3E3PAFILjHNWlL',
-  }
+    email: '',
+    avatar: '',
+  })
+
+  React.useEffect(() => {
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      try {
+        const userData = JSON.parse(userStr)
+        setUser({
+          name: userData.username || userData.account || '未知用户',
+          role: userData.role === '管理' ? '超级管理员' : '商家管理员',
+          email: userData.email || '',
+          avatar: userData.avatar || '',
+        })
+      } catch (err) {
+        console.error('Failed to parse user info', err)
+      }
+    }
+  }, [])
 
   const userMenu: MenuProps = {
     items: [
-      {
-        key: 'profile',
-        label: '个人中心',
-        icon: <UserOutlined />,
-      },
-      {
-        key: 'settings',
-        label: '设置',
-        icon: <SettingOutlined />,
-      },
-      {
-        type: 'divider',
-      },
       {
         key: 'logout',
         label: '退出登录',
@@ -143,7 +144,7 @@ const MainLayout: React.FC = () => {
               placeholder="搜索订单、客户..."
               prefix={<SearchOutlined style={{ color: '#9ca3af' }} />}
               className={styles.searchInput}
-              bordered={false}
+              variant="borderless"
             />
             <Badge count={1} dot>
               <div className={styles.iconButton}>
@@ -153,14 +154,21 @@ const MainLayout: React.FC = () => {
             <div className={styles.userSection}>
               <div className={styles.userInfo}>
                 <div className={styles.userName}>{user.name}</div>
-                <div className={styles.userRole}>{user.role}</div>
+                <div className={styles.userRole}>{user.email || user.role}</div>
               </div>
               <Dropdown menu={userMenu}>
                 <Avatar
-                  src={user.avatar}
+                  src={user.avatar || undefined}
                   size={36}
-                  style={{ cursor: 'pointer', border: '1px solid #e5e7eb' }}
-                />
+                  style={{
+                    cursor: 'pointer',
+                    border: '1px solid #e5e7eb',
+                    backgroundColor: user.avatar ? 'transparent' : '#135bec',
+                    color: 'white',
+                  }}
+                >
+                  {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </Avatar>
               </Dropdown>
             </div>
           </div>
