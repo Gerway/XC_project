@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Table, Button, Form, Select, DatePicker, Input, message } from 'antd'
+import { Table, Button, Form, Select, DatePicker, Input, App } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import { SearchOutlined } from '@ant-design/icons'
 import { OrderStatus, type IOrder } from '@yisu/shared'
@@ -72,6 +72,7 @@ const OrderList: React.FC = () => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(true)
   const [orders, setOrders] = useState<IOrder[]>([])
+  const { message } = App.useApp()
   const [pagination, setPagination] = useState<TablePaginationConfig>({
     current: 1,
     pageSize: 10,

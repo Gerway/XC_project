@@ -1,16 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import {
-  Table,
-  Button,
-  Input,
-  Card,
-  Statistic,
-  Select,
-  Switch,
-  Progress,
-  Modal,
-  message,
-} from 'antd'
+import { Table, Button, Input, Card, Statistic, Select, Switch, Progress, Modal, App } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import {
   PlusOutlined,
@@ -145,6 +134,7 @@ const CouponManager: React.FC = () => {
     total: 12,
     showTotal: (total, range) => `显示 ${range[0]} 到 ${range[1]} 条，共 ${total} 条结果`,
   })
+  const { message } = App.useApp()
 
   // 模拟异步加载
   useEffect(() => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Table, Button, Input, Card, Statistic, Select, Avatar, Popover, Form, message } from 'antd'
+import { Table, Button, Input, Card, Statistic, Select, Avatar, Popover, Form, App } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import {
   SearchOutlined,
@@ -160,6 +160,7 @@ const UserManager: React.FC = () => {
     showTotal: (total, range) =>
       `显示 ${range[0]} 到 ${range[1]} 条，共 ${total.toLocaleString()} 条结果`,
   })
+  const { message } = App.useApp()
 
   // 模拟异步
   useEffect(() => {

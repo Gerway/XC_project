@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Drawer, Descriptions, Image, Tag, Timeline, Input, Button, message } from 'antd'
+import { Drawer, Descriptions, Image, Tag, Timeline, Input, Button, App } from 'antd'
 import {
   CloseOutlined,
   CheckOutlined,
@@ -78,6 +78,7 @@ const AuditDrawer: React.FC<AuditDrawerProps> = ({
 }) => {
   const [remark, setRemark] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const { message } = App.useApp()
 
   // 重置
   const handleClose = () => {
@@ -171,7 +172,7 @@ const AuditDrawer: React.FC<AuditDrawerProps> = ({
       title={drawerTitle}
       footer={drawerFooter}
       className={styles.drawer}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className={styles.drawerBody}>
         {/* ===== 1. 基本信息 ===== */}
