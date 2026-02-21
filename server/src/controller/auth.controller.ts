@@ -55,8 +55,8 @@ export const register = async (
         // 3 准备 SQL 语句 (使用 ? 占位符防止 SQL 注入)
         const sql = `
             INSERT INTO users 
-            (user_id, username, password, idcard, role, created_at, status, email)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (user_id, username, password, idcard, role, created_at, status, email, points)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         // 按照 ? 的顺序准备对应的值
         const values = [
@@ -67,7 +67,8 @@ export const register = async (
             role,
             createdAt,
             1, // status=1 表示状态正常
-            email
+            email,
+            0 // points初始为0
         ];
 
         // 4 执行插入操作 (使用 execute 性能比 query 更好，因为它有预编译缓存)
@@ -90,7 +91,8 @@ export const register = async (
             username: username,
             email: email,
             role: role,
-            avatar: avatar || null
+            avatar: avatar || null,
+            points: 0
         };
 
         // 6. 响应前端

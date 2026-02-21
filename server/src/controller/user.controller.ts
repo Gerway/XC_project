@@ -13,7 +13,7 @@ export const getUserProfile = async (
     try {
         // 查询数据库
         const sql = `
-            SELECT user_id, username, email, idcard, role, avatar, created_at, status 
+            SELECT user_id, username, email, idcard, role, avatar, created_at, status, points
             FROM users 
             WHERE user_id = ?
         `;
