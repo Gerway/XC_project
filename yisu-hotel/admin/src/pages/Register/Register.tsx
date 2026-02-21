@@ -4,7 +4,7 @@ import { UserOutlined, MailOutlined, LockOutlined, SafetyOutlined } from '@ant-d
 import { Link, useNavigate } from 'react-router-dom'
 import styles from './Register.module.scss'
 import type { RadioChangeEvent } from 'antd'
-import request from '../../utils/request'
+import { registerApi } from '../../api/auth'
 
 // 用户角色枚举
 enum UserRole {
@@ -49,12 +49,12 @@ const Register: React.FC = () => {
   const handleRegister = async (values: RegisterFormValues) => {
     try {
       message.loading({ content: '注册中...', key: 'register' })
-      const res = (await request.post('/auth/register', {
+      const res = (await registerApi({
         username: values.username,
         email: values.email,
         password: values.password,
         role: role === UserRole.MERCHANT ? '商户' : '管理',
-      })) as { message: string; user: Record<string, unknown> }
+      })) as unknown as { message: string; user: Record<string, unknown> }
       message.success({ content: res.message || '注册并登录成功！', key: 'register', duration: 2 })
       // 服务器会自动 set cookie，另外也可以保存用户信息
       localStorage.setItem('user', JSON.stringify(res.user))

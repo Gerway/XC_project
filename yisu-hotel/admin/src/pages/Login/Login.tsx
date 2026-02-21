@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import styles from './Login.module.scss'
 import { UserRole } from '@yisu/shared/enums/UserRole'
 import type { RadioChangeEvent } from 'antd'
-import request from '../../utils/request'
+import { loginApi } from '../../api/auth'
 
 interface LoginFormValues {
   username: string
@@ -31,12 +31,12 @@ const Login: React.FC = () => {
   const handleLogin = async (values: LoginFormValues) => {
     try {
       message.loading({ content: '登录中...', key: 'login' })
-      const res = (await request.post('/auth/login', {
+      const res = (await loginApi({
         account: values.username,
         password: values.password,
         role: role === UserRole.MERCHANT ? '商户' : '管理',
         remember: values.remember,
-      })) as { message?: string; user?: Record<string, unknown> }
+      })) as unknown as { message?: string; user?: Record<string, unknown> }
 
       message.success({ content: res.message || '登录成功！', key: 'login', duration: 2 })
       localStorage.setItem('user', JSON.stringify(res.user))
