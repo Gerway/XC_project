@@ -6,22 +6,17 @@ import './FilterModal.scss';
 interface FilterModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (range: [number, number], brands: string[]) => void;
+    onConfirm: (range: [number, number], stars: number[]) => void;
     initialRange?: [number, number];
-    initialBrands?: string[];
+    initialStars?: number[];
 }
 
-const BRAND_COLOR_MAP: Record<string, string> = {
-    'Ibis': 'filter-modal__brand-icon--red',
-    'HanTing': 'filter-modal__brand-icon--blue',
-    'Ji Hotel': 'filter-modal__brand-icon--orange-4',
-    'Orange': 'filter-modal__brand-icon--orange-5',
-    'Home Inn': 'filter-modal__brand-icon--yellow',
-    'Mercure': 'filter-modal__brand-icon--purple',
-    'Crystal': 'filter-modal__brand-icon--emerald',
-    'All Season': 'filter-modal__brand-icon--indigo',
-    'Starway': 'filter-modal__brand-icon--blue-4',
-    'CitiGO': 'filter-modal__brand-icon--black',
+const STAR_COLOR_MAP: Record<number, string> = {
+    5: 'filter-modal__brand-icon--red',
+    4: 'filter-modal__brand-icon--blue',
+    3: 'filter-modal__brand-icon--orange-4',
+    2: 'filter-modal__brand-icon--emerald',
+    1: 'filter-modal__brand-icon--purple',
 };
 
 const FilterModal: React.FC<FilterModalProps> = ({
@@ -29,19 +24,19 @@ const FilterModal: React.FC<FilterModalProps> = ({
     onClose,
     onConfirm,
     initialRange = [0, 1000],
-    initialBrands = []
+    initialStars = []
 }) => {
-    const [activeTab, setActiveTab] = useState('Brand');
+    const [activeTab, setActiveTab] = useState('Star Rating');
     const [minPrice, setMinPrice] = useState(initialRange[0]);
     const [maxPrice, setMaxPrice] = useState(initialRange[1]);
-    const [selectedBrands, setSelectedBrands] = useState<string[]>(initialBrands);
+    const [selectedStars, setSelectedStars] = useState<number[]>(initialStars);
     const [sliderRect, setSliderRect] = useState<any>(null);
 
     useEffect(() => {
         if (isOpen) {
             setMinPrice(initialRange[0]);
             setMaxPrice(initialRange[1]);
-            setSelectedBrands(initialBrands);
+            setSelectedStars(initialStars);
 
             // Get slider dimensions for touch calculations
             setTimeout(() => {
@@ -53,17 +48,12 @@ const FilterModal: React.FC<FilterModalProps> = ({
         }
     }, [isOpen]);
 
-    const brands = [
-        { id: 'Ibis', name: 'Ibis' },
-        { id: 'HanTing', name: 'HanTing' },
-        { id: 'Ji Hotel', name: 'Ji Hotel' },
-        { id: 'Orange', name: 'Orange' },
-        { id: 'Home Inn', name: 'Home Inn' },
-        { id: 'Mercure', name: 'Mercure' },
-        { id: 'Crystal', name: 'Crystal' },
-        { id: 'All Season', name: 'All Season' },
-        { id: 'Starway', name: 'Starway' },
-        { id: 'CitiGO', name: 'CitiGO' },
+    const starsList = [
+        { id: 5, name: '5 Stars (Luxury)' },
+        { id: 4, name: '4 Stars (Premium)' },
+        { id: 3, name: '3 Stars (Comfort)' },
+        { id: 2, name: '2 Stars (Economy)' },
+        { id: 1, name: '1 Star (Budget)' },
     ];
 
     const pricePresets = [
@@ -116,31 +106,31 @@ const FilterModal: React.FC<FilterModalProps> = ({
         setMaxPrice(max);
     };
 
-    const toggleBrand = (brandId: string) => {
-        setSelectedBrands(prev =>
-            prev.includes(brandId)
-                ? prev.filter(id => id !== brandId)
-                : [...prev, brandId]
+    const toggleStar = (starId: number) => {
+        setSelectedStars(prev =>
+            prev.includes(starId)
+                ? prev.filter(id => id !== starId)
+                : [...prev, starId]
         );
     };
 
-    const handleSelectAllBrands = () => {
-        if (selectedBrands.length === brands.length) {
-            setSelectedBrands([]);
+    const handleSelectAllStars = () => {
+        if (selectedStars.length === starsList.length) {
+            setSelectedStars([]);
         } else {
-            setSelectedBrands(brands.map(b => b.id));
+            setSelectedStars(starsList.map(s => s.id));
         }
     };
 
     const handleConfirm = () => {
-        onConfirm([minPrice, maxPrice], selectedBrands);
+        onConfirm([minPrice, maxPrice], selectedStars);
         onClose();
     };
 
     const handleClear = () => {
         setMinPrice(0);
         setMaxPrice(1500);
-        setSelectedBrands([]);
+        setSelectedStars([]);
     };
 
     const minPercent = ((minPrice - minLimit) / (maxLimit - minLimit)) * 100;
@@ -160,7 +150,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     <View onClick={onClose} className="filter-modal__close-btn">
                         <Text className="material-symbols-outlined filter-modal__close-icon">close</Text>
                     </View>
-                    <Text className="filter-modal__title">Filter Brand & Price</Text>
+                    <Text className="filter-modal__title">Filter Stars & Price</Text>
                 </View>
 
                 {/* Price Section */}
@@ -223,7 +213,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 <View className="filter-modal__split-view">
                     {/* Sidebar */}
                     <ScrollView scrollY className="filter-modal__sidebar">
-                        {['Brand', 'Hot Spot', 'District', 'Metro', 'Landmark', 'Distance'].map(item => (
+                        {['Star Rating', 'Hot Spot', 'District', 'Distance'].map(item => (
                             <View
                                 key={item}
                                 onClick={() => setActiveTab(item)}
@@ -239,32 +229,32 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
                     {/* Main Content */}
                     <ScrollView scrollY className="filter-modal__main-content">
-                        {activeTab === 'Brand' && (
+                        {activeTab === 'Star Rating' && (
                             <View>
                                 <View className="filter-modal__brands-header">
-                                    <Text className="filter-modal__brands-title">Hotel Brands</Text>
+                                    <Text className="filter-modal__brands-title">Hotel Star Ratings</Text>
                                     <View
-                                        onClick={handleSelectAllBrands}
+                                        onClick={handleSelectAllStars}
                                         className="filter-modal__select-all-btn"
                                     >
-                                        <Text>{selectedBrands.length === brands.length ? 'Deselect All' : 'Select All'}</Text>
+                                        <Text>{selectedStars.length === starsList.length ? 'Deselect All' : 'Select All'}</Text>
                                     </View>
                                 </View>
 
                                 <View className="filter-modal__brands-grid">
-                                    {brands.map(brand => {
-                                        const isSelected = selectedBrands.includes(brand.id);
+                                    {starsList.map(star => {
+                                        const isSelected = selectedStars.includes(star.id);
                                         return (
                                             <View
-                                                key={brand.id}
-                                                onClick={() => toggleBrand(brand.id)}
+                                                key={star.id}
+                                                onClick={() => toggleStar(star.id)}
                                                 className={`filter-modal__brand-btn ${isSelected ? 'filter-modal__brand-btn--selected' : ''}`}
                                             >
-                                                <View className={`filter-modal__brand-icon ${BRAND_COLOR_MAP[brand.id] || ''}`}>
-                                                    <Text>{brand.name[0]}</Text>
+                                                <View className={`filter-modal__brand-icon ${STAR_COLOR_MAP[star.id] || ''}`}>
+                                                    <Text>{star.id}</Text>
                                                 </View>
                                                 <Text className={`filter-modal__brand-name ${isSelected ? 'filter-modal__brand-name--selected' : ''}`}>
-                                                    {brand.name}
+                                                    {star.name.split(' ')[0]} {/* just "5" or "4" or show full */}
                                                 </Text>
                                                 {isSelected && (
                                                     <View className="filter-modal__brand-check">
@@ -293,7 +283,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                         onClick={handleConfirm}
                         className="filter-modal__confirm-btn"
                     >
-                        Confirm {selectedBrands.length > 0 ? `(${selectedBrands.length})` : ''}
+                        Confirm {selectedStars.length > 0 ? `(${selectedStars.length})` : ''}
                     </Button>
                 </View>
             </View>

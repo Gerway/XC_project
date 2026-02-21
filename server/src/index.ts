@@ -1,13 +1,14 @@
-import dotenv from 'dotenv'
-import path from 'path'
-dotenv.config()
-dotenv.config({ path: path.resolve(__dirname, '../.env') })
+import dotenv from "dotenv";
+import path from 'path';
+dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-import express from 'express'
-import cookieParser from 'cookie-parser'
-import cors from 'cors'
-import AuthRouter from './route/auth.route'
-import UserRouter from './route/user.route'
+import express from "express"
+import cookieParser from "cookie-parser"
+import cors from "cors"
+import AuthRouter from "./route/auth.route"
+import UserRouter from "./route/user.route";
+import HotelRouter from "./route/hotel.route";
 import CouponRouter from './route/coupon.route'
 
 // 数据库连接测试函数
@@ -24,7 +25,8 @@ app.use(cookieParser())
 app.use(cors({ origin: true, credentials: true }))
 
 app.use('/api/auth/', AuthRouter)
-app.use('/api/user/', UserRouter)
+app.use('/api/user/', UserRouter);
+app.use('/api/hotel/', HotelRouter);
 app.use('/api/coupons', CouponRouter)
 
 app.listen(8800, async () => {
