@@ -1,132 +1,28 @@
-import React, { useState, useEffect } from 'react'
-import { Table, Button, Input, Card, Statistic, Select, Switch, Progress, App } from 'antd'
+import React, { useState, useEffect, useCallback } from 'react'
+import { Table, Button, Input, Card, Statistic, Progress, App } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import {
   PlusOutlined,
   SearchOutlined,
-  FilterOutlined,
   TagOutlined,
   PercentageOutlined,
-  HeartOutlined,
-  StarOutlined,
-  SketchOutlined,
-  ArrowUpOutlined,
   DownloadOutlined,
 } from '@ant-design/icons'
 import styles from './CouponManager.module.scss'
 import CreateCouponModal from './CreateCouponModal'
-
-// ===== 类型定义 =====
-
-/** 折扣类型 */
-type DiscountType = 'AMOUNT_OFF' | 'PERCENT_OFF'
-
-/** 颜色主题 */
-type ColorTheme = 'red' | 'orange' | 'blue' | 'purple' | 'green'
-
-/** 优惠券数据接口 */
-interface ICoupon {
-  /** 优惠券 ID */
-  id: string
-  /** 优惠券名称 */
-  name: string
-  /** 折扣类型 */
-  discountType: DiscountType
-  /** 折扣描述 */
-  discountLabel: string
-  /** 开始日期 */
-  startDate: string
-  /** 结束日期 (空代表长期有效) */
-  endDate: string
-  /** 总量 (-1 代表无限制) */
-  total: number
-  /** 已使用 */
-  used: number
-  /** 是否在线 */
-  active: boolean
-  /** 颜色主题 */
-  color: ColorTheme
-}
-
-// ===== 图标映射 =====
-const couponIcons: Record<ColorTheme, React.ReactNode> = {
-  red: <TagOutlined />,
-  orange: <PercentageOutlined />,
-  blue: <HeartOutlined />,
-  purple: <StarOutlined />,
-  green: <SketchOutlined />,
-}
-
-// ===== Mock 数据 =====
-const mockCoupons: ICoupon[] = [
-  {
-    id: 'CP-20231001',
-    name: '新用户注册专享',
-    discountType: 'AMOUNT_OFF',
-    discountLabel: '满300减50',
-    startDate: '2023-10-01',
-    endDate: '2023-12-31',
-    total: 5000,
-    used: 1245,
-    active: true,
-    color: 'red',
-  },
-  {
-    id: 'CP-20231005',
-    name: '国庆黄金周特惠',
-    discountType: 'PERCENT_OFF',
-    discountLabel: '8.5折优惠',
-    startDate: '2023-10-01',
-    endDate: '2023-10-07',
-    total: 1000,
-    used: 980,
-    active: false,
-    color: 'orange',
-  },
-  {
-    id: 'CP-20231115',
-    name: '冬季暖心大促',
-    discountType: 'AMOUNT_OFF',
-    discountLabel: '立减100元',
-    startDate: '2023-11-15',
-    endDate: '2024-01-15',
-    total: 2000,
-    used: 450,
-    active: true,
-    color: 'blue',
-  },
-  {
-    id: 'CP-20230901',
-    name: 'VIP会员升级礼',
-    discountType: 'PERCENT_OFF',
-    discountLabel: '9折优惠',
-    startDate: '2023-09-01',
-    endDate: '',
-    total: -1,
-    used: 3200,
-    active: true,
-    color: 'purple',
-  },
-  {
-    id: 'CP-20230801',
-    name: '环保出行补贴',
-    discountType: 'AMOUNT_OFF',
-    discountLabel: '立减20元',
-    startDate: '2023-08-01',
-    endDate: '2024-08-01',
-    total: 2000,
-    used: 890,
-    active: true,
-    color: 'green',
-  },
-]
+import {
+  getCouponsListApi,
+  createCouponApi,
+  deleteCouponApi,
+  type ICoupon,
+  type CouponCreateParams,
+} from '../../api/coupon'
 
 // ===== 组件 =====
 const CouponManager: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<ICoupon[]>([])
   const [searchText, setSearchText] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [pagination, setPagination] = useState<TablePaginationConfig>({
     current: 1,
@@ -136,49 +32,59 @@ const CouponManager: React.FC = () => {
   })
   const { message, modal } = App.useApp()
 
-  // 模拟异步加载
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setData(mockCoupons)
+  // 异步加载真实数据
+  const fetchCoupons = useCallback(async () => {
+    try {
+      setLoading(true)
+      const res = await getCouponsListApi()
+      setData(res as unknown as ICoupon[]) // Need correct typing on axios resolve
+    } catch {
+      message.error('获取优惠券列表失败')
+    } finally {
       setLoading(false)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [])
+    }
+  }, [message])
+
+  useEffect(() => {
+    fetchCoupons()
+  }, [fetchCoupons])
 
   // 分页
   const handleTableChange = (pag: TablePaginationConfig) => {
     setPagination(pag)
   }
 
+  // ===== 基于现有数据的前端统计计算 =====
+  // 1. 进行中优惠券 (有效期涵盖当下的)
+  const activeCouponsCount = data.filter((item) => {
+    const now = new Date().getTime()
+    // 如果没有 start_time 或 end_time，视同长期有效
+    if (!item.start_time || !item.end_time) return true
+    const start = new Date(item.start_time).getTime()
+    const end = new Date(item.end_time).getTime()
+    return now >= start && now <= end
+  }).length
+
+  // 2. 累计被领取总数 (累加所有优惠券的 issued_count)
+  const totalIssuedCount = data.reduce((sum, item) => sum + (item.issued_count || 0), 0)
+
+  // 3. 整体领取率 (总领取数 / 总发行数)
+  // 将不限量(-1)的券剔除出分母计算，避免干扰百分比
+  const limitedCoupons = data.filter((c) => c.total_count !== -1)
+  const totalCapacity = limitedCoupons.reduce((sum, c) => sum + (c.total_count || 0), 0)
+  const limitedIssued = limitedCoupons.reduce((sum, c) => sum + (c.issued_count || 0), 0)
+  const claimRate =
+    totalCapacity > 0 ? ((limitedIssued / totalCapacity) * 100).toFixed(1) + '%' : '0%'
+
   // 搜索
   const handleSearch = (value: string) => {
     setSearchText(value)
     if (!value.trim()) {
-      setData(mockCoupons)
+      fetchCoupons()
       return
     }
-    const filtered = mockCoupons.filter((item) => item.name.includes(value))
+    const filtered = data.filter((item) => item.title && item.title.includes(value))
     setData(filtered)
-  }
-
-  // 状态筛选
-  const handleStatusChange = (value: string) => {
-    setStatusFilter(value)
-    if (value === 'all') {
-      setData(mockCoupons)
-      return
-    }
-    const isActive = value === 'online'
-    setData(mockCoupons.filter((item) => item.active === isActive))
-  }
-
-  // 开关切换
-  const handleToggle = (checked: boolean, record: ICoupon) => {
-    const updated = data.map((item) =>
-      item.id === record.id ? { ...item, active: checked } : item,
-    )
-    setData(updated)
-    message.success(checked ? `「${record.name}」已上线` : `「${record.name}」已下线`)
   }
 
   // 创建新优惠券
@@ -187,53 +93,52 @@ const CouponManager: React.FC = () => {
   }
 
   // 创建提交
-  const handleCreateSubmit = (coupon: ICoupon) => {
-    setData((prev) => [coupon, ...prev])
-    setCreateModalOpen(false)
-    message.success(`优惠券「${coupon.name}」创建成功`)
-  }
-
-  // 编辑 (预留)
-  const handleEdit = (record: ICoupon) => {
-    message.info(`编辑「${record.name}」功能（待实现）`)
+  const handleCreateSubmit = async (coupon: CouponCreateParams) => {
+    try {
+      await createCouponApi(coupon)
+      message.success(`优惠券「${coupon.title}」创建成功`)
+      setCreateModalOpen(false)
+      fetchCoupons() // 重新获取列表
+    } catch {
+      message.error('创建优惠券失败')
+    }
   }
 
   // 删除 (预留)
   const handleDelete = (record: ICoupon) => {
     modal.confirm({
       title: '确认删除',
-      content: `确定要删除优惠券「${record.name}」吗？此操作不可恢复。`,
+      content: `确定要删除优惠券「${record.title}」吗？此操作不可恢复。`,
       okText: '删除',
       okType: 'danger',
       cancelText: '取消',
-      onOk: () => {
-        setData((prev) => prev.filter((item) => item.id !== record.id))
-        message.success(`已删除「${record.name}」`)
+      onOk: async () => {
+        try {
+          await deleteCouponApi(record.coupon_id)
+          message.success(`已删除「${record.title}」`)
+          fetchCoupons() // 重新获取列表
+        } catch {
+          message.error('删除优惠券失败')
+        }
       },
     })
   }
 
-  // 筛选按钮 (预留)
-  const handleFilter = () => {
-    message.info('高级筛选功能（待实现）')
-  }
-
   // ===== 计算用量 =====
   const getUsageInfo = (record: ICoupon) => {
-    const totalText = record.total === -1 ? '无限制' : record.total.toLocaleString()
-    const usedText = record.used.toLocaleString()
-    const percent = record.total === -1 ? 60 : Math.round((record.used / record.total) * 100)
-    const percentText = record.total === -1 ? '-' : `${percent}%`
+    const totalText = record.total_count === -1 ? '无限制' : record.total_count.toLocaleString()
+    const usedText = record.issued_count.toLocaleString()
+    const percent =
+      record.total_count === -1 ? 60 : Math.round((record.issued_count / record.total_count) * 100)
+    const percentText = record.total_count === -1 ? '-' : `${percent}%`
     return { totalText, usedText, percent, percentText }
   }
 
   // 进度条颜色
   const getProgressColor = (record: ICoupon) => {
-    if (record.total === -1) return record.color === 'purple' ? '#8b5cf6' : '#1890ff'
-    const ratio = record.used / record.total
+    if (record.total_count === -1) return '#1890ff'
+    const ratio = record.issued_count / record.total_count
     if (ratio >= 0.9) return '#f97316'
-    if (record.color === 'green') return '#22c55e'
-    if (record.color === 'purple') return '#8b5cf6'
     return '#1890ff'
   }
 
@@ -241,38 +146,37 @@ const CouponManager: React.FC = () => {
   const columns: ColumnsType<ICoupon> = [
     {
       title: '优惠券名称',
-      key: 'name',
+      key: 'title',
       render: (_: unknown, record: ICoupon) => (
         <div className={styles.couponNameCell}>
-          <div className={`${styles.couponIcon} ${styles[record.color]}`}>
-            {couponIcons[record.color]}
+          <div className={`${styles.couponIcon} ${styles.blue}`}>
+            <TagOutlined />
           </div>
           <div className={styles.couponNameText}>
-            <span className={styles.name}>{record.name}</span>
-            <span className={styles.id}>ID: {record.id}</span>
+            <span className={styles.name}>{record.title}</span>
+            <span className={styles.id}>ID: {record.coupon_id}</span>
           </div>
         </div>
       ),
     },
     {
-      title: '折扣类型',
-      key: 'discountType',
+      title: '折扣规则',
+      key: 'discountRule',
       width: 140,
       render: (_: unknown, record: ICoupon) => (
-        <span className={`${styles.discountTag} ${styles[record.color]}`}>
-          {record.discountLabel}
+        <span className={`${styles.discountTag} ${styles.blue}`}>
+          满{record.min_spend}减{record.discount_amount}
         </span>
       ),
     },
     {
       title: '有效期',
       key: 'validity',
-      width: 160,
       render: (_: unknown, record: ICoupon) => (
         <div className={styles.dateCell}>
-          <span className={styles.startDate}>{record.startDate}</span>
+          <span className={styles.startDate}>{record.start_time || '-'}</span>
           <span className={styles.endDate}>
-            {record.endDate ? `至 ${record.endDate}` : '长期有效'}
+            {record.end_time ? `至 ${record.end_time}` : '长期有效'}
           </span>
         </div>
       ),
@@ -303,28 +207,12 @@ const CouponManager: React.FC = () => {
       },
     },
     {
-      title: '状态',
-      key: 'status',
-      width: 100,
-      align: 'center',
-      render: (_: unknown, record: ICoupon) => (
-        <Switch
-          checked={record.active}
-          size="small"
-          onChange={(checked) => handleToggle(checked, record)}
-        />
-      ),
-    },
-    {
       title: '操作',
       key: 'action',
       width: 130,
       align: 'right',
       render: (_: unknown, record: ICoupon) => (
-        <div>
-          <a className={styles.actionLink} onClick={() => handleEdit(record)}>
-            编辑
-          </a>
+        <div className={styles.actionCell}>
           <a className={styles.deleteLink} onClick={() => handleDelete(record)}>
             删除
           </a>
@@ -357,11 +245,11 @@ const CouponManager: React.FC = () => {
           <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>进行中优惠券</p>
-              <Statistic value={12} styles={{ content: { fontSize: 30, fontWeight: 700 } }} />
-              <div className={styles.trendUp}>
-                <ArrowUpOutlined style={{ fontSize: 12 }} />
-                较上周 +2
-              </div>
+              <Statistic
+                value={activeCouponsCount}
+                styles={{ content: { fontSize: 30, fontWeight: 700 } }}
+              />
+              <div className={styles.trendNeutral}>根据时效自动统计</div>
             </div>
             <div className={`${styles.statIcon} ${styles.blue}`}>
               <TagOutlined />
@@ -370,12 +258,12 @@ const CouponManager: React.FC = () => {
 
           <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
-              <p>今日领取数</p>
-              <Statistic value={1286} styles={{ content: { fontSize: 30, fontWeight: 700 } }} />
-              <div className={styles.trendUp}>
-                <ArrowUpOutlined style={{ fontSize: 12 }} />
-                环比 +15%
-              </div>
+              <p>累计被领取量</p>
+              <Statistic
+                value={totalIssuedCount}
+                styles={{ content: { fontSize: 30, fontWeight: 700 } }}
+              />
+              <div className={styles.trendNeutral}>所有券的总发放数</div>
             </div>
             <div className={`${styles.statIcon} ${styles.indigo}`}>
               <DownloadOutlined />
@@ -384,9 +272,12 @@ const CouponManager: React.FC = () => {
 
           <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
-              <p>累计核销率</p>
-              <Statistic value="68.4%" styles={{ content: { fontSize: 30, fontWeight: 700 } }} />
-              <div className={styles.trendNeutral}>总发放: 45,200</div>
+              <p>整体领取率</p>
+              <Statistic
+                value={claimRate}
+                styles={{ content: { fontSize: 30, fontWeight: 700 } }}
+              />
+              <div className={styles.trendNeutral}>限量优惠券的领取占比</div>
             </div>
             <div className={`${styles.statIcon} ${styles.emerald}`}>
               <PercentageOutlined />
@@ -405,21 +296,6 @@ const CouponManager: React.FC = () => {
               onChange={(e) => handleSearch(e.target.value)}
             />
           </div>
-          <div className={styles.filterActions}>
-            <Select
-              className={styles.statusSelect}
-              value={statusFilter}
-              onChange={handleStatusChange}
-              options={[
-                { value: 'all', label: '所有状态' },
-                { value: 'online', label: '在线' },
-                { value: 'offline', label: '已下线' },
-              ]}
-            />
-            <Button icon={<FilterOutlined />} className={styles.filterBtn} onClick={handleFilter}>
-              筛选
-            </Button>
-          </div>
         </div>
 
         {/* ===== 表格 ===== */}
@@ -427,7 +303,7 @@ const CouponManager: React.FC = () => {
           <Table<ICoupon>
             columns={columns}
             dataSource={data}
-            rowKey="id"
+            rowKey="coupon_id"
             loading={loading}
             pagination={pagination}
             onChange={handleTableChange}
