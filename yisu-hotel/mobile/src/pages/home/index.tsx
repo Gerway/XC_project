@@ -114,7 +114,7 @@ const Home: React.FC = () => {
             <View className="home__logo">
               <Text className="home__logo-letter">Y</Text>
             </View>
-            <Text className="home__brand-name">YiSu</Text>
+            <Text className="home__brand-name">易宿</Text>
           </View>
           <View className="home__avatar-btn" onClick={navigateToProfile}>
             <Image
@@ -155,7 +155,7 @@ const Home: React.FC = () => {
                   className="home__search-input"
                   value={keyword}
                   onInput={e => setKeyword(e.detail.value)}
-                  placeholder="Search"
+                  placeholder="关键词"
                 />
                 <View className="home__search-locate-btn">
                   <Text>◎</Text>
@@ -166,17 +166,17 @@ const Home: React.FC = () => {
             {/* Date Selector */}
             <View className="home__date-selector" onClick={() => setIsDatePickerOpen(true)}>
               <View className="home__date-col">
-                <Text className="home__date-label">Check-in</Text>
+                <Text className="home__date-label">入住日期</Text>
                 <View className="home__date-value-row">
                   <Text className="home__date-value">{formatDate(dates.start)}</Text>
                   <Text className="home__date-day">{isToday(dates.start) ? 'Today' : getWeekDay(dates.start)}</Text>
                 </View>
               </View>
               <View className="home__nights-badge">
-                <Text>{nightCount} Night{nightCount > 1 ? 's' : ''}</Text>
+                <Text>共{nightCount} 晚{nightCount > 1 ? 's' : ''}</Text>
               </View>
               <View className="home__date-col home__date-col--right">
-                <Text className="home__date-label">Check-out</Text>
+                <Text className="home__date-label">退房日期</Text>
                 <View className="home__date-value-row home__date-value-row--right">
                   <Text className="home__date-value">{formatDate(dates.end)}</Text>
                   <Text className="home__date-day">{getWeekDay(dates.end)}</Text>
@@ -191,7 +191,7 @@ const Home: React.FC = () => {
                 <Text className={`home__filter-text ${hasFilter ? 'home__filter-text--active' : ''}`}>
                   {hasFilter
                     ? `¥${priceRange[0]}-${priceRange[1]}${selectedStars.length > 0 ? ` · ${selectedStars.length} stars` : ''}`
-                    : 'Price & Star Rating'
+                    : '价格 & 其他'
                   }
                 </Text>
               </View>
@@ -213,7 +213,7 @@ const Home: React.FC = () => {
 
             {/* Search Button */}
             <Button className="home__search-btn" onClick={handleSearch}>
-              Search Hotels
+              开始搜索
             </Button>
           </View>
 

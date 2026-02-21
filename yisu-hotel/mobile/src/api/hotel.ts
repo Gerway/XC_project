@@ -12,9 +12,12 @@ export interface Hotel {
     description: string;
     hotel_type: number;
     score: number;
-    reviews_count: number;
+    reviews: number;
     min_price: number;
     image_url?: string;
+    real_reviews_count?: number;
+    original_price?: number;
+    left_stock?: number;
 }
 
 export interface SearchHotelsParams {

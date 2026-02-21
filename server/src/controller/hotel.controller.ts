@@ -143,7 +143,24 @@ export const searchHotels = async (
                 hotel_id, name, address, city_name, latitude, longitude, 
                 star_rating, tags, description, hotel_type, score, reviews,
                 MIN(min_price) as min_price,
-                (SELECT url FROM hotel_media hm WHERE hm.hotel_id = available_rooms.hotel_id AND hm.media_type = 1 ORDER BY hm.sort_order ASC LIMIT 1) as image_url
+                (SELECT url FROM hotel_media hm WHERE hm.hotel_id = available_rooms.hotel_id AND hm.media_type = 1 ORDER BY hm.sort_order ASC LIMIT 1) as image_url,
+                (SELECT COUNT(*) FROM reviews rev WHERE rev.hotel_id = available_rooms.hotel_id) as real_reviews_count,
+                (
+                    SELECT r.ori_price 
+                    FROM room r 
+                    INNER JOIN room_inventory ri ON r.room_id = ri.room_id 
+                    WHERE r.hotel_id = available_rooms.hotel_id 
+                    ${check_in ? `AND ri.date = '${check_in}'` : ''} 
+                    ORDER BY ri.price ASC LIMIT 1
+                ) as original_price,
+                (
+                    SELECT ri.stock 
+                    FROM room_inventory ri 
+                    INNER JOIN room r ON r.room_id = ri.room_id 
+                    WHERE r.hotel_id = available_rooms.hotel_id 
+                    ${check_in ? `AND ri.date = '${check_in}'` : ''} 
+                    ORDER BY ri.price ASC LIMIT 1
+                ) as left_stock
             FROM (${sql}) AS available_rooms
             GROUP BY hotel_id
             ORDER BY score DESC
