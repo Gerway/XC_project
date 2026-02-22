@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, Input, ScrollView } from '@tarojs/components';
+import { View, Text, Input, ScrollView, Image } from '@tarojs/components';
 import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import { Hotel, Room, OrderStatus, Order, Coupon } from '../../../types/types';
 import { MOCK_USER, COUPONS } from '../../constants';
@@ -21,7 +21,11 @@ const Booking: React.FC = () => {
           dates: data.dates ? {
             start: new Date(data.dates.start),
             end: new Date(data.dates.end)
-          } : undefined
+          } : undefined,
+          pkgBreakfast: (data.pkgBreakfast || '无餐食') as string,
+          pkgCancellation: (data.pkgCancellation || '不可取消') as string,
+          pkgPrice: Number(data.pkgPrice) || 0,
+          pkgDesc: (data.pkgDesc || '立即确认') as string
         };
       }
     } catch (e) { /* ignore */ }
@@ -57,9 +61,13 @@ const Booking: React.FC = () => {
     end: new Date(new Date().setDate(new Date().getDate() + 1))
   }, [bookingData]);
 
-  const [guestName, setGuestName] = useState(user?.username || 'Liu Che');
-  const [phoneNumber, setPhoneNumber] = useState('182 **** 7789');
-  const [arrivalTime, setArrivalTime] = useState('Before 19:00');
+  const [guestName, setGuestName] = useState(() => {
+    try { const u = JSON.parse(Taro.getStorageSync('userInfo') || '{}'); return u.username || '访客'; } catch { return '访客'; }
+  });
+  const [phoneNumber, setPhoneNumber] = useState(() => {
+    try { const u = JSON.parse(Taro.getStorageSync('userInfo') || '{}'); return u.phone || ''; } catch { return ''; }
+  });
+  const [arrivalTime, setArrivalTime] = useState('19:00前');
   const [notes, setNotes] = useState('');
   const [roomCount, setRoomCount] = useState(1);
   const [showRoomModal, setShowRoomModal] = useState(false);
@@ -69,12 +77,33 @@ const Booking: React.FC = () => {
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [showBreakfast, setShowBreakfast] = useState(false);
   const [breakfastCounts, setBreakfastCounts] = useState<Record<string, number>>({});
+  const [breakfastInitialized, setBreakfastInitialized] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Parse initial breakfast count from package
+  const pkgBreakfastCount = useMemo(() => {
+    const bf = bookingData?.pkgBreakfast || '无餐食';
+    const match = bf.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+  }, [bookingData]);
+
+  const pkgCancellation = bookingData?.pkgCancellation || '不可取消';
+  const pkgPrice = (bookingData?.pkgPrice || Number((room as any)?.avg_price) || 0);
+  const pkgDesc = bookingData?.pkgDesc || '立即确认';
+
+  // Read user points for membership value
+  const userPoints = useMemo(() => {
+    try {
+      const u = JSON.parse(Taro.getStorageSync('userInfo') || '{}');
+      return Number(u.points) || 0;
+    } catch { return 0; }
+  }, []);
+  const membershipValue = Math.floor(userPoints / 10000) * 20;
 
   if (!hotel || !room) {
     return (
       <View className="booking-page">
-        <Text>Loading...</Text>
+        <Text>加载中...</Text>
       </View>
     );
   }
@@ -113,7 +142,7 @@ const Booking: React.FC = () => {
     return datesArr;
   })();
 
-  const roomPriceTotal = room.price * nights * roomCount;
+  const roomPriceTotal = pkgPrice * nights * roomCount;
   const breakfastPricePerUnit = 40;
   const totalBreakfastCount = (Object.values(breakfastCounts) as number[]).reduce((a, b) => a + b, 0);
   const breakfastTotal = totalBreakfastCount * breakfastPricePerUnit;
@@ -141,6 +170,14 @@ const Booking: React.FC = () => {
     return d.getDate() === tomorrow.getDate() && d.getMonth() === tomorrow.getMonth();
   };
 
+  // Initialize breakfast counts with package default (only once after breakfastDates are ready)
+  if (!breakfastInitialized && pkgBreakfastCount > 0 && breakfastDates.length > 0) {
+    const initial: Record<string, number> = {};
+    breakfastDates.forEach(d => { initial[d] = pkgBreakfastCount; });
+    setBreakfastCounts(initial);
+    setBreakfastInitialized(true);
+  }
+
   const updateBreakfast = (dateStr: string, delta: number) => {
     setBreakfastCounts(prev => {
       const current = prev[dateStr] || 0;
@@ -160,7 +197,7 @@ const Booking: React.FC = () => {
 
   const handlePay = () => {
     if (!guestName || !phoneNumber) {
-      Taro.showToast({ title: 'Please fill in all guest information.', icon: 'none' });
+      Taro.showToast({ title: '请填写入住人信息', icon: 'none' });
       return;
     }
     setIsProcessing(true);
@@ -219,14 +256,14 @@ const Booking: React.FC = () => {
       }
 
       setIsProcessing(false);
-      Taro.showToast({ title: 'Payment Successful!', icon: 'success' });
+      Taro.showToast({ title: '支付成功！', icon: 'success' });
       setTimeout(() => {
         Taro.switchTab({ url: '/pages/orders/index' });
       }, 1500);
     }, 2000);
   };
 
-  const dateRangeText = `${formatDateShort(safeDates.start.toISOString())}-${formatDateShort(safeDates.end.toISOString())} Total ${nights} night${nights > 1 ? 's' : ''}`;
+  const dateRangeText = `${formatDateShort(safeDates.start.toISOString())}-${formatDateShort(safeDates.end.toISOString())} 共${nights}晚`;
 
   return (
     <View className="booking-page">
@@ -237,9 +274,9 @@ const Booking: React.FC = () => {
             <Text className="booking-page__back-icon">‹</Text>
           </View>
           <Text className="booking-page__title">{hotel.name}</Text>
-          <View className="booking-page__header-actions">
+          {/* <View className="booking-page__header-actions">
             <Text className="booking-page__more-icon">⋯</Text>
-          </View>
+          </View> */}
         </View>
       </View>
 
@@ -248,19 +285,19 @@ const Booking: React.FC = () => {
         <View className="booking-page__section booking-page__section--padded">
           <View className="booking-page__date-row">
             <Text className="booking-page__date-main">{formatDate(safeDates.start)}</Text>
-            <Text className="booking-page__date-label">{isToday(safeDates.start) ? 'Today' : ''}</Text>
-            <Text className="booking-page__nights-tag">{nights} Night{nights > 1 ? 's' : ''}</Text>
+            <Text className="booking-page__date-label">{isToday(safeDates.start) ? '今天' : ''}</Text>
+            <Text className="booking-page__nights-tag">共{nights}晚</Text>
             <Text className="booking-page__date-main">{formatDate(safeDates.end)}</Text>
-            <Text className="booking-page__date-label">{isTomorrow(safeDates.end) ? 'Tomorrow' : ''}</Text>
+            <Text className="booking-page__date-label">{isTomorrow(safeDates.end) ? '明天' : ''}</Text>
           </View>
 
           <Text className="booking-page__room-name">{room.name}</Text>
 
           <View className="booking-page__policy">
-            <Text className="booking-page__policy-icon">ℹ️</Text>
+            <Image src="https://api.iconify.design/lucide:info.svg?color=%23f97316" style={{ width: 16, height: 16 }} />
             <View className="booking-page__policy-content">
-              <Text className="booking-page__policy-title">Check-in & Cancellation Policy:</Text>
-              <Text>Free cancellation within 1 hour after payment, non-refundable after 1 hour.</Text>
+              <Text className="booking-page__policy-title">入住与取消政策：</Text>
+              <Text>入住时间为下午 14:00 之后。{pkgCancellation}</Text>
             </View>
           </View>
         </View>
@@ -268,8 +305,8 @@ const Booking: React.FC = () => {
         {/* Confirmation Banner */}
         <View className="booking-page__confirm-banner">
           <View className="booking-page__confirm-info">
-            <Text className="booking-page__confirm-icon">✅</Text>
-            <Text className="booking-page__confirm-text">Instant confirmation after booking!</Text>
+            <Image src="https://api.iconify.design/lucide:circle-check.svg?color=%23f97316" style={{ width: 16, height: 16 }} />
+            <Text className="booking-page__confirm-text">{pkgDesc.includes('5小时') ? '预订后5小时内确认' : '预订后立即确认！'}</Text>
           </View>
           <Text className="booking-page__confirm-arrow">›</Text>
         </View>
@@ -278,9 +315,9 @@ const Booking: React.FC = () => {
         <View className="booking-page__section">
           {/* Room Count */}
           <View className="booking-page__form-row" onClick={() => setShowRoomModal(true)}>
-            <Text className="booking-page__form-label">Rooms</Text>
+            <Text className="booking-page__form-label">房间数</Text>
             <View className="booking-page__form-value">
-              <Text className="booking-page__form-value-text">{roomCount} Room{roomCount > 1 ? 's' : ''}</Text>
+              <Text className="booking-page__form-value-text">{roomCount}间</Text>
               <Text className="booking-page__form-arrow">›</Text>
             </View>
           </View>
@@ -288,7 +325,7 @@ const Booking: React.FC = () => {
           {/* Guest Name */}
           <View className="booking-page__form-row">
             <View className="booking-page__form-label-with-help">
-              <Text className="booking-page__form-label">Guest Name</Text>
+              <Text className="booking-page__form-label">入住人</Text>
               <Text className="booking-page__form-label-help">?</Text>
             </View>
             <View className="booking-page__form-input-right">
@@ -297,14 +334,14 @@ const Booking: React.FC = () => {
                 value={guestName}
                 onInput={e => setGuestName(e.detail.value)}
                 className="booking-page__form-input"
-                placeholder="Name of guest"
+                placeholder="请输入入住人姓名"
               />
             </View>
           </View>
 
           {/* Phone */}
           <View className="booking-page__form-row">
-            <Text className="booking-page__form-label">Phone</Text>
+            <Text className="booking-page__form-label">联系电话</Text>
             <View className="booking-page__form-value">
               <Text className="booking-page__phone-prefix">+86</Text>
               <Text className="booking-page__phone-expand">▾</Text>
@@ -313,14 +350,14 @@ const Booking: React.FC = () => {
                 value={phoneNumber}
                 onInput={e => setPhoneNumber(e.detail.value)}
                 className="booking-page__phone-input"
-                placeholder="Mobile Number"
+                placeholder="请输入手机号"
               />
             </View>
           </View>
 
           {/* Arrival Time */}
           <View className="booking-page__form-row" onClick={() => setShowArrivalModal(true)}>
-            <Text className="booking-page__form-label">Arrival Time</Text>
+            <Text className="booking-page__form-label">到店时间</Text>
             <View className="booking-page__form-value">
               <Text className="booking-page__form-value-text">{arrivalTime}</Text>
               <Text className="booking-page__form-arrow">›</Text>
@@ -329,13 +366,13 @@ const Booking: React.FC = () => {
 
           {/* Notes */}
           <View className="booking-page__form-row booking-page__form-row--no-border">
-            <Text className="booking-page__form-label">Notes</Text>
+            <Text className="booking-page__form-label">备注</Text>
             <Input
               type="text"
               value={notes}
               onInput={e => setNotes(e.detail.value)}
               className="booking-page__notes-input"
-              placeholder="Special requests (Optional)"
+              placeholder="特殊要求（可选）"
             />
           </View>
         </View>
@@ -343,8 +380,8 @@ const Booking: React.FC = () => {
         {/* Membership Banner */}
         <View className="booking-page__membership">
           <View className="booking-page__membership-info">
-            <Text className="booking-page__membership-icon">💎</Text>
-            <Text className="booking-page__membership-text">Star Member Benefits (Value ¥60)</Text>
+            <Image src="https://api.iconify.design/lucide:gem.svg?color=%23f97316" style={{ width: 16, height: 16 }} />
+            <Text className="booking-page__membership-text">星级会员权益（价值 <Text className="booking-page__membership-value">¥{membershipValue}</Text>）</Text>
           </View>
           <Text className="booking-page__membership-arrow">›</Text>
         </View>
@@ -353,10 +390,10 @@ const Booking: React.FC = () => {
         <View className="booking-page__addons">
           {/* Breakfast Trigger */}
           <View className="booking-page__form-row" onClick={() => setShowBreakfast(!showBreakfast)}>
-            <Text className="booking-page__form-label">Breakfast</Text>
+            <Text className="booking-page__form-label">早餐</Text>
             <View className="booking-page__form-value">
               <Text className="booking-page__form-value-plain">
-                {totalBreakfastCount > 0 ? `Added ${totalBreakfastCount}` : 'Add Breakfast'}
+                {totalBreakfastCount > 0 ? `已添加 ${totalBreakfastCount}份` : '添加早餐'}
               </Text>
               <Text className={`booking-page__expand-icon ${showBreakfast ? 'booking-page__expand-icon--open' : ''}`}>▾</Text>
             </View>
@@ -368,10 +405,10 @@ const Booking: React.FC = () => {
               <View className="booking-page__breakfast-inner">
                 <View className="booking-page__breakfast-header">
                   <View className="booking-page__breakfast-title-row">
-                    <Text className="booking-page__breakfast-title-icon">🍽</Text>
-                    <Text className="booking-page__breakfast-title-text">Buffet Breakfast</Text>
+                    <Image src="https://api.iconify.design/lucide:utensils.svg?color=%23f97316" style={{ width: 14, height: 14 }} />
+                    <Text className="booking-page__breakfast-title-text">自助早餐</Text>
                   </View>
-                  <Text className="booking-page__breakfast-note">Only valid on selected date</Text>
+                  <Text className="booking-page__breakfast-note">仅限所选日期使用</Text>
                 </View>
 
                 {breakfastDates.map(dateStr => {
@@ -380,7 +417,7 @@ const Booking: React.FC = () => {
                     <View key={dateStr} className="booking-page__breakfast-row">
                       <Text className="booking-page__breakfast-date">{dateStr}</Text>
                       <View className="booking-page__breakfast-controls">
-                        <Text className="booking-page__breakfast-price">¥40<Text className="booking-page__breakfast-price-unit">/person</Text></Text>
+                        <Text className="booking-page__breakfast-price">¥40<Text className="booking-page__breakfast-price-unit">/人</Text></Text>
                         <View className="booking-page__breakfast-counter">
                           <View
                             onClick={() => count > 0 && updateBreakfast(dateStr, -1)}
@@ -406,27 +443,27 @@ const Booking: React.FC = () => {
 
           {/* Late Checkout */}
           <View className="booking-page__form-row">
-            <Text className="booking-page__form-label">Late Checkout</Text>
+            <Text className="booking-page__form-label">延迟退房</Text>
             <View className="booking-page__form-value">
-              <Text className="booking-page__form-value-plain">Member checkout 12:00</Text>
+              <Text className="booking-page__form-value-plain">会员 12:00 退房</Text>
               <Text className="booking-page__form-arrow">▾</Text>
             </View>
           </View>
 
           {/* Points */}
           <View className="booking-page__form-row">
-            <Text className="booking-page__form-label">Points</Text>
+            <Text className="booking-page__form-label">积分</Text>
             <View className="booking-page__form-value">
-              <Text className="booking-page__form-value-plain">Earn <Text className="booking-page__points-highlight">{pointsEarned}</Text> points</Text>
+              <Text className="booking-page__form-value-plain">可累積 <Text className="booking-page__points-highlight">{pointsEarned}</Text> 积分</Text>
               <Text className="booking-page__form-arrow">▾</Text>
             </View>
           </View>
 
           {/* Room Nights */}
           <View className="booking-page__form-row booking-page__form-row--no-border">
-            <Text className="booking-page__form-label">Nights</Text>
+            <Text className="booking-page__form-label">房晚</Text>
             <View className="booking-page__form-value">
-              <Text className="booking-page__form-value-plain">Accumulate 1 night</Text>
+              <Text className="booking-page__form-value-plain">累计 1 晚</Text>
               <Text className="booking-page__form-arrow">▾</Text>
             </View>
           </View>
@@ -434,13 +471,13 @@ const Booking: React.FC = () => {
 
         {/* Coupons Trigger */}
         <View className="booking-page__coupons-trigger" onClick={() => setShowCouponModal(true)}>
-          <Text className="booking-page__form-label">Coupons</Text>
+          <Text className="booking-page__form-label">优惠券</Text>
           <View className="booking-page__form-value">
             {selectedCoupon ? (
               <Text className="booking-page__coupon-discount">- ¥{selectedCoupon.discount_amount}</Text>
             ) : (
               <Text className="booking-page__form-value-plain">
-                {availableCoupons.length > 0 ? `${availableCoupons.length} Available` : 'No available coupons'}
+                {availableCoupons.length > 0 ? `${availableCoupons.length} 张可用` : '无可用优惠券'}
               </Text>
             )}
             <Text className="booking-page__form-arrow">›</Text>
@@ -449,7 +486,7 @@ const Booking: React.FC = () => {
 
         {/* Disclaimer */}
         <View className="booking-page__disclaimer">
-          <Text>Reminder: We will collect your name, contact information, hotel name, and check-in/out times to provide hotel booking and stay services.</Text>
+          <Text>提示：我们将收集您的姓名、联系方式、酒店名称、入住/退房时间，以提供酒店预订及入住服务。</Text>
         </View>
 
         {/* Bottom spacer */}
@@ -460,16 +497,16 @@ const Booking: React.FC = () => {
       <View className="booking-page__bottom-bar">
         <View className="booking-page__bottom-inner">
           <View className="booking-page__total-section">
-            <Text className="booking-page__total-label">Total</Text>
+            <Text className="booking-page__total-label">合计</Text>
             <Text className="booking-page__total-amount">¥{total.toFixed(2)}</Text>
             <View className="booking-page__detail-toggle" onClick={() => setShowPriceDetailModal(!showPriceDetailModal)}>
-              <Text>Detail </Text>
+              <Text>明细 </Text>
               <Text className="booking-page__detail-icon">{showPriceDetailModal ? '▾' : '▴'}</Text>
             </View>
           </View>
 
           <View onClick={isProcessing ? undefined : handlePay} className={`booking-page__pay-btn ${isProcessing ? 'booking-page__pay-btn--disabled' : ''}`}>
-            <Text className="booking-page__pay-btn-text">{isProcessing ? 'Processing...' : 'Submit Order'}</Text>
+            <Text className="booking-page__pay-btn-text">{isProcessing ? '处理中...' : '提交订单'}</Text>
           </View>
         </View>
       </View>
@@ -482,7 +519,7 @@ const Booking: React.FC = () => {
           <View className="booking-page__modal-backdrop" onClick={() => setShowRoomModal(false)}></View>
           <View className="booking-page__modal-content">
             <View className="booking-page__modal-header">
-              <Text className="booking-page__modal-title">Select Rooms</Text>
+              <Text className="booking-page__modal-title">选择房间数</Text>
               <View onClick={() => setShowRoomModal(false)} className="booking-page__modal-close">
                 <Text className="booking-page__modal-close-icon">✕</Text>
               </View>
@@ -494,7 +531,7 @@ const Booking: React.FC = () => {
                   onClick={() => { setRoomCount(num); setShowRoomModal(false); }}
                   className={`booking-page__modal-option ${roomCount === num ? 'booking-page__modal-option--active' : ''}`}
                 >
-                  <Text>{num} Room{num > 1 ? 's' : ''}</Text>
+                  <Text>{num}间</Text>
                 </View>
               ))}
             </View>
@@ -508,14 +545,14 @@ const Booking: React.FC = () => {
           <View className="booking-page__modal-backdrop" onClick={() => setShowArrivalModal(false)}></View>
           <View className="booking-page__modal-content">
             <View className="booking-page__modal-header">
-              <Text className="booking-page__modal-title">Arrival Time</Text>
+              <Text className="booking-page__modal-title">到店时间</Text>
               <View onClick={() => setShowArrivalModal(false)} className="booking-page__modal-close">
                 <Text className="booking-page__modal-close-icon">✕</Text>
               </View>
             </View>
             <ScrollView scrollY className="booking-page__modal-scrollable">
               <View className="booking-page__modal-list">
-                {['Before 14:00', 'Before 15:00', 'Before 17:00', 'Before 19:00', 'Before 21:00', 'Before 23:59', 'Late Arrival (Next Day)'].map(time => (
+                {['14:00前', '15:00前', '17:00前', '19:00前', '21:00前', '23:59前', '次日到店'].map(time => (
                   <View
                     key={time}
                     onClick={() => { setArrivalTime(time); setShowArrivalModal(false); }}
@@ -536,7 +573,7 @@ const Booking: React.FC = () => {
           <View className="booking-page__modal-backdrop" onClick={() => setShowCouponModal(false)}></View>
           <View className="booking-page__modal-content booking-page__modal-content--tall">
             <View className="booking-page__modal-header">
-              <Text className="booking-page__modal-title">Select Coupon</Text>
+              <Text className="booking-page__modal-title">选择优惠券</Text>
               <View onClick={() => setShowCouponModal(false)} className="booking-page__modal-close">
                 <Text className="booking-page__modal-close-icon">✕</Text>
               </View>
@@ -544,7 +581,7 @@ const Booking: React.FC = () => {
             <ScrollView scrollY className="booking-page__modal-scroll-content">
               {availableCoupons.length === 0 ? (
                 <View className="booking-page__modal-empty">
-                  <Text>No usable coupons for this order.</Text>
+                  <Text>无可用优惠券</Text>
                 </View>
               ) : (
                 <View>
@@ -558,12 +595,12 @@ const Booking: React.FC = () => {
                       >
                         <View className="booking-page__coupon-value">
                           <Text className="booking-page__coupon-amount">¥{coupon.discount_amount}</Text>
-                          <Text className="booking-page__coupon-label-text">Coupon</Text>
+                          <Text className="booking-page__coupon-label-text">优惠券</Text>
                         </View>
                         <View className="booking-page__coupon-info">
                           <Text className="booking-page__coupon-title">{coupon.title}</Text>
-                          <Text className="booking-page__coupon-min-spend">Min spend ¥{coupon.min_spend}</Text>
-                          <Text className="booking-page__coupon-expiry">Exp: {coupon.end_time}</Text>
+                          <Text className="booking-page__coupon-min-spend">满¥{coupon.min_spend}可用</Text>
+                          <Text className="booking-page__coupon-expiry">有效期至: {coupon.end_time}</Text>
                         </View>
                         <View className={`booking-page__coupon-check ${isSelected ? 'booking-page__coupon-check--selected' : ''}`}>
                           {isSelected && <Text className="booking-page__coupon-check-icon">✓</Text>}
@@ -584,7 +621,7 @@ const Booking: React.FC = () => {
           <View className="booking-page__modal-backdrop" onClick={() => setShowPriceDetailModal(false)}></View>
           <View className="booking-page__modal-content booking-page__modal-content--tall">
             <View className="booking-page__price-detail-header">
-              <Text className="booking-page__price-detail-title">Cost Details</Text>
+              <Text className="booking-page__price-detail-title">费用明细</Text>
               <Text className="booking-page__price-detail-subtitle">{dateRangeText}</Text>
               <Text className="booking-page__price-detail-subtitle">{room.name}</Text>
               <View onClick={() => setShowPriceDetailModal(false)} className="booking-page__price-detail-close">
@@ -595,27 +632,27 @@ const Booking: React.FC = () => {
             <ScrollView scrollY className="booking-page__price-detail-body">
               {/* Online Payment Total Row */}
               <View className="booking-page__price-total-row">
-                <Text className="booking-page__price-total-label">Online Payment</Text>
+                <Text className="booking-page__price-total-label">在线支付</Text>
                 <Text className="booking-page__price-total-value">¥{total.toFixed(2)}</Text>
               </View>
 
               {/* Room Rate Section */}
               <View className="booking-page__price-section">
                 <View className="booking-page__price-section-header">
-                  <Text className="booking-page__price-section-title">Room Rate</Text>
+                  <Text className="booking-page__price-section-title">房费</Text>
                   <View className="booking-page__price-section-avg">
-                    <Text className="booking-page__price-avg-label">Avg </Text>
-                    <Text className="booking-page__price-avg-value">¥{room.price}</Text>
-                    <Text className="booking-page__price-avg-unit">/night</Text>
+                    <Text className="booking-page__price-avg-label">均价 </Text>
+                    <Text className="booking-page__price-avg-value">¥{pkgPrice}</Text>
+                    <Text className="booking-page__price-avg-unit">/晚</Text>
                   </View>
                 </View>
-                <Text className="booking-page__price-subtotal">{nights} nights Total ¥{(room.price * roomCount * nights).toFixed(2)}</Text>
+                <Text className="booking-page__price-subtotal">{nights}晚 合计 ¥{(pkgPrice * roomCount * nights).toFixed(2)}</Text>
 
                 <View className="booking-page__price-breakdown">
                   {stayDates.map(date => (
                     <View key={date} className="booking-page__price-breakdown-row">
-                      <Text>{formatDateShort(date)} ({roomCount} room{roomCount > 1 ? 's' : ''})</Text>
-                      <Text>¥{(room.price * roomCount).toFixed(2)}</Text>
+                      <Text>{formatDateShort(date)} ({roomCount}间)</Text>
+                      <Text>¥{(pkgPrice * roomCount).toFixed(2)}</Text>
                     </View>
                   ))}
                 </View>
@@ -628,15 +665,15 @@ const Booking: React.FC = () => {
                     <Text className="booking-page__price-section-title">Breakfast</Text>
                     <View className="booking-page__price-section-avg">
                       <Text className="booking-page__price-avg-value">¥40</Text>
-                      <Text className="booking-page__price-avg-unit">/person</Text>
+                      <Text className="booking-page__price-avg-unit">/人</Text>
                     </View>
                   </View>
-                  <Text className="booking-page__price-subtotal">{totalBreakfastCount} person Total ¥{breakfastTotal}</Text>
+                  <Text className="booking-page__price-subtotal">{totalBreakfastCount}份 合计 ¥{breakfastTotal}</Text>
                   <View className="booking-page__price-breakdown booking-page__price-breakdown--gray">
                     {(Object.entries(breakfastCounts) as [string, number][]).map(([date, count]) => (
                       count > 0 ? (
                         <View key={date} className="booking-page__price-breakdown-row">
-                          <Text>{formatDateShort(date)} ({count} person)</Text>
+                          <Text>{formatDateShort(date)} ({count}份)</Text>
                           <Text>¥{count * 40}</Text>
                         </View>
                       ) : null
@@ -649,7 +686,7 @@ const Booking: React.FC = () => {
               {selectedCoupon && (
                 <View className="booking-page__price-section-border">
                   <View className="booking-page__price-total-row" style={{ borderBottom: 'none', paddingBottom: 0 }}>
-                    <Text className="booking-page__price-section-title">Coupon</Text>
+                    <Text className="booking-page__price-section-title">优惠券</Text>
                     <Text className="booking-page__price-coupon-value">- ¥{selectedCoupon.discount_amount}</Text>
                   </View>
                 </View>
@@ -659,13 +696,13 @@ const Booking: React.FC = () => {
               <View className="booking-page__points-section">
                 <View className="booking-page__points-row">
                   <View>
-                    <Text className="booking-page__points-label">Points</Text>
+                    <Text className="booking-page__points-label">积分</Text>
                     <View className="booking-page__points-detail">
-                      <Text>Room rate points </Text>
-                      <Text className="booking-page__points-speed-badge">1x Speed</Text>
+                      <Text>房费积分 </Text>
+                      <Text className="booking-page__points-speed-badge">1倍速</Text>
                     </View>
                   </View>
-                  <Text className="booking-page__points-value">{pointsEarned} Points</Text>
+                  <Text className="booking-page__points-value">{pointsEarned} 积分</Text>
                 </View>
               </View>
             </ScrollView>

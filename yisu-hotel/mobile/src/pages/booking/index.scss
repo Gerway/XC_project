@@ -145,7 +145,7 @@ $text-10px: 10px;
 
     // ---- Confirmation Banner ----
     &__confirm-banner {
-        background: $teal-50;
+        background: $orange-50;
         padding: $spacing-3 $spacing-4;
         @include flex-between;
         margin-bottom: $spacing-2;
@@ -164,7 +164,7 @@ $text-10px: 10px;
     &__confirm-text {
         font-size: $text-xs;
         font-weight: $font-bold;
-        color: $teal-700;
+        color: $primary;
     }
 
     &__confirm-arrow {
@@ -292,6 +292,11 @@ $text-10px: 10px;
         color: $gray-900;
     }
 
+    &__membership-value {
+        color: $primary;
+        font-weight: $font-bold;
+    }
+
     &__membership-arrow {
         color: $gray-300;
         font-size: $text-xl;
@@ -399,8 +404,8 @@ $text-10px: 10px;
         }
 
         &--plus {
-            border-color: $blue-600;
-            color: $blue-600;
+            border-color: $primary;
+            color: $primary;
         }
 
         &--disabled {

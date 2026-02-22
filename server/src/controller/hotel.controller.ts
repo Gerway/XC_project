@@ -238,7 +238,7 @@ export const getHotelDetails = async (
         let roomSql = `
             SELECT 
                 r.room_id, r.name, r.area, r.has_breakfast, r.has_window, r.room_bed, r.ori_price,
-                MIN(ri.price) as min_price,
+                ROUND(AVG(ri.price), 2) as avg_price,
                 (SELECT url FROM room_media rm WHERE rm.room_id = r.room_id ORDER BY rm.sort_order ASC LIMIT 1) as image_url
             FROM room r
             INNER JOIN room_inventory ri ON r.room_id = ri.room_id

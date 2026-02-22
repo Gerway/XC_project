@@ -47,7 +47,7 @@ export interface RoomDetails {
     has_window: number;
     room_bed: string;
     ori_price: number;
-    min_price: number;
+    avg_price: number;
     image_url?: string;
 }
 

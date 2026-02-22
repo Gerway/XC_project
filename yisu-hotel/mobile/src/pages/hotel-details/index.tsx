@@ -102,7 +102,7 @@ const HotelDetailsPage: React.FC = () => {
     );
   }
 
-  const handleBook = (room: RoomDetails, pkgPrice: number, pkgName: string) => {
+  const handleBook = (room: RoomDetails, pkgPrice: number, pkgName: string, pkgBreakfast: string, pkgCancellation: string, pkgDesc: string) => {
     // Check login status first
     const userInfo = Taro.getStorageSync('userInfo');
     if (!userInfo) {
@@ -157,7 +157,11 @@ const HotelDetailsPage: React.FC = () => {
     Taro.setStorageSync('bookingInfo', JSON.stringify({
       hotel: hotelDetails,
       room,
-      dates: { start: dates.start.getTime(), end: dates.end.getTime() }
+      dates: { start: dates.start.getTime(), end: dates.end.getTime() },
+      pkgBreakfast,
+      pkgCancellation,
+      pkgPrice,
+      pkgDesc
     }));
 
     // 4. Navigate with orderId
@@ -199,7 +203,7 @@ const HotelDetailsPage: React.FC = () => {
     const dd = cancelDate.getDate().toString().padStart(2, '0');
     const cancelTimeStr = `${mm}月${dd}日18:00`;
 
-    const roomMinPrice = Number(room.min_price) || 0;
+    const roomMinPrice = Number(room.avg_price) || 0;
     const roomOriPrice = Number(room.ori_price) || 0;
 
     for (let b = baseBreakfast; b <= 2; b++) {
@@ -248,7 +252,7 @@ const HotelDetailsPage: React.FC = () => {
   } catch (e) {
     console.error('Failed to parse userInfo', e);
   }
-  const pointDiscount = Math.floor(userPoints / 100);
+  const pointDiscount = Math.floor(userPoints / 10000 * 20);
 
   const NEW_AMENITIES = [
     { label: `${hotelDetails?.open_time ? hotelDetails.open_time.substring(0, 4) : '2014'}年开业`, icon: "https://api.iconify.design/lucide:newspaper.svg?color=%23333333&strokeWidth=1.5" },
@@ -484,17 +488,16 @@ const HotelDetailsPage: React.FC = () => {
                   </View>
                   <View className="hotel-details__room-summary-price-area">
                     <View className="hotel-details__room-summary-price">
-                      {room.ori_price && room.ori_price > room.min_price && (
+                      {room.ori_price && room.ori_price > room.avg_price && (
                         <Text className="hotel-details__room-summary-ori-price">¥{room.ori_price}</Text>
                       )}
-                      <Text className={`hotel-details__room-summary-min-price ${room.ori_price && room.ori_price > room.min_price ? 'hotel-details__room-summary-min-price--red' : ''}`}>
-                        <Text style={{ fontSize: '12px' }}>¥</Text>{room.min_price}
-                        <Text style={{ fontSize: '12px', color: '#666', fontWeight: 'normal' }}>起</Text>
+                      <Text className={`hotel-details__room-summary-min-price ${room.ori_price && room.ori_price > room.avg_price ? 'hotel-details__room-summary-min-price--red' : ''}`}>
+                        <Text style={{ fontSize: '12px' }}>均¥</Text>{room.avg_price}
                       </Text>
                     </View>
                     {userPoints > 0 && pointDiscount > 0 && (
                       <View className="hotel-details__room-summary-discount">
-                        <Text>积分当钱花·优惠{pointDiscount}</Text>
+                        <Text>当前会员等级可优惠{pointDiscount}</Text>
                       </View>
                     )}
                   </View>
@@ -549,7 +552,7 @@ const HotelDetailsPage: React.FC = () => {
                         <View className="hotel-details__pkg-discount">
                           <Text>优惠{(pkg.oriPrice - pkg.price)}</Text>
                         </View>
-                        <View className="hotel-details__pkg-book-btn" onClick={() => handleBook(room, pkg.price, `${room.name}(${pkg.breakfast})`)}>
+                        <View className="hotel-details__pkg-book-btn" onClick={() => handleBook(room, pkg.price, `${room.name}(${pkg.breakfast})`, pkg.breakfast, pkg.cancellation, pkg.desc)}>
                           <Text className="hotel-details__pkg-book-btn-text">订</Text>
                         </View>
                       </View>
