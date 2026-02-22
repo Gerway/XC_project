@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Table, Tag, Button, Tooltip, Modal, Form, Input, Select, App } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import {
@@ -12,52 +12,7 @@ import {
 } from '@ant-design/icons'
 import { HotelStatus, type IHotel } from '@yisu/shared'
 import styles from './HotelList.module.scss'
-
-// Initial Mock Data
-const initialHotels: IHotel[] = [
-  {
-    id: 'H-2023-001',
-    name: '易宿广场大酒店',
-    description: '豪华型 · 5星级',
-    address: '北京市朝阳区建国路88号',
-    submissionDate: '2023年10月24日',
-    status: HotelStatus.PUBLISHED,
-  },
-  {
-    id: 'H-2023-002',
-    name: '日落湾度假村',
-    description: '度假型 · 4星级',
-    address: '海南省三亚市亚龙湾度假区1号',
-    submissionDate: '2023年10月23日',
-    status: HotelStatus.REJECTED,
-    rejectionReason: '上传的物业文件不完整。',
-  },
-  {
-    id: 'H-2023-005',
-    name: '城中城旅馆',
-    description: '经济型 · 3星级',
-    address: '上海市黄浦区南京东路555号',
-    submissionDate: '2023年10月22日',
-    status: HotelStatus.PENDING,
-  },
-  {
-    id: 'H-2023-008',
-    name: '山景山庄',
-    description: '民宿 · 精选',
-    address: '浙江省杭州市西湖区满觉陇路',
-    submissionDate: '2023年10月20日',
-    status: HotelStatus.REJECTED,
-    rejectionReason: '违反定价政策。请查阅指南。',
-  },
-  {
-    id: 'H-2023-012',
-    name: '云端商务酒店',
-    description: '商务型 · 4星级',
-    address: '广东省深圳市南山区科技园',
-    submissionDate: '2023年10月18日',
-    status: HotelStatus.PUBLISHED,
-  },
-]
+import { hotelApi } from '../../api/hotel'
 
 // Hotel type options
 const hotelTypeOptions = [
@@ -129,7 +84,27 @@ const statusConfig: Record<HotelStatus, { color: string; text: string }> = {
 }
 
 const HotelList: React.FC = () => {
-  const [hotels, setHotels] = useState<IHotel[]>(initialHotels)
+  const [hotels, setHotels] = useState<IHotel[]>([])
+  const [loading, setLoading] = useState(false)
+  const fetchHotels = async () => {
+    setLoading(true)
+    try {
+      const res = await hotelApi.searchHotels({})
+      if (res && res.data) {
+        setHotels(res.data.map(h => ({ ...h, status: HotelStatus.PUBLISHED })))
+        setPagination(prev => ({ ...prev, total: res.data.length }))
+      }
+    } catch (err) {
+      console.error(err)
+      message.error('获取酒店列表失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchHotels()
+  }, [])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingHotel, setEditingHotel] = useState<IHotel | null>(null) // null = Add mode
   const [confirmLoading, setConfirmLoading] = useState(false)
@@ -163,13 +138,13 @@ const HotelList: React.FC = () => {
     // Update status to PENDING and clear rejection reason
     setHotels((prev) =>
       prev.map((h) =>
-        h.id === hotel.id ? { ...h, status: HotelStatus.PENDING, rejectionReason: undefined } : h,
+        h.hotel_id === hotel.hotel_id ? { ...h, status: HotelStatus.PENDING, rejectionReason: undefined } : h,
       ),
     )
     // Remove from edited set after submitting review
     setEditedHotelIds((prev) => {
       const next = new Set(prev)
-      next.delete(hotel.id)
+      next.delete(String(hotel.hotel_id))
       return next
     })
     message.success(`已提交"${hotel.name}"的审核申请`)
@@ -213,7 +188,7 @@ const HotelList: React.FC = () => {
         // --- Edit mode ---
         setHotels((prev) =>
           prev.map((h) =>
-            h.id === editingHotel.id
+            h.hotel_id === editingHotel.hotel_id
               ? {
                   ...h,
                   name: values.name,
@@ -224,12 +199,12 @@ const HotelList: React.FC = () => {
           ),
         )
         // Mark hotel as edited so "提交审核" button becomes enabled
-        setEditedHotelIds((prev) => new Set(prev).add(editingHotel.id))
+        setEditedHotelIds((prev) => new Set(prev).add(String(editingHotel.hotel_id)))
         message.success(`酒店"${values.name}"的信息已更新`)
       } else {
         // --- Add mode ---
         const newHotel: IHotel = {
-          id: generateHotelId(),
+          hotel_id: generateHotelId(),
           name: values.name,
           description: `${values.type} · ${values.starRating}`,
           address: values.address,
@@ -264,7 +239,7 @@ const HotelList: React.FC = () => {
       width: 240,
       render: (_: string, record: IHotel) => (
         <div className={styles.hotelInfo}>
-          <div className={styles.iconWrapper}>{getHotelIcon(record.id)}</div>
+          <div className={styles.iconWrapper}>{getHotelIcon(String(record.hotel_id))}</div>
           <div className={styles.details}>
             <p className={styles.name}>{record.name}</p>
             {record.description && <p className={styles.desc}>{record.description}</p>}
@@ -305,7 +280,7 @@ const HotelList: React.FC = () => {
       width: 220,
       render: (_: unknown, record: IHotel) => {
         const isRejected = record.status === HotelStatus.REJECTED
-        const isEdited = editedHotelIds.has(record.id)
+        const isEdited = editedHotelIds.has(String(record.hotel_id))
         const canSubmit = isRejected || isEdited
 
         return (
@@ -374,9 +349,10 @@ const HotelList: React.FC = () => {
 
         <div className={styles.tableCard}>
           <Table<IHotel>
+            loading={loading}
             columns={columns}
             dataSource={hotels}
-            rowKey="id"
+            rowKey="hotel_id"
             pagination={pagination}
             onChange={handleTableChange}
             scroll={{ x: 800 }}
@@ -404,7 +380,7 @@ const HotelList: React.FC = () => {
           <div className={styles.editInfoBar}>
             <span className={styles.editInfoItem}>
               <span className={styles.editInfoLabel}>酒店ID</span>
-              <span className={styles.editInfoValue}>{editingHotel.id}</span>
+              <span className={styles.editInfoValue}>{editingHotel.hotel_id}</span>
             </span>
             <span className={styles.editInfoDivider} />
             <span className={styles.editInfoItem}>
