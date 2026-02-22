@@ -116,7 +116,7 @@ export const hotelApi = {
     createOrder(data: {
         user_id: string; hotel_id: string; room_id: string;
         check_in: string; check_out: string; nights: number; room_count: number;
-        can_cancel: number; special_request?: string;
+        total_price: number; real_pay: number; can_cancel: number; special_request?: string;
     }) {
         return request<{ message: string; data: { order_id: string } }>({
             url: '/hotel/order/create',
@@ -129,12 +129,60 @@ export const hotelApi = {
      * 用户支付，更新订单状态并插入 order_details
      */
     payOrder(data: {
-        order_id: string; real_pay: number; total_price: number;
+        order_id: string; real_pay: number; total_price: number; room_count: number;
         special_request?: string; idcards: string;
         daily: { date: string; price: number; breakfast_count: number }[];
     }) {
         return request<{ message: string; data: { order_id: string } }>({
             url: '/hotel/order/pay',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 未支付退出时的订单信息同步更新
+     */
+    updatePendingOrder(data: {
+        order_id: string; real_pay: number; total_price: number; room_count: number;
+        special_request?: string; idcards: string;
+        daily: { date: string; price: number; breakfast_count: number }[];
+    }) {
+        return request<{ message: string }>({
+            url: '/hotel/order/update',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 获取用户订单列表
+     */
+    getUserOrders(data: { user_id: string }) {
+        return request<{ message: string; data: any[] }>({
+            url: '/hotel/order/list',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 删除订单（同时删除 order_details）
+     */
+    deleteOrder(data: { order_id: string }) {
+        return request<{ message: string }>({
+            url: '/hotel/order/delete',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 取消订单（状态改为已取消）
+     */
+    cancelOrder(data: { order_id: string }) {
+        return request<{ message: string }>({
+            url: '/hotel/order/cancel',
             method: 'POST',
             data
         });

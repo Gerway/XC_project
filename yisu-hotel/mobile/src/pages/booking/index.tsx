@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { View, Text, Input, ScrollView, Image } from '@tarojs/components';
-import Taro, { useRouter } from '@tarojs/taro';
+import Taro, { useRouter, useUnload } from '@tarojs/taro';
 import { Hotel, Room, Coupon } from '../../../types/types';
 import { COUPONS } from '../../constants';
 import { hotelApi, DailyInventory } from '../../api/hotel';
@@ -137,6 +137,10 @@ const Booking: React.FC = () => {
       const userId = userInfoStr ? JSON.parse(userInfoStr).user_id : null;
       const hotelId = (hotel as any)?.hotel_id;
       const canCancel = pkgCancellation.includes('免费') ? 1 : 0;
+
+      const initialTotalPrice = pkgPrice * nights * roomCount;
+      const initialRealPay = Math.max(0, initialTotalPrice - membershipValue);
+
       if (userId && hotelId) {
         hotelApi.createOrder({
           user_id: userId,
@@ -146,6 +150,8 @@ const Booking: React.FC = () => {
           check_out: checkOut,
           nights,
           room_count: roomCount,
+          total_price: initialTotalPrice,
+          real_pay: initialRealPay,
           can_cancel: canCancel
         }).then(res => {
           if (res?.data?.order_id) setPendingOrderId(res.data.order_id);
@@ -208,6 +214,86 @@ const Booking: React.FC = () => {
   const pointsEarned = Math.floor(roomPriceTotal);
 
   const availableCoupons = coupons.filter(c => !c.is_used && c.min_spend <= rawTotal);
+
+  // Auto-update ref so useUnload gets latest data
+  const isPaidRef = useRef(false);
+  const latestDataRef = useRef<{
+    pendingOrderId: string | null;
+    rawTotal: number;
+    total: number;
+    notes: string;
+    idcards: string[];
+    dailyPrices: DailyInventory[];
+    roomCount: number;
+    breakfastCounts: Record<string, number>;
+    breakfastDates: string[];
+    stayDates: string[];
+    pkgPrice: number;
+  }>({
+    pendingOrderId: null,
+    rawTotal: 0,
+    total: 0,
+    notes: '',
+    idcards: [''],
+    dailyPrices: [],
+    roomCount: 1,
+    breakfastCounts: {},
+    breakfastDates: [],
+    stayDates: [],
+    pkgPrice: 0
+  });
+
+  useEffect(() => {
+    latestDataRef.current = {
+      pendingOrderId,
+      rawTotal,
+      total,
+      notes,
+      idcards,
+      dailyPrices,
+      roomCount,
+      breakfastCounts,
+      breakfastDates,
+      stayDates,
+      pkgPrice
+    };
+  }, [pendingOrderId, rawTotal, total, notes, idcards, dailyPrices, roomCount, breakfastCounts, breakfastDates, stayDates, pkgPrice]);
+
+  useUnload(() => {
+    // If not paid and we have an order id, update the order details with user selection
+    if (!isPaidRef.current && latestDataRef.current.pendingOrderId) {
+      const v = latestDataRef.current;
+      const validIdcards = v.idcards.filter(id => id.trim() !== '');
+
+      const dailyDetail = v.dailyPrices.length > 0
+        ? v.dailyPrices.map((d, i) => {
+          const morningDate = v.breakfastDates[i];
+          return {
+            date: d.date,
+            price: d.price * v.roomCount,
+            breakfast_count: v.breakfastCounts[morningDate] || 0
+          };
+        })
+        : v.stayDates.map((date, i) => {
+          const morningDate = v.breakfastDates[i];
+          return {
+            date,
+            price: v.pkgPrice * v.roomCount,
+            breakfast_count: v.breakfastCounts[morningDate] || 0
+          };
+        });
+
+      hotelApi.updatePendingOrder({
+        order_id: v.pendingOrderId as string,
+        real_pay: v.total,
+        total_price: v.rawTotal,
+        room_count: v.roomCount,
+        special_request: v.notes,
+        idcards: JSON.stringify(validIdcards),
+        daily: dailyDetail
+      }).catch(e => console.error('Failed to sync order on unload:', e));
+    }
+  });
 
   const formatDate = (date: Date) => {
     const m = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -287,10 +373,12 @@ const Booking: React.FC = () => {
           order_id: pendingOrderId,
           real_pay: total,
           total_price: rawTotal,
+          room_count: roomCount,
           special_request: notes,
           idcards: JSON.stringify(validIdcards),
           daily: dailyDetail
         });
+        isPaidRef.current = true; // Mark as paid so useUnload doesn't sync again
       } else {
         throw new Error('No pending order ID');
       }

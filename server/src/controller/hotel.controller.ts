@@ -374,6 +374,8 @@ interface CreateOrderBody {
     check_out: string;
     nights: number;
     room_count: number;
+    total_price: number;
+    real_pay: number;
     can_cancel: number;
     special_request?: string;
 }
@@ -382,7 +384,7 @@ export const createOrder = async (
     req: Request<{}, {}, CreateOrderBody>,
     res: Response
 ): Promise<void> => {
-    const { user_id, hotel_id, room_id, check_in, check_out, nights, room_count, can_cancel, special_request } = req.body;
+    const { user_id, hotel_id, room_id, check_in, check_out, nights, room_count, total_price, real_pay, can_cancel, special_request } = req.body;
 
     if (!user_id || !hotel_id || !room_id || !check_in || !check_out) {
         res.status(400).json({ message: '缺少必要参数' });
@@ -394,12 +396,12 @@ export const createOrder = async (
         const idcards = JSON.stringify([]);
 
         await pool.execute(
-            `INSERT INTO orders (order_id, user_id, hotel_id, room_id, check_in, check_out, nights, idcards, special_request, total_price, real_pay, status, created_at, canCancel)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, 0, NOW(), ?)`,
+            `INSERT INTO orders (order_id, user_id, hotel_id, room_id, check_in, check_out, nights, room_count, idcards, special_request, total_price, real_pay, status, created_at, canCancel)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NOW(), ?)`,
             [order_id, user_id, hotel_id, room_id,
                 `${check_in} 14:00:00`, `${check_out} 12:00:00`,
-                nights * room_count, idcards, special_request || '',
-                can_cancel]
+                nights, room_count, idcards, special_request || '',
+                total_price, real_pay, can_cancel]
         );
 
         res.status(200).json({ message: '订单创建成功', data: { order_id } });
@@ -419,6 +421,7 @@ interface PayOrderBody {
     order_id: string;
     real_pay: number;
     total_price: number;
+    room_count: number;
     special_request?: string;
     idcards: string;
     daily: DailyDetail[];
@@ -428,7 +431,7 @@ export const payOrder = async (
     req: Request<{}, {}, PayOrderBody>,
     res: Response
 ): Promise<void> => {
-    const { order_id, real_pay, total_price, special_request, idcards, daily } = req.body;
+    const { order_id, real_pay, total_price, room_count, special_request, idcards, daily } = req.body;
 
     if (!order_id) {
         res.status(400).json({ message: '缺少 order_id' });
@@ -437,8 +440,8 @@ export const payOrder = async (
 
     try {
         await pool.execute(
-            `UPDATE orders SET status = 1, real_pay = ?, total_price = ?, special_request = ?, idcards = ?, payed_at = NOW() WHERE order_id = ?`,
-            [real_pay, total_price, special_request || '', idcards || '[]', order_id]
+            `UPDATE orders SET status = 1, real_pay = ?, total_price = ?, room_count = ?, special_request = ?, idcards = ?, payed_at = NOW() WHERE order_id = ?`,
+            [real_pay, total_price, room_count, special_request || '', idcards || '[]', order_id]
         );
 
         if (daily && daily.length > 0) {
@@ -455,5 +458,169 @@ export const payOrder = async (
     } catch (err) {
         console.error('payOrder error:', err);
         res.status(500).json({ message: '支付处理失败' });
+    }
+};
+
+interface UpdatePendingOrderBody {
+    order_id: string;
+    real_pay: number;
+    total_price: number;
+    room_count: number;
+    special_request?: string;
+    idcards: string;
+    daily: DailyDetail[];
+}
+
+export const updatePendingOrder = async (
+    req: Request<{}, {}, UpdatePendingOrderBody>,
+    res: Response
+): Promise<void> => {
+    const { order_id, real_pay, total_price, room_count, special_request, idcards, daily } = req.body;
+
+    if (!order_id) {
+        res.status(400).json({ message: '缺少 order_id' });
+        return;
+    }
+
+    try {
+        await pool.execute(
+            `UPDATE orders 
+             SET real_pay = ?, total_price = ?, room_count = ?, special_request = ?, idcards = ? 
+             WHERE order_id = ? AND status = 0`,
+            [real_pay, total_price, room_count, special_request || '', idcards || '[]', order_id]
+        );
+
+        // 删除旧的明细，重新插入最新的
+        await pool.execute(
+            `DELETE FROM order_details WHERE order_id = ?`,
+            [order_id]
+        );
+
+        if (daily && daily.length > 0) {
+            for (let i = 0; i < daily.length; i++) {
+                const d = daily[i];
+                await pool.execute(
+                    `INSERT INTO order_details (order_details_id, order_id, order_details_date, price, breakfast_count) VALUES (?, ?, ?, ?, ?)`,
+                    [`OD_${order_id}_${i + 1}`, order_id, `${d.date} 00:00:00`, d.price, d.breakfast_count]
+                );
+            }
+        }
+
+        res.status(200).json({ message: '订单信息更新成功' });
+    } catch (err) {
+        console.error('updatePendingOrder error:', err);
+        res.status(500).json({ message: '更新订单信息失败' });
+    }
+};
+
+// ===================== 获取用户订单列表 =====================
+export const getUserOrders = async (
+    req: Request<{}, {}, { user_id: string }>,
+    res: Response
+): Promise<void> => {
+    const { user_id } = req.body;
+
+    if (!user_id) {
+        res.status(400).json({ message: '缺少 user_id' });
+        return;
+    }
+
+    try {
+        const [rows] = await pool.execute<RowDataPacket[]>(
+            `SELECT 
+                o.order_id, o.hotel_id, o.room_id, o.check_in, o.check_out, 
+                o.nights, o.room_count, o.total_price, o.real_pay, o.status, 
+                o.created_at, o.canCancel,
+                h.name AS hotel_name,
+                r.name AS room_name,
+                (SELECT hm.url FROM hotel_media hm WHERE hm.hotel_id = o.hotel_id ORDER BY hm.sort_order ASC LIMIT 1) AS hotel_image
+             FROM orders o
+             LEFT JOIN hotel h ON o.hotel_id = h.hotel_id
+             LEFT JOIN room r ON o.room_id = r.room_id
+             WHERE o.user_id = ?
+             ORDER BY o.created_at DESC`,
+            [user_id]
+        );
+
+        res.status(200).json({
+            message: '查询成功',
+            data: rows.map(row => ({
+                order_id: row.order_id,
+                hotel_id: row.hotel_id,
+                hotel_name: row.hotel_name || '未知酒店',
+                hotel_image: row.hotel_image || '',
+                room_id: row.room_id,
+                room_name: row.room_name || '未知房型',
+                check_in: row.check_in,
+                check_out: row.check_out,
+                nights: row.nights,
+                room_count: row.room_count || 1,
+                total_price: Number(row.total_price) || 0,
+                real_pay: Number(row.real_pay) || 0,
+                status: row.status,
+                created_at: row.created_at,
+                canCancel: row.canCancel
+            }))
+        });
+    } catch (err) {
+        console.error('getUserOrders error:', err);
+        res.status(500).json({ message: '获取订单列表失败' });
+    }
+};
+
+// ===================== 删除订单 =====================
+export const deleteOrder = async (
+    req: Request<{}, {}, { order_id: string }>,
+    res: Response
+): Promise<void> => {
+    const { order_id } = req.body;
+
+    if (!order_id) {
+        res.status(400).json({ message: '缺少 order_id' });
+        return;
+    }
+
+    try {
+        // 1. 先删除 order_details 中关联的明细
+        await pool.execute(
+            `DELETE FROM order_details WHERE order_id = ?`,
+            [order_id]
+        );
+
+        // 2. 再删除 orders 中的订单本身
+        await pool.execute(
+            `DELETE FROM orders WHERE order_id = ?`,
+            [order_id]
+        );
+
+        res.status(200).json({ message: '订单删除成功' });
+    } catch (err) {
+        console.error('deleteOrder error:', err);
+        res.status(500).json({ message: '删除订单失败' });
+    }
+};
+
+// ===================== 取消订单（状态改为4） =====================
+export const cancelOrder = async (
+    req: Request<{}, {}, { order_id: string }>,
+    res: Response
+): Promise<void> => {
+    const { order_id } = req.body;
+
+    if (!order_id) {
+        res.status(400).json({ message: '缺少 order_id' });
+        return;
+    }
+
+    try {
+        await pool.execute(
+            `UPDATE orders SET status = 4 WHERE order_id = ? AND status IN (0, 1, 2)`,
+            [order_id]
+        );
+
+        res.status(200).json({ message: '订单已取消' });
+    } catch (err) {
+        console.error('cancelOrder error:', err);
+        res.status(500).json({ message: '取消订单失败' });
     }
 };
