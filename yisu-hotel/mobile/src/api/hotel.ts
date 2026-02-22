@@ -70,6 +70,12 @@ export interface HotelDetails extends Omit<Hotel, 'reviews'> {
     review_keywords: string[];
 }
 
+export interface DailyInventory {
+    date: string;   // YYYY-MM-DD
+    price: number;
+    stock: number;
+}
+
 export const hotelApi = {
     /**
      * 搜索酒店列表
@@ -88,6 +94,47 @@ export const hotelApi = {
     getHotelDetails(data: HotelDetailsBody) {
         return request<{ message: string; data: HotelDetails }>({
             url: '/hotel/details',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 获取房型逐日价格与库存
+     */
+    getRoomInventory(data: { room_id: string; check_in: string; check_out: string }) {
+        return request<{ message: string; data: { daily: DailyInventory[]; min_stock: number } }>({
+            url: '/hotel/room-inventory',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 进入预定页时创建未支付订单
+     */
+    createOrder(data: {
+        user_id: string; hotel_id: string; room_id: string;
+        check_in: string; check_out: string; nights: number; room_count: number;
+        can_cancel: number; special_request?: string;
+    }) {
+        return request<{ message: string; data: { order_id: string } }>({
+            url: '/hotel/order/create',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 用户支付，更新订单状态并插入 order_details
+     */
+    payOrder(data: {
+        order_id: string; real_pay: number; total_price: number;
+        special_request?: string; idcards: string;
+        daily: { date: string; price: number; breakfast_count: number }[];
+    }) {
+        return request<{ message: string; data: { order_id: string } }>({
+            url: '/hotel/order/pay',
             method: 'POST',
             data
         });

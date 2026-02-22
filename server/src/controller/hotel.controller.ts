@@ -102,8 +102,11 @@ export const searchHotels = async (
         let havingConditions = [];
 
         if (check_in && check_out) {
-            // 必须连住 nights 晚且都有库存
-            // SUM() 里判断：如果满足条件则算 1天，最后这些天的和必须等于 nights
+            // Require inventory rows for ALL nights in the date range
+            havingConditions.push(`COUNT(*) = ?`);
+            params.push(nights);
+
+            // Also require ALL those nights to have stock > 0
             let stockCondition = `SUM(CASE WHEN ri.stock > 0`;
 
             if (min_price !== undefined) {
@@ -256,8 +259,8 @@ export const getHotelDetails = async (
             let nights = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
             if (nights === 0) nights = 1;
 
-            roomSql += ` GROUP BY r.room_id HAVING SUM(CASE WHEN ri.stock > 0 THEN 1 ELSE 0 END) = ?`;
-            roomParams.push(nights);
+            roomSql += ` GROUP BY r.room_id HAVING COUNT(*) = ? AND SUM(CASE WHEN ri.stock > 0 THEN 1 ELSE 0 END) = ?`;
+            roomParams.push(nights, nights);
         } else {
             // Default to today or simple group by if no dates provided
             roomSql += ` GROUP BY r.room_id`;
@@ -311,5 +314,146 @@ export const getHotelDetails = async (
     } catch (err) {
         console.error("查询酒店详情报错:", err);
         res.status(500).json({ message: "内部错误，酒店详情获取失败！" });
+    }
+};
+
+interface RoomInventoryBody {
+    room_id: string;
+    check_in: string; // YYYY-MM-DD  (inclusive)
+    check_out: string; // YYYY-MM-DD (exclusive - checkout day)
+}
+
+export const getRoomInventory = async (
+    req: Request<{}, {}, RoomInventoryBody>,
+    res: Response
+): Promise<void> => {
+    const { room_id, check_in, check_out } = req.body;
+
+    if (!room_id || !check_in || !check_out) {
+        res.status(400).json({ message: '缺少必要参数 room_id / check_in / check_out' });
+        return;
+    }
+
+    try {
+        const [rows] = await pool.execute<RowDataPacket[]>(
+            `SELECT date, price, stock
+             FROM room_inventory
+             WHERE room_id = ? AND date >= ? AND date < ?
+             ORDER BY date ASC`,
+            [room_id, check_in, check_out]
+        );
+
+        const daily = rows.map(r => ({
+            date: r.date instanceof Date
+                ? r.date.toISOString().split('T')[0]
+                : String(r.date).split('T')[0],
+            price: Number(r.price),
+            stock: Number(r.stock)
+        }));
+
+        const min_stock = daily.length > 0
+            ? Math.min(...daily.map(d => d.stock))
+            : 0;
+
+        res.status(200).json({ message: '查询成功', data: { daily, min_stock } });
+    } catch (err) {
+        console.error('getRoomInventory error:', err);
+        res.status(500).json({ message: '内部错误，房型库存查询失败' });
+    }
+};
+
+// ──────────────────────────────────────────────────────────────────
+// Order Controllers
+// ──────────────────────────────────────────────────────────────────
+
+interface CreateOrderBody {
+    user_id: string;
+    hotel_id: string;
+    room_id: string;
+    check_in: string;
+    check_out: string;
+    nights: number;
+    room_count: number;
+    can_cancel: number;
+    special_request?: string;
+}
+
+export const createOrder = async (
+    req: Request<{}, {}, CreateOrderBody>,
+    res: Response
+): Promise<void> => {
+    const { user_id, hotel_id, room_id, check_in, check_out, nights, room_count, can_cancel, special_request } = req.body;
+
+    if (!user_id || !hotel_id || !room_id || !check_in || !check_out) {
+        res.status(400).json({ message: '缺少必要参数' });
+        return;
+    }
+
+    try {
+        const order_id = `ORD_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+        const idcards = JSON.stringify([]);
+
+        await pool.execute(
+            `INSERT INTO orders (order_id, user_id, hotel_id, room_id, check_in, check_out, nights, idcards, special_request, total_price, real_pay, status, created_at, canCancel)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, 0, NOW(), ?)`,
+            [order_id, user_id, hotel_id, room_id,
+                `${check_in} 14:00:00`, `${check_out} 12:00:00`,
+                nights * room_count, idcards, special_request || '',
+                can_cancel]
+        );
+
+        res.status(200).json({ message: '订单创建成功', data: { order_id } });
+    } catch (err) {
+        console.error('createOrder error:', err);
+        res.status(500).json({ message: '创建订单失败' });
+    }
+};
+
+interface DailyDetail {
+    date: string;
+    price: number;
+    breakfast_count: number;
+}
+
+interface PayOrderBody {
+    order_id: string;
+    real_pay: number;
+    total_price: number;
+    special_request?: string;
+    idcards: string;
+    daily: DailyDetail[];
+}
+
+export const payOrder = async (
+    req: Request<{}, {}, PayOrderBody>,
+    res: Response
+): Promise<void> => {
+    const { order_id, real_pay, total_price, special_request, idcards, daily } = req.body;
+
+    if (!order_id) {
+        res.status(400).json({ message: '缺少 order_id' });
+        return;
+    }
+
+    try {
+        await pool.execute(
+            `UPDATE orders SET status = 1, real_pay = ?, total_price = ?, special_request = ?, idcards = ?, payed_at = NOW() WHERE order_id = ?`,
+            [real_pay, total_price, special_request || '', idcards || '[]', order_id]
+        );
+
+        if (daily && daily.length > 0) {
+            for (let i = 0; i < daily.length; i++) {
+                const d = daily[i];
+                await pool.execute(
+                    `INSERT INTO order_details (order_details_id, order_id, order_details_date, price, breakfast_count) VALUES (?, ?, ?, ?, ?)`,
+                    [`OD_${order_id}_${i + 1}`, order_id, `${d.date} 00:00:00`, d.price, d.breakfast_count]
+                );
+            }
+        }
+
+        res.status(200).json({ message: '支付成功', data: { order_id } });
+    } catch (err) {
+        console.error('payOrder error:', err);
+        res.status(500).json({ message: '支付处理失败' });
     }
 };

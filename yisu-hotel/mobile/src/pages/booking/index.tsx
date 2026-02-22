@@ -1,14 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Input, ScrollView, Image } from '@tarojs/components';
-import Taro, { useRouter, useDidShow } from '@tarojs/taro';
-import { Hotel, Room, OrderStatus, Order, Coupon } from '../../../types/types';
-import { MOCK_USER, COUPONS } from '../../constants';
+import Taro, { useRouter } from '@tarojs/taro';
+import { Hotel, Room, Coupon } from '../../../types/types';
+import { COUPONS } from '../../constants';
+import { hotelApi, DailyInventory } from '../../api/hotel';
 import './index.scss';
 
 const Booking: React.FC = () => {
   const router = useRouter();
   const { orderId } = router.params;
-  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+
   // Read booking info from storage (set by HotelDetails page)
   const bookingData = useMemo(() => {
     try {
@@ -32,34 +33,22 @@ const Booking: React.FC = () => {
     return null;
   }, []);
 
-  // Load existing order if orderId is present
-  useDidShow(() => {
-    if (orderId) {
-      try {
-        const raw = Taro.getStorageSync('orders');
-        if (raw) {
-          const orders: Order[] = JSON.parse(raw);
-          const found = orders.find(o => o.order_id === orderId);
-          if (found) {
-            setCurrentOrder(found);
-            // Pre-fill fields if they exist in order (e.g. if editing)
-            if (found.guest_name) setGuestName(found.guest_name);
-            if (found.guest_phone) setPhoneNumber(found.guest_phone);
-          }
-        }
-      } catch (e) { }
-    }
-  });
-
   const hotel = bookingData?.hotel;
   const room = bookingData?.room;
-  const user = MOCK_USER;
   const coupons = COUPONS;
+
 
   const safeDates = useMemo(() => bookingData?.dates || {
     start: new Date(),
     end: new Date(new Date().setDate(new Date().getDate() + 1))
   }, [bookingData]);
+
+  const pkgPrice = bookingData?.pkgPrice || 0;
+  const pkgBreakfast = bookingData?.pkgBreakfast || '无餐食';
+  const pkgCancellation = bookingData?.pkgCancellation || '不可取消';
+  const pkgDesc = bookingData?.pkgDesc || '立即确认';
+
+  const nights = Math.max(1, Math.round((safeDates.end.getTime() - safeDates.start.getTime()) / (1000 * 60 * 60 * 24)));
 
   const [guestName, setGuestName] = useState(() => {
     try { const u = JSON.parse(Taro.getStorageSync('userInfo') || '{}'); return u.username || '访客'; } catch { return '访客'; }
@@ -70,6 +59,8 @@ const Booking: React.FC = () => {
   const [arrivalTime, setArrivalTime] = useState('19:00前');
   const [notes, setNotes] = useState('');
   const [roomCount, setRoomCount] = useState(1);
+  const [maxRoomCount, setMaxRoomCount] = useState(10); // capped by min_stock
+  const [dailyPrices, setDailyPrices] = useState<DailyInventory[]>([]);
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [showArrivalModal, setShowArrivalModal] = useState(false);
   const [showCouponModal, setShowCouponModal] = useState(false);
@@ -79,6 +70,26 @@ const Booking: React.FC = () => {
   const [breakfastCounts, setBreakfastCounts] = useState<Record<string, number>>({});
   const [breakfastInitialized, setBreakfastInitialized] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+
+  // Dynamic ID Cards
+  const [idcards, setIdcards] = useState<string[]>(['']);
+
+  const handleAddIdcard = () => {
+    setIdcards(prev => [...prev, '']);
+  };
+
+  const handleRemoveIdcard = (index: number) => {
+    setIdcards(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleIdcardChange = (index: number, value: string) => {
+    setIdcards(prev => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  };
 
   // Parse initial breakfast count from package
   const pkgBreakfastCount = useMemo(() => {
@@ -86,10 +97,6 @@ const Booking: React.FC = () => {
     const match = bf.match(/(\d+)/);
     return match ? parseInt(match[1], 10) : 0;
   }, [bookingData]);
-
-  const pkgCancellation = bookingData?.pkgCancellation || '不可取消';
-  const pkgPrice = (bookingData?.pkgPrice || Number((room as any)?.avg_price) || 0);
-  const pkgDesc = bookingData?.pkgDesc || '立即确认';
 
   // Read user points for membership value
   const userPoints = useMemo(() => {
@@ -100,6 +107,53 @@ const Booking: React.FC = () => {
   }, []);
   const membershipValue = Math.floor(userPoints / 10000) * 20;
 
+  // Fetch per-day inventory AND create a pending order on mount
+  useEffect(() => {
+    const roomId = (room as any)?.room_id;
+    if (!roomId) return;
+    const fmt = (d: Date) => {
+      const y = d.getFullYear();
+      const m = (d.getMonth() + 1).toString().padStart(2, '0');
+      const day = d.getDate().toString().padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    const checkIn = fmt(safeDates.start);
+    const checkOut = fmt(safeDates.end);
+
+    // 1. Fetch inventory
+    hotelApi.getRoomInventory({ room_id: roomId, check_in: checkIn, check_out: checkOut })
+      .then(res => {
+        if (res?.data) {
+          setDailyPrices(res.data.daily || []);
+          const ms = res.data.min_stock ?? 10;
+          setMaxRoomCount(Math.max(1, ms));
+          setRoomCount(prev => Math.min(prev, Math.max(1, ms)));
+        }
+      }).catch(() => { });
+
+    // 2. Create pending order (status=0) in DB
+    try {
+      const userInfoStr = Taro.getStorageSync('userInfo');
+      const userId = userInfoStr ? JSON.parse(userInfoStr).user_id : null;
+      const hotelId = (hotel as any)?.hotel_id;
+      const canCancel = pkgCancellation.includes('免费') ? 1 : 0;
+      if (userId && hotelId) {
+        hotelApi.createOrder({
+          user_id: userId,
+          hotel_id: hotelId,
+          room_id: roomId,
+          check_in: checkIn,
+          check_out: checkOut,
+          nights,
+          room_count: roomCount,
+          can_cancel: canCancel
+        }).then(res => {
+          if (res?.data?.order_id) setPendingOrderId(res.data.order_id);
+        }).catch(() => { });
+      }
+    } catch { }
+  }, []);
+
   if (!hotel || !room) {
     return (
       <View className="booking-page">
@@ -107,8 +161,6 @@ const Booking: React.FC = () => {
       </View>
     );
   }
-
-  const nights = Math.max(1, Math.round((safeDates.end.getTime() - safeDates.start.getTime()) / (1000 * 60 * 60 * 24)));
 
   const formatDateToLocalISO = (date: Date) => {
     const year = date.getFullYear();
@@ -142,14 +194,18 @@ const Booking: React.FC = () => {
     return datesArr;
   })();
 
-  const roomPriceTotal = pkgPrice * nights * roomCount;
+  // Per-day actual total room cost (use dailyPrices if available, else fallback)
+  const roomPriceTotal = dailyPrices.length > 0
+    ? dailyPrices.reduce((sum, d) => sum + d.price, 0) * roomCount
+    : pkgPrice * nights * roomCount;
   const breakfastPricePerUnit = 40;
   const totalBreakfastCount = (Object.values(breakfastCounts) as number[]).reduce((a, b) => a + b, 0);
   const breakfastTotal = totalBreakfastCount * breakfastPricePerUnit;
   const rawTotal = roomPriceTotal + breakfastTotal;
   const discountAmount = selectedCoupon ? selectedCoupon.discount_amount : 0;
-  const total = Math.max(0, rawTotal - discountAmount);
-  const pointsEarned = Math.floor(total);
+  const total = Math.max(0, rawTotal - discountAmount - membershipValue);
+  // Points = pre-discount room cost only (no breakfast, no coupon, no membership deduction)
+  const pointsEarned = Math.floor(roomPriceTotal);
 
   const availableCoupons = coupons.filter(c => !c.is_used && c.min_spend <= rawTotal);
 
@@ -195,64 +251,48 @@ const Booking: React.FC = () => {
     setShowCouponModal(false);
   };
 
-  const handlePay = () => {
+  const handlePay = async () => {
     if (!guestName || !phoneNumber) {
       Taro.showToast({ title: '请填写入住人信息', icon: 'none' });
       return;
     }
     setIsProcessing(true);
-    setTimeout(() => {
-      // Update existing order or create new one (fallback)
-      try {
-        const existingOrders = Taro.getStorageSync('orders');
-        let orders: Order[] = existingOrders ? JSON.parse(existingOrders) : [];
 
-        let targetOrder = currentOrder;
-
-        if (targetOrder) {
-          // Update existing
-          const idx = orders.findIndex(o => o.order_id === targetOrder!.order_id);
-          if (idx > -1) {
-            orders[idx] = {
-              ...orders[idx],
-              user_id: user?.user_id || 'guest',
-              total_price: total,
-              real_pay: total,
-              status: OrderStatus.PAID,
-              guest_name: guestName,
-              guest_phone: phoneNumber,
-              note: notes,
-              arrival_time: arrivalTime
-            };
-          }
-        } else {
-          // Fallback: create new (shouldn't happen with new flow)
-          const newOrder: Order = {
-            order_id: `o_${Date.now()}`,
-            user_id: user?.user_id || 'guest',
-            hotel_id: hotel.hotel_id,
-            hotel_name: hotel.name,
-            hotel_image: hotel.image_url,
-            room_id: room.room_id,
-            room_name: room.name,
-            check_in: safeDates.start.toISOString().split('T')[0],
-            check_out: safeDates.end.toISOString().split('T')[0],
-            nights: nights,
-            total_price: total,
-            real_pay: total,
-            status: OrderStatus.PAID,
-            created_at: new Date().toISOString(),
-            guest_name: guestName,
-            guest_phone: phoneNumber,
-            note: notes,
-            arrival_time: arrivalTime
+    try {
+      // Build daily detail array for order_details
+      // Note: `dailyPrices[i].date` is the stay night (e.g. 24th). `breakfastDates[i]` is the morning (e.g. 25th).
+      const dailyDetail = dailyPrices.length > 0
+        ? dailyPrices.map((d, i) => {
+          const morningDate = breakfastDates[i];
+          return {
+            date: d.date,
+            price: d.price * roomCount,
+            breakfast_count: breakfastCounts[morningDate] || 0
           };
-          orders.unshift(newOrder);
-        }
+        })
+        : stayDates.map((date, i) => {
+          const morningDate = breakfastDates[i];
+          return {
+            date,
+            price: pkgPrice * roomCount,
+            breakfast_count: breakfastCounts[morningDate] || 0
+          };
+        });
 
-        Taro.setStorageSync('orders', JSON.stringify(orders));
-      } catch (e) {
-        console.log('Failed to save order', e);
+      if (pendingOrderId) {
+        const validIdcards = idcards.filter(id => id.trim() !== '');
+
+        // Use the real API
+        await hotelApi.payOrder({
+          order_id: pendingOrderId,
+          real_pay: total,
+          total_price: rawTotal,
+          special_request: notes,
+          idcards: JSON.stringify(validIdcards),
+          daily: dailyDetail
+        });
+      } else {
+        throw new Error('No pending order ID');
       }
 
       setIsProcessing(false);
@@ -260,7 +300,11 @@ const Booking: React.FC = () => {
       setTimeout(() => {
         Taro.switchTab({ url: '/pages/orders/index' });
       }, 1500);
-    }, 2000);
+    } catch (e) {
+      console.error('Pay error', e);
+      setIsProcessing(false);
+      Taro.showToast({ title: '支付失败，请重试', icon: 'none' });
+    }
   };
 
   const dateRangeText = `${formatDateShort(safeDates.start.toISOString())}-${formatDateShort(safeDates.end.toISOString())} 共${nights}晚`;
@@ -354,6 +398,35 @@ const Booking: React.FC = () => {
               />
             </View>
           </View>
+
+          {/* ID Cards */}
+          {idcards.map((id, index) => (
+            <View className="booking-page__form-row" key={'idcard_' + index}>
+              <View className="booking-page__form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <View
+                  onClick={index === 0 ? handleAddIdcard : () => handleRemoveIdcard(index)}
+                  style={{
+                    width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+                    backgroundColor: index === 0 ? '#10b981' : '#ef4444',
+                    color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '14px', lineHeight: '18px'
+                  }}
+                >
+                  {index === 0 ? '+' : '-'}
+                </View>
+                <Text>身份证</Text>
+              </View>
+              <View className="booking-page__form-input-right">
+                <Input
+                  type="idcard"
+                  value={id}
+                  onInput={e => handleIdcardChange(index, e.detail.value)}
+                  className="booking-page__form-input"
+                  placeholder="请输入入住人身份证号"
+                />
+              </View>
+            </View>
+          ))}
 
           {/* Arrival Time */}
           <View className="booking-page__form-row" onClick={() => setShowArrivalModal(true)}>
@@ -525,7 +598,7 @@ const Booking: React.FC = () => {
               </View>
             </View>
             <View className="booking-page__modal-list">
-              {[1, 2, 3, 4, 5].map(num => (
+              {Array.from({ length: maxRoomCount }, (_, i) => i + 1).map(num => (
                 <View
                   key={num}
                   onClick={() => { setRoomCount(num); setShowRoomModal(false); }}
@@ -621,12 +694,13 @@ const Booking: React.FC = () => {
           <View className="booking-page__modal-backdrop" onClick={() => setShowPriceDetailModal(false)}></View>
           <View className="booking-page__modal-content booking-page__modal-content--tall">
             <View className="booking-page__price-detail-header">
-              <Text className="booking-page__price-detail-title">费用明细</Text>
-              <Text className="booking-page__price-detail-subtitle">{dateRangeText}</Text>
-              <Text className="booking-page__price-detail-subtitle">{room.name}</Text>
-              <View onClick={() => setShowPriceDetailModal(false)} className="booking-page__price-detail-close">
-                <Text className="booking-page__price-detail-close-icon">✕</Text>
+              <View className="booking-page__price-detail-title-row">
+                <Text className="booking-page__price-detail-title">费用明细</Text>
+                <View onClick={() => setShowPriceDetailModal(false)} className="booking-page__price-detail-close">
+                  <Text className="booking-page__price-detail-close-icon">✕</Text>
+                </View>
               </View>
+              <Text className="booking-page__price-detail-subtitle">{dateRangeText} · {room.name}</Text>
             </View>
 
             <ScrollView scrollY className="booking-page__price-detail-body">
@@ -640,21 +714,36 @@ const Booking: React.FC = () => {
               <View className="booking-page__price-section">
                 <View className="booking-page__price-section-header">
                   <Text className="booking-page__price-section-title">房费</Text>
-                  <View className="booking-page__price-section-avg">
-                    <Text className="booking-page__price-avg-label">均价 </Text>
-                    <Text className="booking-page__price-avg-value">¥{pkgPrice}</Text>
-                    <Text className="booking-page__price-avg-unit">/晚</Text>
-                  </View>
+                  {dailyPrices.length > 0 ? (
+                    <Text className="booking-page__price-avg-label">{nights}晚 合计 ¥{roomPriceTotal.toFixed(2)}</Text>
+                  ) : (
+                    <View className="booking-page__price-section-avg">
+                      <Text className="booking-page__price-avg-label">均价 </Text>
+                      <Text className="booking-page__price-avg-value">¥{pkgPrice}</Text>
+                      <Text className="booking-page__price-avg-unit">/晚</Text>
+                    </View>
+                  )}
                 </View>
-                <Text className="booking-page__price-subtotal">{nights}晚 合计 ¥{(pkgPrice * roomCount * nights).toFixed(2)}</Text>
+                {dailyPrices.length === 0 && (
+                  <Text className="booking-page__price-subtotal">{nights}晚 合计 ¥{(pkgPrice * roomCount * nights).toFixed(2)}</Text>
+                )}
 
                 <View className="booking-page__price-breakdown">
-                  {stayDates.map(date => (
-                    <View key={date} className="booking-page__price-breakdown-row">
-                      <Text>{formatDateShort(date)} ({roomCount}间)</Text>
-                      <Text>¥{(pkgPrice * roomCount).toFixed(2)}</Text>
-                    </View>
-                  ))}
+                  {dailyPrices.length > 0 ? (
+                    dailyPrices.map(d => (
+                      <View key={d.date} className="booking-page__price-breakdown-row">
+                        <Text>{formatDateShort(d.date)} ({roomCount}间)</Text>
+                        <Text>¥{(d.price * roomCount).toFixed(2)}</Text>
+                      </View>
+                    ))
+                  ) : (
+                    stayDates.map(date => (
+                      <View key={date} className="booking-page__price-breakdown-row">
+                        <Text>{formatDateShort(date)} ({roomCount}间)</Text>
+                        <Text>¥{(pkgPrice * roomCount).toFixed(2)}</Text>
+                      </View>
+                    ))
+                  )}
                 </View>
               </View>
 
@@ -662,7 +751,7 @@ const Booking: React.FC = () => {
               {totalBreakfastCount > 0 && (
                 <View className="booking-page__price-section-border">
                   <View className="booking-page__price-section-header">
-                    <Text className="booking-page__price-section-title">Breakfast</Text>
+                    <Text className="booking-page__price-section-title">早餐</Text>
                     <View className="booking-page__price-section-avg">
                       <Text className="booking-page__price-avg-value">¥40</Text>
                       <Text className="booking-page__price-avg-unit">/人</Text>
@@ -688,6 +777,16 @@ const Booking: React.FC = () => {
                   <View className="booking-page__price-total-row" style={{ borderBottom: 'none', paddingBottom: 0 }}>
                     <Text className="booking-page__price-section-title">优惠券</Text>
                     <Text className="booking-page__price-coupon-value">- ¥{selectedCoupon.discount_amount}</Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Membership Discount Section */}
+              {membershipValue > 0 && (
+                <View className="booking-page__price-section-border">
+                  <View className="booking-page__price-total-row" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+                    <Text className="booking-page__price-section-title">星级会员折扣</Text>
+                    <Text className="booking-page__price-coupon-value">- ¥{membershipValue}</Text>
                   </View>
                 </View>
               )}

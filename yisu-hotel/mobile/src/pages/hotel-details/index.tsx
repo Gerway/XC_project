@@ -213,7 +213,7 @@ const HotelDetailsPage: React.FC = () => {
       const nonFreePrice = roomMinPrice + increase;
       const freePrice = nonFreePrice + 10;
 
-      const safeOri = roomOriPrice > roomMinPrice ? roomOriPrice : (roomMinPrice + 20);
+      const safeOri = roomOriPrice > roomMinPrice ? roomOriPrice : (roomMinPrice);
       const oriPriceNonFree = safeOri + increase;
       const oriPriceFree = oriPriceNonFree + 10;
 
@@ -543,15 +543,19 @@ const HotelDetailsPage: React.FC = () => {
 
                       <View className="hotel-details__pkg-action">
                         <View className="hotel-details__pkg-price-row">
-                          <Text className="hotel-details__pkg-ori-price">¥{pkg.oriPrice}</Text>
+                          {pkg.oriPrice > pkg.price && (
+                            <Text className="hotel-details__pkg-ori-price">¥{pkg.oriPrice}</Text>
+                          )}
                           <Text className="hotel-details__pkg-cur-price">
                             <Text style={{ fontSize: '10px' }}>均¥</Text>
                             <Text style={{ fontSize: '18px', fontWeight: 'bold' }}>{pkg.price}</Text>
                           </Text>
                         </View>
-                        <View className="hotel-details__pkg-discount">
-                          <Text>优惠{(pkg.oriPrice - pkg.price)}</Text>
-                        </View>
+                        {pkg.oriPrice > pkg.price && (
+                          <View className="hotel-details__pkg-discount">
+                            <Text>优惠{(pkg.oriPrice - pkg.price)}</Text>
+                          </View>
+                        )}
                         <View className="hotel-details__pkg-book-btn" onClick={() => handleBook(room, pkg.price, `${room.name}(${pkg.breakfast})`, pkg.breakfast, pkg.cancellation, pkg.desc)}>
                           <Text className="hotel-details__pkg-book-btn-text">订</Text>
                         </View>
