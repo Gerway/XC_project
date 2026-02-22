@@ -8,12 +8,12 @@
     // ---- Header ----
     &__header {
         background: rgba($background, 0.95);
-        padding-top: env(safe-area-inset-top, 0);
+        padding-top: $spacing-8
     }
 
     &__header-content {
         @include flex-between;
-        padding: $spacing-4 $spacing-5;
+        padding: $spacing-4 100px $spacing-4 $spacing-5;
     }
 
     &__logo-section {

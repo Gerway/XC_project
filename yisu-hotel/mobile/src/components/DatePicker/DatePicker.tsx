@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Button, ScrollView } from '@tarojs/components';
-import { CommonEvent } from '@tarojs/components/types/common';
 import './DatePicker.scss';
 
 interface DatePickerProps {
@@ -12,9 +11,9 @@ interface DatePickerProps {
 }
 
 const HOLIDAYS: Record<string, string> = {
-    '2-14': 'Valentine',
-    '5-1': 'Labor',
-    '6-1': "Kid",
+    '2-14': '情人节',
+    '5-1': '劳动节',
+    '6-1': "儿童节",
 };
 
 const normalizeDate = (d: Date) => {
@@ -90,8 +89,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ isOpen, onClose, onSelect, star
 
     const formatMonth = (date: Date) => {
         // Taro doesn't verify locale string exactly like browser, simple formatting
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        return `${months[date.getMonth()]} ${date.getFullYear()}`;
+        return `${date.getFullYear()}年${date.getMonth() + 1}月`;
     };
 
     const handleDone = () => {
@@ -122,18 +120,17 @@ const DatePicker: React.FC<DatePickerProps> = ({ isOpen, onClose, onSelect, star
         <View className="date-picker">
             {/* Header */}
             <View className="date-picker__header">
-                <View onClick={onClose} className="date-picker__close-btn">
-                    <Text className="material-symbols-outlined date-picker__close-icon">close</Text>
-                </View>
-                <Text className="date-picker__title">Select Dates</Text>
                 <View onClick={handleClear} className="date-picker__clear-btn">
-                    <Text>Clear</Text>
+                    <Text>清空</Text>
                 </View>
+                <Text className="date-picker__title">选择日期</Text>
+                {/* 伪类占位，保持flex-between居中 */}
+                <View className="date-picker__placeholder" />
             </View>
 
             {/* Week Header */}
             <View className="date-picker__week-header">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+                {['日', '一', '二', '三', '四', '五', '六'].map(d => (
                     <Text key={d} className="date-picker__week-day">{d}</Text>
                 ))}
             </View>
@@ -163,7 +160,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ isOpen, onClose, onSelect, star
 
                                     let mainText = day.toString();
                                     if (day < 10) mainText = `0${day}`;
-                                    if (isToday && isStart) mainText = "Today";
+                                    if (isToday && isStart) mainText = "今天";
 
                                     return (
                                         <View
@@ -193,7 +190,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ isOpen, onClose, onSelect, star
 
                                                 {(isStart || isEnd) && (
                                                     <Text className={`date-picker__day-label ${isStart ? 'date-picker__day-label--start' : 'date-picker__day-label--end'}`}>
-                                                        {isStart ? 'In' : 'Out'}
+                                                        {isStart ? '入住' : '离店'}
                                                     </Text>
                                                 )}
                                             </View>
@@ -209,14 +206,14 @@ const DatePicker: React.FC<DatePickerProps> = ({ isOpen, onClose, onSelect, star
             {/* Footer */}
             <View className="date-picker__footer">
                 <View className="date-picker__footer-info">
-                    <Text className="date-picker__nights-text">Total {totalNights} night{totalNights !== 1 ? 's' : ''}</Text>
-                    <Text className="date-picker__price-badge">Price available</Text>
+                    <Text className="date-picker__nights-text">共 {totalNights} 晚</Text>
+                    <Text className="date-picker__price-badge">查看价格</Text>
                 </View>
                 <Button
                     onClick={handleDone}
                     className="date-picker__done-btn"
                 >
-                    Done
+                    完成
                 </Button>
             </View>
         </View>

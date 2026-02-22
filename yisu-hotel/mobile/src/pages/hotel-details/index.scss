@@ -27,9 +27,15 @@ $text-11px: 11px;
         height: 100%;
     }
 
+    &__hero-bg-img {
+        width: 100%;
+        height: 100%;
+    }
+
     &__hero-gradient {
         @include absolute-fill;
         background: linear-gradient(to bottom, rgba($black, 0.4), transparent, rgba($black, 0.1));
+        pointer-events: none;
     }
 
     // Top Nav
@@ -38,22 +44,24 @@ $text-11px: 11px;
         top: 0;
         left: 0;
         right: 0;
-        padding: 44px $spacing-4 $spacing-4;
+        padding: 44px 110px $spacing-4 $spacing-4;
         @include flex-between;
         z-index: $z-20;
     }
 
     &__nav-btn {
         @include flex-center;
-        @include circle($w-10);
-        background: rgba($black, 0.3);
+        width: 44px;
+        height: 44px;
+        background: transparent;
         color: $white;
     }
 
     &__nav-btn-icon {
-        font-size: $text-xl;
+        font-size: 26px;
         color: $white;
         font-weight: $font-bold;
+        text-shadow: 0 1px 4px rgba($black, 0.5);
     }
 
     &__nav-actions {
@@ -125,12 +133,19 @@ $text-11px: 11px;
     }
 
     // Title & Info
+    &__title-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: $spacing-2;
+        margin-bottom: $spacing-2;
+    }
+
     &__title {
         font-size: $text-2xl;
         font-weight: $font-bold;
         color: $gray-900;
         line-height: $leading-tight;
-        margin-bottom: $spacing-2;
     }
 
     &__meta {
@@ -142,11 +157,84 @@ $text-11px: 11px;
     }
 
     &__tag-badge {
-        background: $blue-50;
-        color: $blue-600;
+        background: $orange-50;
+        color: $primary;
         padding: 2px $spacing-1-5;
         border-radius: $rounded;
         font-weight: $font-bold;
+
+        &--inline {
+            font-size: 11px;
+            padding: 2px 6px;
+        }
+    }
+
+    // Line Amenities
+    &__line-amenities-wrapper {
+        margin-top: 0;
+        margin-bottom: $spacing-2;
+        display: flex;
+        align-items: center;
+    }
+
+    &__line-amenities-scroll-area {
+        flex: 1;
+        overflow: hidden;
+    }
+
+    &__line-amenities-container {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        padding-bottom: $spacing-2;
+    }
+
+    &__line-amenity-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: 50px;
+        flex-shrink: 0;
+        gap: $spacing-1;
+        padding: 0 $spacing-2;
+
+        &:first-child {
+            padding-left: 0;
+        }
+
+        &--border {
+            border-left: 1px solid $gray-200;
+        }
+
+        &--more {
+            flex-direction: row;
+            min-width: auto;
+            gap: 2px;
+            color: $gray-500;
+            padding-left: $spacing-2;
+            padding-right: 0;
+            margin-bottom: $spacing-2;
+        }
+    }
+
+    &__line-amenity-icon {
+        width: 22px;
+        height: 22px;
+    }
+
+    &__line-amenity-label {
+        font-size: 11px;
+        color: $gray-800;
+    }
+
+    &__line-amenity-more-text {
+        font-size: 11px;
+        line-height: 1.2;
+    }
+
+    &__line-amenity-more-icon {
+        font-size: 14px;
     }
 
     &__dot {
@@ -234,7 +322,7 @@ $text-11px: 11px;
     &__score-number {
         font-size: $text-2xl;
         font-weight: $font-bold;
-        color: $blue-600;
+        color: $primary;
     }
 
     &__score-label {
@@ -256,6 +344,16 @@ $text-11px: 11px;
         font-size: $text-10px;
         color: $gray-400;
         margin-top: 2px;
+    }
+
+    &__map-nav-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: $rounded-full;
+        background: $orange-50;
+        color: $primary;
+        @include flex-center;
+        font-size: $text-lg;
     }
 
     &__map-card {
@@ -290,7 +388,7 @@ $text-11px: 11px;
 
     &__map-icon-wrapper {
         @include circle($w-8);
-        background: $blue-100;
+        background: $orange-50;
         @include flex-center;
         flex-shrink: 0;
     }
@@ -338,322 +436,396 @@ $text-11px: 11px;
 
     // ---- Sticky Tabs & Date ----
     &__sticky-section {
-        background: $gray-50;
-        padding: $spacing-2 0;
-    }
-
-    &__date-bar {
         background: $white;
-        margin: 0 $spacing-3;
-        padding: $spacing-3;
-        border-radius: $rounded-xl;
-        box-shadow: $shadow-sm;
-        border: 1px solid $gray-100;
-        margin-bottom: $spacing-3;
-        @include flex-between;
+        padding-top: $spacing-2;
     }
 
-    &__date-picker-trigger {
+    &__date-row {
+        margin: 0 $spacing-4;
+        padding: $spacing-2 0;
+        @include flex-between;
+        border-bottom: 1px solid $gray-100;
+    }
+
+    &__date-info {
         display: flex;
         align-items: center;
-        gap: $spacing-4;
+        gap: $spacing-2;
     }
 
-    &__date-range-text {
-        font-size: $text-sm;
+    &__date-text {
+        font-size: $text-base;
         font-weight: $font-bold;
         color: $gray-900;
     }
 
-    &__date-separator {
-        color: $gray-400;
-        font-weight: $font-normal;
-        margin: 0 $spacing-1;
+    &__nights-badge {
+        font-size: 10px;
+        color: $gray-700;
+        border: 1px solid $gray-400;
+        border-radius: 12px;
+        padding: 0 6px;
+        height: 18px;
+        line-height: 16px;
+        font-weight: $font-medium;
     }
 
-    &__nights-chip {
-        font-size: $text-10px;
-        font-weight: $font-bold;
-        background: $gray-100;
-        color: $gray-600;
-        padding: 2px $spacing-1-5;
-        border-radius: $rounded;
+    &__date-decor {
         display: flex;
         align-items: center;
         gap: 2px;
     }
 
-    &__nights-chip-icon {
-        font-size: 12px;
-    }
+    &__decor-box {
+        width: 6px;
+        height: 6px;
 
-    &__booking-type-toggle {
-        display: flex;
-        background: $gray-100;
-        padding: 2px;
-        border-radius: $rounded-lg;
-    }
+        &--dark {
+            background: $primary-color;
+        }
 
-    &__booking-type-btn {
-        padding: $spacing-1 $spacing-3;
-        font-size: $text-xs;
-        font-weight: $font-bold;
-        border-radius: $rounded-md;
-        color: $gray-500;
-        background: transparent;
+        &--light {
+            background: #6ddad6;
+        }
 
-        &--active {
-            background: $white;
-            box-shadow: $shadow;
-            color: $gray-900;
+        &--lighter {
+            background: #bdf0ef;
         }
     }
 
-    // Filter Chips
-    &__filter-chips-scroll {
-        background: $gray-50;
-    }
-
-    &__filter-chips {
+    // Filters Row
+    &__filters-row {
         display: flex;
-        gap: $spacing-2;
-        padding: 0 $spacing-3;
-        white-space: nowrap;
-    }
-
-    &__filter-chip {
-        padding: $spacing-1-5 $spacing-3;
-        font-size: $text-xs;
-        font-weight: $font-bold;
-        border-radius: $rounded-full;
-        border: 1px solid $gray-200;
+        align-items: center;
+        padding: $spacing-2 $spacing-4 $spacing-3;
         background: $white;
+    }
+
+    &__filters-scroll {
+        flex: 1;
+        overflow: hidden;
+        margin-right: $spacing-2;
+    }
+
+    &__filter-pills {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: $spacing-2;
+        padding-right: $spacing-2;
+    }
+
+    &__filter-pill {
+        background: $gray-50;
         color: $gray-600;
-        flex-shrink: 0;
+        font-size: $text-xs;
+        padding: $spacing-1-5 $spacing-3;
+        border-radius: $rounded-full;
+        white-space: nowrap;
 
         &--active {
-            background: $gray-900;
+            background: $primary-color;
             color: $white;
-            border-color: $gray-900;
+            font-weight: $font-bold;
         }
+    }
+
+    &__filter-action {
+        background: $gray-50;
+        color: $gray-600;
+        font-size: $text-xs;
+        padding: $spacing-1-5 $spacing-2;
+        border-radius: $rounded-full;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
     }
 
     // ---- Room List ----
     &__room-list {
         padding: 0 $spacing-3 $spacing-6;
         @include flex-col;
-        gap: $spacing-4;
-    }
-
-    &__room-card {
-        background: $white;
-        border-radius: $rounded-2xl;
-        padding: $spacing-3;
-        box-shadow: $shadow-sm;
-        border: 1px solid $gray-100;
-        @include flex-col;
         gap: $spacing-3;
     }
 
-    &__room-top {
+    &__room-container {
+        background: $white;
+        border-radius: $rounded-xl;
+        overflow: hidden;
+        box-shadow: $shadow-sm;
+    }
+
+    // Room Summary
+    &__room-summary {
+        padding: $spacing-3;
         display: flex;
         gap: $spacing-3;
-    }
-
-    &__room-image-wrapper {
-        width: 112px;
-        height: 112px;
-        background: $gray-100;
-        border-radius: $rounded-xl;
-        flex-shrink: 0;
-        overflow: hidden;
         position: relative;
     }
 
-    &__room-image {
-        width: 100%;
-        height: 100%;
+    &__room-summary-img-box {
+        position: relative;
+        width: 80px;
+        height: 100px;
+        flex-shrink: 0;
+        border-radius: $rounded-lg;
+        overflow: hidden;
     }
 
-    &__room-popular-tag {
+    &__room-summary-img {
+        width: 100%;
+        height: 100%;
+        background-color: $gray-200;
+    }
+
+    &__room-summary-tag {
         position: absolute;
         top: 0;
         left: 0;
-        background: $red-500;
+        @include gradient-primary;
         color: $white;
-        font-size: $text-9px;
+        font-size: $text-10px;
+        padding: 2px 6px;
+        border-bottom-right-radius: $rounded-lg;
         font-weight: $font-bold;
-        padding: 2px $spacing-1-5;
-        border-radius: 0 0 $rounded-lg 0;
     }
 
-    &__room-image-count {
+    &__room-summary-img-count {
         position: absolute;
-        bottom: $spacing-1;
-        right: $spacing-1;
-        background: rgba($black, 0.5);
+        bottom: 4px;
+        right: 4px;
+        background: rgba(0, 0, 0, 0.5);
         color: $white;
-        font-size: $text-9px;
-        padding: 0 $spacing-1;
-        border-radius: $rounded;
+        font-size: 10px;
+        padding: 2px 4px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         gap: 2px;
     }
 
-    &__room-image-count-icon {
-        font-size: 10px;
-    }
-
-    // Room Info
-    &__room-info {
+    &__room-summary-info {
         flex: 1;
         min-width: 0;
-        @include flex-col;
+        display: flex;
+        flex-direction: column;
         justify-content: space-between;
     }
 
-    &__room-name-row {
-        @include flex-between;
+    &__room-summary-header {
+        display: flex;
+        justify-content: space-between;
         align-items: flex-start;
     }
 
-    &__room-name {
+    &__room-summary-title-wrapper {
+        flex: 1;
+        padding-right: $spacing-2;
+    }
+
+    &__room-summary-title {
         font-weight: $font-bold;
         color: $gray-900;
-        font-size: 15px;
+        font-size: 16px;
         line-height: $leading-tight;
-        margin-bottom: $spacing-1;
     }
 
-    &__room-expand-icon {
-        color: $gray-300;
-        font-size: $text-lg;
-    }
-
-    &__room-specs {
-        font-size: $text-xs;
-        color: $gray-500;
+    &__room-summary-expand-icon {
+        color: $gray-400;
+        font-size: 16px;
+        width: 20px;
+        height: 20px;
         display: flex;
-        flex-wrap: wrap;
         align-items: center;
-        gap: $spacing-1-5;
-    }
+        justify-content: center;
+        transition: transform 0.3s;
 
-    &__spec-dot {
-        @include circle(2px);
-        background: $gray-400;
-    }
-
-    &__room-badges {
-        margin-top: $spacing-2;
-        display: flex;
-        flex-wrap: wrap;
-        gap: $spacing-1;
-    }
-
-    &__room-badge {
-        font-size: $text-10px;
-        padding: 2px $spacing-1-5;
-        border-radius: $rounded;
-        border-width: 1px;
-        border-style: solid;
-
-        &--green {
-            color: $green-600;
-            background: $green-50;
-            border-color: $green-100;
-        }
-
-        &--orange {
-            color: $orange-600;
-            background: $orange-50;
-            border-color: $orange-100;
+        &--expanded {
+            transform: rotate(180deg);
         }
     }
 
-    // Price & Action Area
-    &__room-action-area {
-        background: $gray-50;
-        border-radius: $rounded-xl;
-        padding: $spacing-3;
-        @include flex-between;
+    &__room-summary-desc {
+        color: $gray-500;
+        font-size: 12px;
+        margin-top: 4px;
     }
 
-    &__room-price-col {
-        @include flex-col;
-    }
-
-    &__room-deal-tags {
+    &__room-summary-price-area {
         display: flex;
-        gap: $spacing-1;
-        margin-bottom: 2px;
-    }
-
-    &__room-deal-tag {
-        font-size: $text-9px;
-        font-weight: $font-bold;
-        color: $red-500;
-        border: 1px solid $red-200;
-        padding: 0 $spacing-1;
-        border-radius: 2px;
-        background: $white;
-    }
-
-    &__room-price-row {
-        display: flex;
+        flex-direction: column;
         align-items: flex-end;
-        gap: $spacing-1-5;
+        margin-top: 4px;
     }
 
-    &__room-original-price {
-        font-size: $text-xs;
+    &__room-summary-price {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+    }
+
+    &__room-summary-ori-price {
+        font-size: 12px;
         color: $gray-400;
         text-decoration: line-through;
     }
 
-    &__room-current-price {
-        display: flex;
-        align-items: baseline;
+    &__room-summary-min-price {
+        font-size: 20px;
         font-weight: $font-bold;
         color: $gray-900;
 
         &--red {
-            color: $red-600;
+            color: $orange-500;
         }
     }
 
-    &__room-currency {
-        font-size: $text-xs;
+    &__room-summary-discount {
+        background: $orange-50;
+        color: $orange-600;
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 2px;
+        margin-top: 4px;
     }
 
-    &__room-price-value {
-        font-size: $text-xl;
+    // Room Packages List
+    &__room-packages {
+        background: #f7f8fa;
+        padding: $spacing-3;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-2;
     }
 
-    &__room-price-unit {
-        font-size: $text-10px;
-        color: $gray-500;
-        font-weight: $font-normal;
-        margin-left: 2px;
-    }
-
-    &__room-tax-note {
-        font-size: $text-9px;
-        color: $gray-400;
-    }
-
-    &__book-btn {
-        background: linear-gradient(to right, $orange-500, $red-500);
-        padding: $spacing-2-5 $spacing-6;
+    &__pkg-card {
+        background: $white;
         border-radius: $rounded-lg;
-        box-shadow: $shadow-md;
+        padding: $spacing-3;
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch;
     }
 
-    &__book-btn-text {
-        color: $white;
+    &__pkg-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    &__pkg-title-row {
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+    }
+
+    &__pkg-breakfast {
         font-weight: $font-bold;
-        font-size: $text-sm;
+        color: $gray-900;
+
+        &--gray {
+            color: $gray-600;
+        }
+    }
+
+    &__pkg-separator {
+        color: $gray-300;
+        margin: 0 4px;
+    }
+
+    &__pkg-cancel {
+        color: $gray-600;
+        font-size: 13px;
+    }
+
+    &__pkg-gift {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        color: $orange-600;
+    }
+
+    &__pkg-gift-icon {
+        background: $orange-500;
+        color: $white;
+        font-size: 9px;
+        padding: 1px 3px;
+        border-radius: 2px;
+    }
+
+    &__pkg-services {
+        margin-top: 4px;
+    }
+
+    &__pkg-services-flex {
+        display: flex;
+        gap: 6px;
+    }
+
+    &__pkg-service-tag {
+        font-size: 10px;
+        color: $gray-500;
+        border: 1px solid $gray-300;
+        padding: 2px 4px;
+        border-radius: 2px;
+    }
+
+    &__pkg-service-text {
+        font-size: 11px;
+        color: $orange-600;
+    }
+
+    &__pkg-action {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: flex-end;
+        min-width: 80px;
+    }
+
+    &__pkg-price-row {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        line-height: $leading-none;
+    }
+
+    &__pkg-ori-price {
+        font-size: 11px;
+        color: $gray-400;
+        text-decoration: line-through;
+        margin-bottom: 2px;
+    }
+
+    &__pkg-cur-price {
+        color: $orange-500;
+        display: flex;
+        align-items: baseline;
+    }
+
+    &__pkg-discount {
+        font-size: 10px;
+        color: $orange-500;
+        background: $orange-50;
+        padding: 1px 4px;
+        border-radius: 2px;
+        margin-top: 4px;
+        margin-bottom: 8px;
+    }
+
+    &__pkg-book-btn {
+        background: linear-gradient(to right, $orange-400, $orange-600);
+        padding: 6px 16px;
+        border-radius: $rounded-md;
+    }
+
+    &__pkg-book-btn-text {
+        color: $white;
+        font-size: 14px;
+        font-weight: $font-bold;
     }
 
     // ---- Section: Hotel Honors ----
@@ -666,7 +838,10 @@ $text-11px: 11px;
         font-size: $text-base;
         font-weight: $font-bold;
         color: $gray-900;
-        margin-bottom: $spacing-3;
+        margin-top: 0;
+        padding-bottom: $spacing-1;
+        margin-bottom: $spacing-2;
+        border-bottom: 1px solid lightgray;
 
         &--lg {
             font-size: $text-lg;
@@ -786,7 +961,7 @@ $text-11px: 11px;
 
     &__policy-card {
         background: $white;
-        padding: $spacing-4;
+        padding: $spacing-5 $spacing-4 $spacing-4;
         border-radius: $rounded-xl;
         border: 1px solid $gray-100;
         font-size: $text-xs;
@@ -811,10 +986,28 @@ $text-11px: 11px;
         line-height: $leading-relaxed;
         margin-top: $spacing-3;
         margin-bottom: $spacing-3;
+
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-all;
+
+        max-height: 1000px;
+        -webkit-line-clamp: 999;
+        line-clamp: 999;
+        transition: max-height 0.4s ease-in-out;
+
+        &--clamped {
+            max-height: calc(1.625em * 3);
+            /* approx 3 lines based on typical leading-relaxed */
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            text-overflow: ellipsis;
+        }
     }
 
     &__policy-read-more {
-        color: $blue-600;
+        color: $primary;
         font-weight: $font-bold;
         display: flex;
         align-items: center;
@@ -825,17 +1018,22 @@ $text-11px: 11px;
     // Location
     &__location-card {
         background: $white;
+        padding: $spacing-5 $spacing-4 $spacing-1;
         border-radius: $rounded-xl;
         overflow: hidden;
         border: 1px solid $gray-100;
         box-shadow: $shadow-sm;
+        
     }
 
     &__map-preview {
         height: 128px;
+        margin: 0 0;
+        border-radius: $rounded-lg;
         background: $gray-200;
         position: relative;
         @include flex-center;
+        overflow: hidden;
     }
 
     &__map-marker {
@@ -844,7 +1042,7 @@ $text-11px: 11px;
     }
 
     &__map-marker-label {
-        background: $blue-600;
+        background: $primary;
         color: $white;
         font-size: $text-10px;
         font-weight: $font-bold;
@@ -856,8 +1054,18 @@ $text-11px: 11px;
 
     &__map-marker-dot {
         @include circle(8px);
-        background: $blue-600;
+        background: $primary;
         margin-top: $spacing-1-5;
+    }
+
+    &__score-badge {
+        background: $primary;
+        color: $white;
+        font-weight: $font-bold;
+        padding: $spacing-1 $spacing-2;
+        border-radius: $rounded;
+        box-shadow: $shadow-lg;
+        position: relative;
     }
 
     &__location-station {
@@ -900,7 +1108,7 @@ $text-11px: 11px;
 
     &__reviews-card {
         background: $white;
-        padding: $spacing-4;
+        padding: $spacing-5 $spacing-4 $spacing-4;
         border-radius: $rounded-xl;
         border: 1px solid $gray-100;
         box-shadow: $shadow-sm;
@@ -1035,6 +1243,14 @@ $text-11px: 11px;
         @include flex-center;
         border-radius: 4px;
         font-weight: $font-bold;
+    }
+
+    &__reviews-tag {
+        font-size: $text-xs;
+        padding: $spacing-1 $spacing-2;
+        background: $orange-50;
+        color: $primary;
+        border-radius: $rounded-full;
     }
 
     &__review-mini-tag {

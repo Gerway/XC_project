@@ -1,32 +1,53 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, Image, ScrollView } from '@tarojs/components';
+import React, { useState, useMemo, useEffect } from 'react';
+import { View, Text, Image, ScrollView, Swiper, SwiperItem } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
-import { HOTELS, ROOMS, MOCK_USER } from '../../constants';
-import { Room, Order, OrderStatus } from '../../../types/types';
+import { MOCK_USER } from '../../constants';
+import { Order, OrderStatus } from '../../../types/types';
+import { hotelApi, HotelDetails, RoomDetails } from '../../api/hotel';
+import DatePicker from '../../components/DatePicker/DatePicker';
 import './index.scss';
 
-const HotelDetails: React.FC = () => {
+const HotelDetailsPage: React.FC = () => {
   const router = useRouter();
   const id = router.params.id || 'h_1';
-  const hotel = HOTELS.find(h => h.hotel_id === id);
-  const rooms = id && ROOMS[id] ? ROOMS[id] : ROOMS['h_1'];
 
-  const [bookingType, setBookingType] = useState<'Daily' | 'Hourly'>('Daily');
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const [hotelDetails, setHotelDetails] = useState<HotelDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [expandedRooms, setExpandedRooms] = useState<Record<string, boolean>>({});
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
 
   // Try to read dates from storage (set by search page)
   const [dates, setDates] = useState<{ start: Date; end: Date }>(() => {
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
+
+    // Safari/WeChat Mini program bug: 'YYYY-MM-DD' parses as invalid date. Use 'YYYY/MM/DD'.
+    const parseSafeDate = (dateStr: string) => {
+      return new Date(dateStr.replace(/-/g, '/'));
+    };
+
+    // 1. Try to read from Router Params first (Passed from Search page)
+    if (router.params.check_in && router.params.check_out) {
+      return {
+        start: parseSafeDate(router.params.check_in),
+        end: parseSafeDate(router.params.check_out)
+      };
+    }
+
+    // 2. Fallback to LocalStorage 'searchParams'
     try {
       const raw = Taro.getStorageSync('searchParams');
       if (raw) {
         const params = JSON.parse(raw);
-        if (params.checkIn && params.checkOut) {
+        if (params.check_in && params.check_out) {
           return {
-            start: new Date(params.checkIn),
-            end: new Date(params.checkOut)
+            start: parseSafeDate(params.check_in),
+            end: parseSafeDate(params.check_out)
           };
         }
       }
@@ -34,15 +55,54 @@ const HotelDetails: React.FC = () => {
     return { start: today, end: tomorrow };
   });
 
-  if (!hotel) {
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchDetails = async () => {
+      try {
+        setLoading(true);
+
+        // Helper to format date cleanly as YYYY-MM-DD
+        const getYYYYMMDD = (d: Date) => {
+          const y = d.getFullYear();
+          const m = (d.getMonth() + 1).toString().padStart(2, '0');
+          const day = d.getDate().toString().padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        };
+
+        const res = await hotelApi.getHotelDetails({
+          hotel_id: id,
+          check_in: getYYYYMMDD(dates.start),
+          check_out: getYYYYMMDD(dates.end)
+        });
+        if (res.data) {
+          setHotelDetails(res.data);
+        }
+      } catch (e) {
+        console.error('Failed to fetch hotel details', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDetails();
+  }, [id, dates]);
+
+  if (loading) {
     return (
-      <View className="hotel-details">
-        <Text>Hotel not found</Text>
+      <View className="hotel-details" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Text>玩命加载中...</Text>
       </View>
     );
   }
 
-  const handleBook = (room: Room) => {
+  if (!hotelDetails) {
+    return (
+      <View className="hotel-details">
+        <Text>未找到酒店信息</Text>
+      </View>
+    );
+  }
+
+  const handleBook = (room: RoomDetails, pkgPrice: number, pkgName: string) => {
     // Check login status first
     const userInfo = Taro.getStorageSync('userInfo');
     if (!userInfo) {
@@ -61,20 +121,20 @@ const HotelDetails: React.FC = () => {
     }
 
     // 1. Create PENDING order immediately
-    const nights = Math.max(1, Math.round((dates.end.getTime() - dates.start.getTime()) / (1000 * 60 * 60 * 24)));
-    const totalPrice = room.price * nights;
+    const orderNights = Math.max(1, Math.round((dates.end.getTime() - dates.start.getTime()) / (1000 * 60 * 60 * 24)));
+    const totalPrice = pkgPrice * orderNights;
 
     const newOrder: Order = {
       order_id: `o_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
       user_id: MOCK_USER.user_id,
-      hotel_id: hotel.hotel_id,
-      hotel_name: hotel.name,
-      hotel_image: hotel.image_url,
+      hotel_id: hotelDetails.hotel_id,
+      hotel_name: hotelDetails.name,
+      hotel_image: hotelDetails.media?.[0]?.url || '',
       room_id: room.room_id,
-      room_name: room.name,
+      room_name: pkgName,
       check_in: dates.start.toISOString().split('T')[0],
       check_out: dates.end.toISOString().split('T')[0],
-      nights: nights,
+      nights: orderNights,
       total_price: totalPrice,
       real_pay: totalPrice, // Initial price, might change with coupons/breakfast
       status: OrderStatus.PENDING,
@@ -95,7 +155,7 @@ const HotelDetails: React.FC = () => {
 
     // 3. Store booking info for UI rendering (Hotel/Room details)
     Taro.setStorageSync('bookingInfo', JSON.stringify({
-      hotel,
+      hotel: hotelDetails,
       room,
       dates: { start: dates.start.getTime(), end: dates.end.getTime() }
     }));
@@ -104,18 +164,122 @@ const HotelDetails: React.FC = () => {
     Taro.navigateTo({ url: `/pages/booking/index?orderId=${newOrder.order_id}` });
   };
 
-  const formatDate = (date: Date) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${months[date.getMonth()]} ${date.getDate()}`;
+  const handleDateSelect = (start: Date, end: Date) => {
+    setDates({ start, end });
+    // TODO: Since dates changed, we ideally should re-fetch hotel details or room prices
+    // but for now, just updating UI state
+  };
+
+  const formatDate = (d: Date) => {
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    return `${month}月${day}日`;
+  };
+
+  const getWeekday = (date: Date) => {
+    const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    return days[date.getDay()];
   };
 
   const nights = Math.max(1, Math.round((dates.end.getTime() - dates.start.getTime()) / (1000 * 60 * 60 * 24)));
+  const heroImage = hotelDetails.media?.find(m => m.media_type === 1)?.url || hotelDetails.image_url || 'https://images.unsplash.com/photo-1551882547-ff40c0d5bf8f?auto=format&fit=crop&w=800&q=80';
+  const mediaCount = hotelDetails.media?.length || 0;
+
+  const toggleRoomExpand = (roomId: string) => {
+    setExpandedRooms(prev => ({ ...prev, [roomId]: !prev[roomId] }));
+  };
+
+  const getPackages = (room: RoomDetails) => {
+    const packages: any[] = [];
+    const baseBreakfast = room.has_breakfast === 1 ? 1 : 0;
+
+    // 使用入住日期当天的 18:00 作为免费取消的截止时间
+    const cancelDate = new Date(dates.start);
+    const mm = (cancelDate.getMonth() + 1).toString().padStart(2, '0');
+    const dd = cancelDate.getDate().toString().padStart(2, '0');
+    const cancelTimeStr = `${mm}月${dd}日18:00`;
+
+    const roomMinPrice = Number(room.min_price) || 0;
+    const roomOriPrice = Number(room.ori_price) || 0;
+
+    for (let b = baseBreakfast; b <= 2; b++) {
+      const bLabel = b === 0 ? '无餐食' : `${b}份早餐`;
+      const increase = (b - baseBreakfast) * 20;
+
+      const nonFreePrice = roomMinPrice + increase;
+      const freePrice = nonFreePrice + 10;
+
+      const safeOri = roomOriPrice > roomMinPrice ? roomOriPrice : (roomMinPrice + 20);
+      const oriPriceNonFree = safeOri + increase;
+      const oriPriceFree = oriPriceNonFree + 10;
+
+      packages.push({
+        id: `${room.room_id}_${b}_non_free`,
+        breakfast: bLabel,
+        cancellation: '不可取消',
+        desc: '5小时内确认',
+        price: nonFreePrice,
+        oriPrice: oriPriceNonFree,
+        hasTags: false,
+        isFree: false
+      });
+
+      packages.push({
+        id: `${room.room_id}_${b}_free`,
+        breakfast: bLabel,
+        cancellation: `${cancelTimeStr}前免费取消`,
+        desc: '延迟退房 | 立即确认',
+        price: freePrice,
+        oriPrice: oriPriceFree,
+        hasTags: true,
+        isFree: true
+      });
+    }
+    return packages;
+  };
+
+  const userInfoStr = Taro.getStorageSync('userInfo');
+  let userPoints = 0;
+  try {
+    if (userInfoStr) {
+      const userInfoObj = typeof userInfoStr === 'string' ? JSON.parse(userInfoStr) : userInfoStr;
+      userPoints = Number(userInfoObj.points) || 0;
+    }
+  } catch (e) {
+    console.error('Failed to parse userInfo', e);
+  }
+  const pointDiscount = Math.floor(userPoints / 100);
+
+  const NEW_AMENITIES = [
+    { label: `${hotelDetails?.open_time ? hotelDetails.open_time.substring(0, 4) : '2014'}年开业`, icon: "https://api.iconify.design/lucide:newspaper.svg?color=%23333333&strokeWidth=1.5" },
+    { label: '家庭房', icon: "https://api.iconify.design/lucide:home.svg?color=%23333333&strokeWidth=1.5" },
+    { label: '山景房', icon: "https://api.iconify.design/lucide:mountain.svg?color=%23333333&strokeWidth=1.5" },
+    { label: '棋牌房', icon: "https://api.iconify.design/mdi:cards-playing-outline.svg?color=%23333333" },
+    { label: '免费停车', icon: "https://api.iconify.design/mdi:alpha-p-circle-outline.svg?color=%23333333" },
+    { label: '洗衣房', icon: "https://api.iconify.design/lucide:shirt.svg?color=%23333333&strokeWidth=1.5" },
+  ];
 
   return (
     <ScrollView scrollY className="hotel-details">
       {/* --- Hero Image Section --- */}
       <View className="hotel-details__hero">
-        <Image src={hotel.image_url} className="hotel-details__hero-bg" mode="aspectFill" />
+        {mediaCount > 0 ? (
+          <Swiper
+            className="hotel-details__hero-bg"
+            circular
+            autoplay
+            interval={2000}
+            onChange={(e) => setCurrentMediaIndex(e.detail.current)}
+          >
+            {hotelDetails.media.map((m, idx) => (
+              <SwiperItem key={idx}>
+                <Image src={m.url} className="hotel-details__hero-bg-img" mode="aspectFill" />
+              </SwiperItem>
+            ))}
+          </Swiper>
+        ) : (
+          <Image src={heroImage} className="hotel-details__hero-bg" mode="aspectFill" />
+        )}
         <View className="hotel-details__hero-gradient"></View>
 
         <View className="hotel-details__top-nav">
@@ -124,91 +288,99 @@ const HotelDetails: React.FC = () => {
           </View>
           <View className="hotel-details__nav-actions">
             <View className="hotel-details__nav-btn">
-              <Text className="hotel-details__nav-btn-icon">♡</Text>
+              <Image src="https://api.iconify.design/lucide:heart.svg?color=white" style={{ width: 20, height: 20 }} />
             </View>
             <View className="hotel-details__nav-btn">
-              <Text className="hotel-details__nav-btn-icon">↗</Text>
-            </View>
-            <View className="hotel-details__nav-btn">
-              <Text className="hotel-details__nav-btn-icon">⋯</Text>
+              <Image src="https://api.iconify.design/lucide:share.svg?color=white" style={{ width: 20, height: 20 }} />
             </View>
           </View>
         </View>
 
         <View className="hotel-details__image-counter">
-          <Text className="hotel-details__image-counter-icon">🖼</Text>
-          <Text>1/42</Text>
-        </View>
-
-        <View className="hotel-details__hero-actions">
-          <View className="hotel-details__hero-action-btn hotel-details__hero-action-btn--primary">
-            <Text>Exterior</Text>
-          </View>
-          <View className="hotel-details__hero-action-btn hotel-details__hero-action-btn--secondary">
-            <Text>Rooms</Text>
-          </View>
-          <View className="hotel-details__hero-action-btn hotel-details__hero-action-btn--secondary">
-            <Text>Dining</Text>
-          </View>
+          <Image src="https://api.iconify.design/lucide:image.svg?color=white" style={{ width: 14, height: 14 }} className="hotel-details__image-counter-icon" />
+          <Text>{mediaCount > 0 ? currentMediaIndex + 1 : 1}/{mediaCount > 0 ? mediaCount : 1}</Text>
         </View>
       </View>
 
       {/* --- Main Content --- */}
       <View className="hotel-details__main">
         <View>
-          <Text className="hotel-details__title">{hotel.name}</Text>
-          <View className="hotel-details__meta">
-            <Text className="hotel-details__tag-badge">{hotel.tags[0] || 'Luxury'}</Text>
-            <Text>Opened 2015</Text>
-            <View className="hotel-details__dot"></View>
-            <Text>Renovated 2021</Text>
+          <View className="hotel-details__title-row">
+            <Text className="hotel-details__title">{hotelDetails.name}</Text>
+            {(hotelDetails.tags && hotelDetails.tags.length > 0) && (
+              <Text className="hotel-details__tag-badge hotel-details__tag-badge--inline">{hotelDetails.tags[0]}</Text>
+            )}
+          </View>
+        </View>
+
+        {/* New Line Amenities Scroller */}
+        <View className="hotel-details__line-amenities-wrapper">
+          <View className="hotel-details__line-amenities-scroll-area">
+            <ScrollView scrollX className="hotel-details__line-amenities-scroll" scrollWithAnimation>
+              <View className="hotel-details__line-amenities-container">
+                {NEW_AMENITIES.map((am, index) => (
+                  <View key={am.label} className={`hotel-details__line-amenity-col ${index > 0 ? 'hotel-details__line-amenity-col--border' : ''}`}>
+                    <Image src={am.icon} className="hotel-details__line-amenity-icon" />
+                    <Text className="hotel-details__line-amenity-label">{am.label}</Text>
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+          <View className="hotel-details__line-amenity-col hotel-details__line-amenity-col--border hotel-details__line-amenity-col--more">
+            <Text className="hotel-details__line-amenity-more-text">设施<br />详情</Text>
+            <Text className="hotel-details__line-amenity-more-icon">›</Text>
           </View>
         </View>
 
         {/* Ranking Banners */}
         <View className="hotel-details__rankings">
-          <View className="hotel-details__ranking-banner hotel-details__ranking-banner--orange">
-            <View className="hotel-details__ranking-info">
-              <Text className="hotel-details__ranking-icon hotel-details__ranking-icon--orange">🏆</Text>
-              <Text className="hotel-details__ranking-text hotel-details__ranking-text--orange">#1 in Quiet Hotels Recommendation</Text>
+          {hotelDetails.ranking?.city_rank && (
+            <View className="hotel-details__ranking-banner hotel-details__ranking-banner--orange">
+              <View className="hotel-details__ranking-info">
+                <Image src="https://api.iconify.design/lucide:trophy.svg?color=%23f97316" style={{ width: 16, height: 16 }} className="hotel-details__ranking-icon" />
+                <Text className="hotel-details__ranking-text hotel-details__ranking-text--orange">排名 #{hotelDetails.ranking.city_rank} in {hotelDetails.city_name} 热门推荐</Text>
+              </View>
+              <Text className="hotel-details__ranking-arrow hotel-details__ranking-arrow--orange">›</Text>
             </View>
-            <Text className="hotel-details__ranking-arrow hotel-details__ranking-arrow--orange">›</Text>
-          </View>
-          <View className="hotel-details__ranking-banner hotel-details__ranking-banner--yellow">
-            <View className="hotel-details__ranking-info">
-              <Text className="hotel-details__ranking-icon hotel-details__ranking-icon--yellow">🏅</Text>
-              <Text className="hotel-details__ranking-text hotel-details__ranking-text--yellow">Top 4 Travelers' Choice 2024</Text>
+          )}
+          {hotelDetails.ranking?.total_rank && (
+            <View className="hotel-details__ranking-banner hotel-details__ranking-banner--yellow">
+              <View className="hotel-details__ranking-info">
+                <Image src="https://api.iconify.design/lucide:award.svg?color=%23eab308" style={{ width: 16, height: 16 }} className="hotel-details__ranking-icon" />
+                <Text className="hotel-details__ranking-text hotel-details__ranking-text--yellow">全站总榜第 {hotelDetails.ranking.total_rank} 名</Text>
+              </View>
+              <Text className="hotel-details__ranking-arrow hotel-details__ranking-arrow--yellow">›</Text>
             </View>
-            <Text className="hotel-details__ranking-arrow hotel-details__ranking-arrow--yellow">›</Text>
-          </View>
+          )}
         </View>
 
         {/* Score & Map Row */}
         <View className="hotel-details__score-map-row">
           <View className="hotel-details__score-card">
             <View className="hotel-details__score-top">
-              <Text className="hotel-details__score-number">{hotel.score}</Text>
-              <Text className="hotel-details__score-label">Great</Text>
+              <Text className="hotel-details__score-number">{hotelDetails.score}</Text>
+              <Text className="hotel-details__score-label">{hotelDetails.score >= 4.5 ? '极好' : '很好'}</Text>
             </View>
-            <View className="hotel-details__score-reviews" onClick={() => Taro.navigateTo({ url: `/pages/reviews/index?id=${hotel.hotel_id}` })}>
-              <Text>{hotel.reviews_count} Reviews ›</Text>
+            <View className="hotel-details__score-reviews" onClick={() => Taro.navigateTo({ url: `/pages/reviews/index?id=${hotelDetails.hotel_id}` })}>
+              <Text>{hotelDetails.reviews_count} 条点评 ›</Text>
             </View>
-            <Text className="hotel-details__score-subtitle">Cleanliness 4.9 · Service 4.8</Text>
+            {/* <Text className="hotel-details__score-subtitle">卫生 4.9 · 服务 4.8</Text> */}
           </View>
 
           <View className="hotel-details__map-card">
             <View className="hotel-details__map-info">
-              <Text className="hotel-details__map-address">{hotel.address}</Text>
-              <Text className="hotel-details__map-distance">0.5km from center</Text>
+              <Text className="hotel-details__map-address">{hotelDetails.address}</Text>
+              <Text className="hotel-details__map-distance">市中心 0.5km</Text>
             </View>
             <View className="hotel-details__map-icon-wrapper">
-              <Text className="hotel-details__map-icon">📍</Text>
+              <Image src="https://api.iconify.design/lucide:map-pin.svg?color=%23ea580c" style={{ width: 18, height: 18 }} className="hotel-details__map-icon" />
             </View>
           </View>
         </View>
 
         {/* Coupon Row */}
-        <View className="hotel-details__coupon-row">
+        {/* <View className="hotel-details__coupon-row">
           <View className="hotel-details__coupon-pills">
             <Text className="hotel-details__coupon-label">Coupons</Text>
             <Text className="hotel-details__coupon-pill">15% Off</Text>
@@ -217,220 +389,230 @@ const HotelDetails: React.FC = () => {
           <View className="hotel-details__coupon-claim">
             <Text>Claim ›</Text>
           </View>
-        </View>
+        </View> */}
       </View>
 
       {/* --- Sticky Tabs & Date --- */}
       <View className="hotel-details__sticky-section">
-        <View className="hotel-details__date-bar">
-          <View className="hotel-details__date-picker-trigger" onClick={() => setShowDatePicker(!showDatePicker)}>
-            <View>
-              <Text className="hotel-details__date-range-text">
-                {formatDate(dates.start)} - {formatDate(dates.end)}
-              </Text>
+        {/* Date Row */}
+        <View className="hotel-details__date-row" onClick={() => setShowDatePicker(!showDatePicker)}>
+          <View className="hotel-details__date-info">
+            <Text className="hotel-details__date-text">{formatDate(dates.start)} {getWeekday(dates.start)}</Text>
+            <View className="hotel-details__nights-badge">
+              <Text>{nights}晚</Text>
             </View>
-            <View className="hotel-details__nights-chip">
-              <Text>{nights} Night{nights > 1 ? 's' : ''}</Text>
-              <Text className="hotel-details__nights-chip-icon">📅</Text>
-            </View>
-          </View>
-          <View className="hotel-details__booking-type-toggle">
-            <View
-              className={`hotel-details__booking-type-btn ${bookingType === 'Daily' ? 'hotel-details__booking-type-btn--active' : ''}`}
-              onClick={() => setBookingType('Daily')}
-            >
-              <Text>Daily</Text>
-            </View>
-            <View
-              className={`hotel-details__booking-type-btn ${bookingType === 'Hourly' ? 'hotel-details__booking-type-btn--active' : ''}`}
-              onClick={() => setBookingType('Hourly')}
-            >
-              <Text>Hourly</Text>
-            </View>
+            <Text className="hotel-details__date-text">{formatDate(dates.end)} {getWeekday(dates.end)}</Text>
           </View>
         </View>
 
-        <ScrollView scrollX className="hotel-details__filter-chips-scroll" showScrollbar={false}>
-          <View className="hotel-details__filter-chips">
-            {['All Rooms', 'Free Cancellation', 'Breakfast Included', 'Pay at Hotel'].map((filter, i) => (
-              <View key={filter} className={`hotel-details__filter-chip ${i === 0 ? 'hotel-details__filter-chip--active' : ''}`}>
-                <Text>{filter}</Text>
-              </View>
-            ))}
-          </View>
-        </ScrollView>
+        {/* Filters Row */}
+        <View className="hotel-details__filters-row">
+          <ScrollView scrollX className="hotel-details__filters-scroll" showScrollbar={false}>
+            <View className="hotel-details__filter-pills">
+              {['含早餐', '不含早餐', '双床房', '大床房'].map((filter) => {
+                const isActive = activeFilters.includes(filter);
+                return (
+                  <View
+                    key={filter}
+                    className={`hotel-details__filter-pill ${isActive ? 'hotel-details__filter-pill--active' : ''}`}
+                    onClick={() => {
+                      setActiveFilters(prev =>
+                        prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
+                      );
+                    }}
+                  >
+                    <Text>{filter}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </ScrollView>
+          {/* <View className="hotel-details__filter-action">
+            <Text>筛选 ▾</Text>
+          </View> */}
+        </View>
       </View>
 
       {/* --- Room List --- */}
       <View className="hotel-details__room-list">
-        {rooms.map((room, idx) => {
-          const tags = idx === 0 ? ['Early Bird Deal'] : (idx === 1 ? ['Mobile Only', 'Instant Confirmation'] : ['Members Only']);
+        {hotelDetails.rooms?.filter(room => {
+          const bedStr = (room.room_bed || '') + (room.name || '');
+          if (activeFilters.includes('大床房') && !bedStr.includes('大床')) return false;
+          if (activeFilters.includes('双床房') && !bedStr.includes('双床') && !bedStr.includes('双人床')) return false;
+
+          let pkgs = getPackages(room);
+          if (activeFilters.includes('含早餐') && !activeFilters.includes('不含早餐')) {
+            pkgs = pkgs.filter(p => p.breakfast !== '无餐食');
+          } else if (activeFilters.includes('不含早餐') && !activeFilters.includes('含早餐')) {
+            pkgs = pkgs.filter(p => p.breakfast === '无餐食');
+          }
+
+          return pkgs.length > 0;
+        }).map((room, idx) => {
+          const isExpanded = !!expandedRooms[room.room_id];
+          let pkgs = getPackages(room);
+          if (activeFilters.includes('含早餐') && !activeFilters.includes('不含早餐')) {
+            pkgs = pkgs.filter(p => p.breakfast !== '无餐食');
+          } else if (activeFilters.includes('不含早餐') && !activeFilters.includes('含早餐')) {
+            pkgs = pkgs.filter(p => p.breakfast === '无餐食');
+          }
 
           return (
-            <View key={room.room_id} className="hotel-details__room-card">
-              <View className="hotel-details__room-top">
-                <View className="hotel-details__room-image-wrapper">
-                  <Image src={room.image_url} className="hotel-details__room-image" mode="aspectFill" />
-                  {idx === 0 && <Text className="hotel-details__room-popular-tag">Popular</Text>}
-                  <View className="hotel-details__room-image-count">
-                    <Text className="hotel-details__room-image-count-icon">🖼</Text>
+            <View key={room.room_id} className="hotel-details__room-container">
+              {/* Summary Card */}
+              <View className="hotel-details__room-summary" onClick={() => toggleRoomExpand(room.room_id)}>
+                <View className="hotel-details__room-summary-img-box">
+                  <Image src={room.image_url || ''} className="hotel-details__room-summary-img" mode="aspectFill" />
+                  {idx === 0 && <Text className="hotel-details__room-summary-tag">热门推荐</Text>}
+                  <View className="hotel-details__room-summary-img-count">
+                    <Image src="https://api.iconify.design/lucide:image.svg?color=white" style={{ width: 10, height: 10 }} />
                     <Text> 5</Text>
                   </View>
                 </View>
 
-                <View className="hotel-details__room-info">
-                  <View>
-                    <View className="hotel-details__room-name-row">
-                      <Text className="hotel-details__room-name">{room.name}</Text>
-                      <Text className="hotel-details__room-expand-icon">▾</Text>
+                <View className="hotel-details__room-summary-info">
+                  <View className="hotel-details__room-summary-header">
+                    <View className="hotel-details__room-summary-title-wrapper">
+                      <Text className="hotel-details__room-summary-title">{room.name}</Text>
                     </View>
-                    <View className="hotel-details__room-specs">
-                      <Text>{room.area}m²</Text>
-                      <View className="hotel-details__spec-dot"></View>
-                      <Text>{room.features[1] || 'Queen Bed'}</Text>
-                      <View className="hotel-details__spec-dot"></View>
-                      <Text>{room.features[0] || 'City View'}</Text>
+                    <View className={`hotel-details__room-summary-expand-icon ${isExpanded ? 'hotel-details__room-summary-expand-icon--expanded' : ''}`}>
+                      <Text>⌄</Text>
                     </View>
-                    <View className="hotel-details__room-badges">
-                      <Text className="hotel-details__room-badge hotel-details__room-badge--green">Free Cancellation</Text>
-                      {room.has_breakfast && <Text className="hotel-details__room-badge hotel-details__room-badge--orange">Breakfast</Text>}
+                  </View>
+                  <View className="hotel-details__room-summary-desc">
+                    <Text>{room.area}m² {room.room_bed || '大床'}</Text>
+                  </View>
+                  <View className="hotel-details__room-summary-price-area">
+                    <View className="hotel-details__room-summary-price">
+                      {room.ori_price && room.ori_price > room.min_price && (
+                        <Text className="hotel-details__room-summary-ori-price">¥{room.ori_price}</Text>
+                      )}
+                      <Text className={`hotel-details__room-summary-min-price ${room.ori_price && room.ori_price > room.min_price ? 'hotel-details__room-summary-min-price--red' : ''}`}>
+                        <Text style={{ fontSize: '12px' }}>¥</Text>{room.min_price}
+                        <Text style={{ fontSize: '12px', color: '#666', fontWeight: 'normal' }}>起</Text>
+                      </Text>
                     </View>
+                    {userPoints > 0 && pointDiscount > 0 && (
+                      <View className="hotel-details__room-summary-discount">
+                        <Text>积分当钱花·优惠{pointDiscount}</Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               </View>
 
-              <View className="hotel-details__room-action-area">
-                <View className="hotel-details__room-price-col">
-                  <View className="hotel-details__room-deal-tags">
-                    {tags.map(t => (
-                      <Text key={t} className="hotel-details__room-deal-tag">{t}</Text>
-                    ))}
-                  </View>
-                  <View className="hotel-details__room-price-row">
-                    <Text className="hotel-details__room-original-price">¥{room.ori_price}</Text>
-                    <View className={`hotel-details__room-current-price ${idx === 1 ? 'hotel-details__room-current-price--red' : ''}`}>
-                      <Text className="hotel-details__room-currency">¥</Text>
-                      <Text className="hotel-details__room-price-value">{room.price}</Text>
-                      <Text className="hotel-details__room-price-unit">avg/night</Text>
-                    </View>
-                  </View>
-                  <Text className="hotel-details__room-tax-note">Includes taxes & fees</Text>
-                </View>
+              {/* Packages List */}
+              {isExpanded && (
+                <View className="hotel-details__room-packages">
+                  {pkgs.map(pkg => (
+                    <View key={pkg.id} className="hotel-details__pkg-card">
+                      <View className="hotel-details__pkg-info">
+                        <View className="hotel-details__pkg-title-row">
+                          <Text className={`hotel-details__pkg-breakfast ${pkg.breakfast === '无餐食' ? 'hotel-details__pkg-breakfast--gray' : 'hotel-details__pkg-breakfast--green'}`}>{pkg.breakfast}</Text>
+                          <Text className="hotel-details__pkg-separator"> | </Text>
+                          <Text className={`hotel-details__pkg-cancel ${pkg.isFree ? 'hotel-details__pkg-cancel--green' : ''}`}>
+                            {pkg.cancellation} {pkg.isFree ? '›' : ''}
+                          </Text>
+                        </View>
 
-                <View onClick={() => handleBook(room)} className="hotel-details__book-btn">
-                  <Text className="hotel-details__book-btn-text">Book</Text>
+                        {pkg.hasTags && (
+                          <View className="hotel-details__pkg-gift">
+                            <Text className="hotel-details__pkg-gift-icon">礼</Text>
+                            <Text>暖冬养颜茶自助1份/天+打车券...</Text>
+                          </View>
+                        )}
+
+                        <View className="hotel-details__pkg-services">
+                          {pkg.isFree ? (
+                            <View className="hotel-details__pkg-services-flex">
+                              <View className="hotel-details__pkg-service-tag">
+                                <Text>延迟退房</Text>
+                              </View>
+                              <View className="hotel-details__pkg-service-tag">
+                                <Text>立即确认</Text>
+                              </View>
+                            </View>
+                          ) : (
+                            <Text className="hotel-details__pkg-service-text">⏱ {pkg.desc}</Text>
+                          )}
+                        </View>
+                      </View>
+
+                      <View className="hotel-details__pkg-action">
+                        <View className="hotel-details__pkg-price-row">
+                          <Text className="hotel-details__pkg-ori-price">¥{pkg.oriPrice}</Text>
+                          <Text className="hotel-details__pkg-cur-price">
+                            <Text style={{ fontSize: '10px' }}>均¥</Text>
+                            <Text style={{ fontSize: '18px', fontWeight: 'bold' }}>{pkg.price}</Text>
+                          </Text>
+                        </View>
+                        <View className="hotel-details__pkg-discount">
+                          <Text>优惠{(pkg.oriPrice - pkg.price)}</Text>
+                        </View>
+                        <View className="hotel-details__pkg-book-btn" onClick={() => handleBook(room, pkg.price, `${room.name}(${pkg.breakfast})`)}>
+                          <Text className="hotel-details__pkg-book-btn-text">订</Text>
+                        </View>
+                      </View>
+                    </View>
+                  ))}
                 </View>
-              </View>
+              )}
             </View>
           );
         })}
       </View>
 
-      {/* --- Section: Hotel Honors --- */}
-      <View className="hotel-details__honors">
-        <Text className="hotel-details__section-title">Hotel Honors</Text>
-        <View className="hotel-details__honors-card">
-          <View className="hotel-details__honor-item">
-            <View className="hotel-details__honor-icon-wrapper hotel-details__honor-icon-wrapper--orange">
-              <Text className="hotel-details__honor-icon">🏆</Text>
-            </View>
-            <View className="hotel-details__honor-info">
-              <Text className="hotel-details__honor-title">Top 1 Quiet Hotel</Text>
-              <Text className="hotel-details__honor-desc">Awarded for exceptional soundproofing and peaceful environment.</Text>
-            </View>
-            <Text className="hotel-details__honor-arrow">›</Text>
-          </View>
-          <View className="hotel-details__honors-divider"></View>
-          <View className="hotel-details__honor-item">
-            <View className="hotel-details__honor-icon-wrapper hotel-details__honor-icon-wrapper--yellow">
-              <Text className="hotel-details__honor-icon">👍</Text>
-            </View>
-            <View className="hotel-details__honor-info">
-              <Text className="hotel-details__honor-title">Travelers' Choice 2024</Text>
-              <Text className="hotel-details__honor-desc">Ranked among the top 10% of hotels worldwide.</Text>
-            </View>
-            <Text className="hotel-details__honor-arrow">›</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* --- Section: Amenities --- */}
-      <View className="hotel-details__amenities">
-        <View className="hotel-details__amenities-header">
-          <Text className="hotel-details__section-title" style={{ marginBottom: 0 }}>Amenities</Text>
-          <Text className="hotel-details__amenities-view-all">View All ›</Text>
-        </View>
-        <View className="hotel-details__amenity-icons-grid">
-          {[
-            { icon: '🅿️', label: 'Parking' },
-            { icon: '🖨', label: 'Business' },
-            { icon: '🍽', label: 'Dining' },
-            { icon: '📶', label: 'Free Wifi' },
-            { icon: '🏋️', label: 'Gym' },
-            { icon: '🏊', label: 'Pool' },
-            { icon: '🧖', label: 'Spa' },
-            { icon: '☕', label: 'Lounge' }
-          ].map(am => (
-            <View key={am.label} className="hotel-details__amenity-icon-item">
-              <Text className="hotel-details__amenity-icon">{am.icon}</Text>
-              <Text className="hotel-details__amenity-icon-label">{am.label}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      {/* --- Section: Hotel Policy --- */}
+      {/* --- Section: 基础信息 --- */}
       <View className="hotel-details__info-sections">
-        <View>
-          <Text className="hotel-details__section-title">Hotel Policy</Text>
-          <View className="hotel-details__policy-card">
-            <View className="hotel-details__policy-row">
-              <Text className="hotel-details__policy-label">Check-in</Text>
-              <Text className="hotel-details__policy-value">After 14:00</Text>
-            </View>
-            <View className="hotel-details__policy-row">
-              <Text className="hotel-details__policy-label">Check-out</Text>
-              <Text className="hotel-details__policy-value">Before 12:00</Text>
-            </View>
-            <Text className="hotel-details__policy-text">Guests are required to show a photo identification and credit card upon check-in. Please note that all Special Requests are...</Text>
-            <View className="hotel-details__policy-read-more">
-              <Text>Read More ▾</Text>
-            </View>
+        <View className="hotel-details__policy-card">
+          <View className="hotel-details__section-title">酒店基础信息</View>
+          <View className="hotel-details__policy-row">
+            <Text className="hotel-details__policy-label">入住时间</Text>
+            <Text className="hotel-details__policy-value">下午 14:00之后</Text>
           </View>
+          <View className="hotel-details__policy-row">
+            <Text className="hotel-details__policy-label">退房时间</Text>
+            <Text className="hotel-details__policy-value">上午 12:00之前</Text>
+          </View>
+          <Text className={`hotel-details__policy-text ${!isDescExpanded ? 'hotel-details__policy-text--clamped' : ''}`}>
+            {hotelDetails.description}
+          </Text>
+          {hotelDetails.description && hotelDetails.description.length > 60 && (
+            <View className="hotel-details__policy-read-more" onClick={() => setIsDescExpanded(!isDescExpanded)}>
+              <Text>{isDescExpanded ? '收起 ▴' : '更多 ▾'}</Text>
+            </View>
+          )}
         </View>
 
-        <View>
-          <Text className="hotel-details__section-title">Location</Text>
-          <View className="hotel-details__location-card">
-            <View className="hotel-details__map-preview">
-              <View className="hotel-details__map-marker">
-                <View className="hotel-details__map-marker-label">
-                  <Text>{hotel.name.split(' ')[0]} Hotel</Text>
-                </View>
-                <View className="hotel-details__map-marker-dot"></View>
+        <View className="hotel-details__location-card">
+          <View className="hotel-details__section-title">周边位置</View>
+          <View className="hotel-details__map-preview">
+            <View className="hotel-details__map-marker">
+              <View className="hotel-details__map-marker-label">
+                <Text>{hotelDetails.name.split(' ')[0]}</Text>
+              </View>
+              <View className="hotel-details__map-marker-dot"></View>
+            </View>
+          </View>
+          <View className="hotel-details__location-station">
+            <View className="hotel-details__station-info">
+              <Text className="hotel-details__station-icon">🚇</Text>
+              <View>
+                <Text className="hotel-details__station-name">Nearest Station</Text>
+                <Text className="hotel-details__station-distance">2 min walk · 150m</Text>
               </View>
             </View>
-            <View className="hotel-details__location-station">
-              <View className="hotel-details__station-info">
-                <Text className="hotel-details__station-icon">🚇</Text>
-                <View>
-                  <Text className="hotel-details__station-name">Nearest Station</Text>
-                  <Text className="hotel-details__station-distance">2 min walk · 150m</Text>
-                </View>
-              </View>
-              <Text className="hotel-details__station-arrow">›</Text>
-            </View>
+            <Text className="hotel-details__station-arrow">›</Text>
           </View>
         </View>
       </View>
 
       {/* --- Section: Reviews --- */}
       <View className="hotel-details__reviews">
-        <Text className="hotel-details__section-title hotel-details__section-title--lg">Guest Reviews</Text>
-
         <View className="hotel-details__reviews-card">
+          <View className="hotel-details__section-title hotel-details__section-title--lg">用户评价</View>
           <View className="hotel-details__review-summary">
-            <Text className="hotel-details__review-summary-title">"Excellent"</Text>
+            <Text className="hotel-details__review-summary-title">{hotelDetails.score >= 4.5 ? '“极好”' : '“很好”'}</Text>
             <View>
               <View className="hotel-details__review-stars">
                 {[1, 2, 3, 4, 5].map(i => (
@@ -439,95 +621,51 @@ const HotelDetails: React.FC = () => {
                   </View>
                 ))}
               </View>
-              <Text className="hotel-details__review-count">{hotel.reviews_count} reviews</Text>
+              <Text className="hotel-details__review-count">{hotelDetails.reviews_count} 条评价</Text>
             </View>
           </View>
 
           <View className="hotel-details__review-tags">
-            {[
-              { label: 'Good Service', count: 231 },
-              { label: 'Clean & Tidy', count: 207 },
-              { label: 'Convenient', count: 177 },
-              { label: 'Quiet', count: 163 },
-              { label: 'Nice Room', count: 155 },
-              { label: 'Near Metro', count: 145 }
-            ].map(tag => (
-              <View key={tag.label} className="hotel-details__review-tag">
-                <Text>{tag.label} {tag.count}</Text>
+            {hotelDetails.review_keywords && hotelDetails.review_keywords.length > 0 ? (
+              hotelDetails.review_keywords.map(kw => (
+                <View key={kw} className="hotel-details__review-tag">
+                  <Text>{kw}</Text>
+                </View>
+              ))
+            ) : (
+              <View className="hotel-details__review-tag"><Text>暂无评价</Text></View>
+            )}
+          </View>
+
+          <View className="hotel-details__review-list">
+            {hotelDetails.reviews?.map((review, i) => (
+              <View key={i} className={`hotel-details__review-item ${i > 0 ? 'hotel-details__review-item--bordered' : ''}`}>
+                <View className="hotel-details__reviewer-info">
+                  <View className="hotel-details__reviewer-avatar">
+                    <Text className="hotel-details__reviewer-avatar-icon">👤</Text>
+                  </View>
+                  <View>
+                    <View className="hotel-details__reviewer-name-row">
+                      <Text className="hotel-details__reviewer-name">匿名用户</Text>
+                    </View>
+                    <Text className="hotel-details__reviewer-stay">{review.created_at?.slice(0, 10)} 发表</Text>
+                  </View>
+                </View>
+
+                <View className="hotel-details__review-score-row">
+                  <View className="hotel-details__review-score">
+                    <Text>{review.score}</Text>
+                  </View>
+                </View>
+
+                <Text className="hotel-details__review-text">{review.content}</Text>
               </View>
             ))}
           </View>
 
-          <View className="hotel-details__review-list">
-            <View className="hotel-details__review-item">
-              <View className="hotel-details__reviewer-info">
-                <View className="hotel-details__reviewer-avatar">
-                  <Text className="hotel-details__reviewer-avatar-icon">👤</Text>
-                </View>
-                <View>
-                  <View className="hotel-details__reviewer-name-row">
-                    <Text className="hotel-details__reviewer-name">Dong**</Text>
-                    <Text className="hotel-details__reviewer-badge">Gold Member</Text>
-                  </View>
-                  <Text className="hotel-details__reviewer-stay">Feb 2026 Stayed in Superior King Room</Text>
-                </View>
-              </View>
-
-              <View className="hotel-details__review-score-row">
-                <View className="hotel-details__review-score">
-                  <Text>5.0</Text>
-                </View>
-                <Text className="hotel-details__review-mini-tag">Nice Bathroom</Text>
-                <Text className="hotel-details__review-mini-tag">Room is Good</Text>
-                <Text className="hotel-details__review-mini-tag">Quiet</Text>
-              </View>
-
-              <Text className="hotel-details__review-text">The stay was very good.</Text>
-
-              <View className="hotel-details__review-helpful">
-                <View className="hotel-details__review-helpful-btn">
-                  <Text>👍 Helpful</Text>
-                </View>
-              </View>
-            </View>
-
-            <View className="hotel-details__review-item hotel-details__review-item--bordered">
-              <View className="hotel-details__reviewer-info">
-                <View className="hotel-details__reviewer-avatar">
-                  <Text className="hotel-details__reviewer-avatar-icon">👤</Text>
-                </View>
-                <View>
-                  <View className="hotel-details__reviewer-name-row">
-                    <Text className="hotel-details__reviewer-name">Zhou*</Text>
-                    <Text className="hotel-details__reviewer-badge">Gold Member</Text>
-                  </View>
-                  <Text className="hotel-details__reviewer-stay">Feb 2026 Stayed in Superior King Room</Text>
-                </View>
-              </View>
-
-              <View className="hotel-details__review-score-row">
-                <View className="hotel-details__review-score">
-                  <Text>5.0</Text>
-                </View>
-                <Text className="hotel-details__review-mini-tag">Clean</Text>
-                <Text className="hotel-details__review-mini-tag">Good Service</Text>
-              </View>
-
-              <Text className="hotel-details__review-text">
-                Two minutes walk from the high-speed rail station, very convenient. Front desk service is also very good, warm and thoughtful. The room is clean and hygienic.
-              </Text>
-
-              <View className="hotel-details__review-helpful">
-                <View className="hotel-details__review-helpful-btn">
-                  <Text>👍 Helpful</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          <View className="hotel-details__review-view-more" onClick={() => Taro.navigateTo({ url: `/pages/reviews/index?id=${hotel.hotel_id}` })}>
+          <View className="hotel-details__review-view-more" onClick={() => Taro.navigateTo({ url: `/pages/reviews/index?id=${hotelDetails.hotel_id}` })}>
             <View className="hotel-details__review-view-more-link">
-              <Text>View More ›</Text>
+              <Text>更多 ›</Text>
             </View>
           </View>
         </View>
@@ -535,8 +673,16 @@ const HotelDetails: React.FC = () => {
 
       {/* Bottom spacer */}
       <View style={{ height: '40px' }}></View>
+
+      <DatePicker
+        isOpen={showDatePicker}
+        onClose={() => setShowDatePicker(false)}
+        onSelect={handleDateSelect}
+        startDate={dates.start}
+        endDate={dates.end}
+      />
     </ScrollView>
   );
 };
 
-export default HotelDetails;
+export default HotelDetailsPage;

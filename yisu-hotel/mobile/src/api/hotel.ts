@@ -1,7 +1,7 @@
 import { request } from '../utils/request';
 
 export interface Hotel {
-    hotel_id: number;
+    hotel_id: string;
     name: string;
     address: string;
     city_name: string;
@@ -18,6 +18,8 @@ export interface Hotel {
     real_reviews_count?: number;
     original_price?: number;
     left_stock?: number;
+    remark?: string;
+    open_time?: string;
 }
 
 export interface SearchHotelsParams {
@@ -31,6 +33,43 @@ export interface SearchHotelsParams {
     room_type?: number;
 }
 
+export interface HotelDetailsBody {
+    hotel_id: string;
+    check_in?: string;
+    check_out?: string;
+}
+
+export interface RoomDetails {
+    room_id: string;
+    name: string;
+    area: number;
+    has_breakfast: number;
+    has_window: number;
+    room_bed: string;
+    ori_price: number;
+    min_price: number;
+    image_url?: string;
+}
+
+export interface Review {
+    content: string;
+    score: number;
+    created_at: string;
+    images?: any;
+}
+
+export interface HotelDetails extends Omit<Hotel, 'reviews'> {
+    ranking: {
+        city_rank: number;
+        total_rank: number;
+    };
+    media: Array<{ url: string; media_type: number; media_name: string }>;
+    rooms: RoomDetails[];
+    reviews_count: number;
+    reviews: Review[];
+    review_keywords: string[];
+}
+
 export const hotelApi = {
     /**
      * 搜索酒店列表
@@ -38,6 +77,17 @@ export const hotelApi = {
     searchHotels(data: SearchHotelsParams) {
         return request<{ message: string; data: Hotel[] }>({
             url: '/hotel/search',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 获取酒店详情
+     */
+    getHotelDetails(data: HotelDetailsBody) {
+        return request<{ message: string; data: HotelDetails }>({
+            url: '/hotel/details',
             method: 'POST',
             data
         });
