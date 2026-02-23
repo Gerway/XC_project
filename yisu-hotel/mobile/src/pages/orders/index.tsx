@@ -128,11 +128,11 @@ const Orders: React.FC = () => {
     Taro.navigateTo({ url: '/pages/login/index' });
   };
 
-  const handleAction = (action: string, order: Order) => {
+  const handleAction = async (action: string, order: Order) => {
     if (action === 'book_again') {
       Taro.navigateTo({ url: `/pages/hotel-details/index?id=${order.hotel_id}` });
     } else if (action === 'pay') {
-      Taro.navigateTo({ url: `/pages/booking/index?orderId=${order.order_id}` });
+      Taro.navigateTo({ url: `/pages/order-details/index?orderId=${order.order_id}` });
     } else if (action === 'review') {
       Taro.navigateTo({ url: `/pages/reviews/index?orderId=${order.order_id}` });
     }
@@ -315,7 +315,7 @@ const Orders: React.FC = () => {
                         onClick={(e) => { e.stopPropagation(); handleAction('pay', order); }}
                         className="orders-page__card-btn orders-page__card-btn--primary"
                       >
-                        <Text>去支付</Text>
+                        <Text>查看详情</Text>
                       </View>
                     )}
                     {isCompleted && (

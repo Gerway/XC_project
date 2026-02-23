@@ -336,7 +336,7 @@ export const getRoomInventory = async (
 
     try {
         const [rows] = await pool.execute<RowDataPacket[]>(
-            `SELECT date, price, stock
+            `SELECT DATE_FORMAT(date, '%Y-%m-%d') as date_str, price, stock
              FROM room_inventory
              WHERE room_id = ? AND date >= ? AND date < ?
              ORDER BY date ASC`,
@@ -344,9 +344,7 @@ export const getRoomInventory = async (
         );
 
         const daily = rows.map(r => ({
-            date: r.date instanceof Date
-                ? r.date.toISOString().split('T')[0]
-                : String(r.date).split('T')[0],
+            date: r.date_str,
             price: Number(r.price),
             stock: Number(r.stock)
         }));
@@ -622,5 +620,85 @@ export const cancelOrder = async (
     } catch (err) {
         console.error('cancelOrder error:', err);
         res.status(500).json({ message: '取消订单失败' });
+    }
+};
+
+// ===================== 获取订单详情 =====================
+export const getOrderDetail = async (
+    req: Request<{}, {}, { order_id: string }>,
+    res: Response
+): Promise<void> => {
+    const { order_id } = req.body;
+
+    if (!order_id) {
+        res.status(400).json({ message: '缺少 order_id' });
+        return;
+    }
+
+    try {
+        // 1. 主订单 + 酒店 + 房间 信息
+        const [rows] = await pool.execute<RowDataPacket[]>(
+            `SELECT 
+                o.*,
+                h.name AS hotel_name, h.address AS hotel_address,
+                r.name AS room_name, r.area AS room_area, r.room_bed, r.has_window, r.has_breakfast,
+                (SELECT hm.url FROM hotel_media hm WHERE hm.hotel_id = o.hotel_id ORDER BY hm.sort_order ASC LIMIT 1) AS hotel_image
+             FROM orders o
+             LEFT JOIN hotel h ON o.hotel_id = h.hotel_id
+             LEFT JOIN room r ON o.room_id = r.room_id
+             WHERE o.order_id = ?`,
+            [order_id]
+        );
+
+        if (rows.length === 0) {
+            res.status(404).json({ message: '订单不存在' });
+            return;
+        }
+
+        const orderRow = rows[0];
+
+        // 2. 订单明细
+        const [detailRows] = await pool.execute<RowDataPacket[]>(
+            `SELECT order_details_date, price, breakfast_count FROM order_details WHERE order_id = ? ORDER BY order_details_date ASC`,
+            [order_id]
+        );
+
+        res.status(200).json({
+            message: '查询成功',
+            data: {
+                order_id: orderRow.order_id,
+                user_id: orderRow.user_id,
+                hotel_id: orderRow.hotel_id,
+                hotel_name: orderRow.hotel_name || '未知酒店',
+                hotel_address: orderRow.hotel_address || '',
+                hotel_image: orderRow.hotel_image || '',
+                room_id: orderRow.room_id,
+                room_name: orderRow.room_name || '未知房型',
+                room_area: orderRow.room_area,
+                room_bed: orderRow.room_bed,
+                has_window: orderRow.has_window,
+                has_breakfast: orderRow.has_breakfast,
+                check_in: orderRow.check_in,
+                check_out: orderRow.check_out,
+                nights: orderRow.nights,
+                room_count: orderRow.room_count || 1,
+                idcards: orderRow.idcards,
+                special_request: orderRow.special_request,
+                total_price: Number(orderRow.total_price) || 0,
+                real_pay: Number(orderRow.real_pay) || 0,
+                status: orderRow.status,
+                created_at: orderRow.created_at,
+                payed_at: orderRow.payed_at,
+                canCancel: orderRow.canCancel,
+                details: detailRows.map(d => ({
+                    date: d.order_details_date,
+                    price: Number(d.price) || 0,
+                    breakfast_count: d.breakfast_count || 0
+                }))
+            }
+        });
+    } catch (err) {
+        console.error('getOrderDetail error:', err);
+        res.status(500).json({ message: '获取订单详情失败' });
     }
 };

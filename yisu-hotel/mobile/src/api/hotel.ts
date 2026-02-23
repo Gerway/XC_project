@@ -186,5 +186,16 @@ export const hotelApi = {
             method: 'POST',
             data
         });
+    },
+
+    /**
+     * 获取订单详情
+     */
+    getOrderDetail(data: { order_id: string }) {
+        return request<{ message: string; data: any }>({
+            url: '/hotel/order/detail',
+            method: 'POST',
+            data
+        });
     }
 };

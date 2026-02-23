@@ -1,7 +1,7 @@
 @use '../../styles/variables' as *;
 @use '../../styles/mixins' as *;
 
-$purple-main: #6D5DD3;
+$accent: $orange-500;
 
 .order-details {
     background: #F5F7FA;
@@ -84,8 +84,8 @@ $purple-main: #6D5DD3;
 
     &__status-title {
         font-size: $text-2xl;
-        font-weight: $font-bold;
-        color: $gray-900;
+        font-weight: $font-extrabold;
+        color: $orange-600;
         display: flex;
         align-items: center;
         gap: $spacing-2;
@@ -134,7 +134,7 @@ $purple-main: #6D5DD3;
     &__payment-label {
         font-size: $text-sm;
         font-weight: $font-bold;
-        color: $gray-900;
+        color: $orange-600;
     }
 
     &__payment-amount {
@@ -250,23 +250,26 @@ $purple-main: #6D5DD3;
         flex: 1;
         height: 36px;
         border-radius: $rounded-full;
-        border: 1px solid $gray-200;
+        border: 1px solid $orange-200;
+        background: $orange-50;
         @include flex-center;
         gap: $spacing-1;
 
         text {
             font-size: $text-xs;
             font-weight: $font-bold;
-            color: $gray-700;
+            color: $orange-800;
         }
 
         &--active {
-            background: $gray-50;
+            background: $orange-100;
+            border-color: $orange-300;
         }
     }
 
     &__action-btn-icon {
         font-size: 16px;
+        color: $accent;
     }
 
     // Booking Details
@@ -281,7 +284,7 @@ $purple-main: #6D5DD3;
     }
 
     &__detail-icon {
-        color: $gray-400;
+        color: $orange-400;
         font-size: 18px;
 
         &--top {
@@ -306,8 +309,9 @@ $purple-main: #6D5DD3;
         font-size: $text-xs;
         padding: 2px 6px;
         border-radius: $rounded-full;
-        border: 1px solid $gray-200;
-        color: $gray-500;
+        border: 1px solid $orange-200;
+        background: $orange-50;
+        color: $orange-600;
         white-space: nowrap;
     }
 
@@ -381,7 +385,7 @@ $purple-main: #6D5DD3;
         width: 40px;
         height: 40px;
         border-radius: 9999px;
-        background: $purple-main;
+        background: $accent;
         @include flex-center;
         color: $white;
         margin-bottom: $spacing-1;
@@ -447,7 +451,7 @@ $purple-main: #6D5DD3;
     }
 
     &__points-highlight {
-        color: $purple-main;
+        color: $accent;
     }
 
     // Order Info
@@ -478,9 +482,27 @@ $purple-main: #6D5DD3;
         gap: $spacing-1;
     }
 
+    // Price Summary
+    &__price-summary {
+        margin-top: $spacing-2;
+        padding-top: $spacing-2;
+        border-top: 1px solid $gray-100;
+    }
+
+    &__info-label--bold {
+        font-weight: $font-bold;
+        color: $gray-800;
+    }
+
+    &__info-value--accent {
+        color: $accent;
+        font-weight: $font-bold;
+        font-size: $text-sm;
+    }
+
     &__copy-icon {
         font-size: 12px;
-        color: $gray-400;
+        color: $orange-400;
     }
 
     // Not Found
@@ -540,10 +562,10 @@ $purple-main: #6D5DD3;
             }
         }
 
-        &--purple {
+        &--primary {
             flex: 1.5;
-            background: $purple-main;
-            box-shadow: 0 10px 15px -3px rgba($purple-main, 0.3);
+            @include gradient-primary;
+            box-shadow: $shadow-md, $shadow-orange-light;
             border: none;
 
             text {
