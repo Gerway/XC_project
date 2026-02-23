@@ -1,3 +1,5 @@
+
+
 export enum HotelStatus {
   PENDING = 'PENDING',
   PUBLISHED = 'PUBLISHED',
@@ -5,19 +7,32 @@ export enum HotelStatus {
 }
 
 export interface IHotel {
-  id: string
+  hotel_id: number | string
   name: string
-  submissionDate: string
+  submissionDate?: string
   status: HotelStatus
   rejectionReason?: string
   address?: string
   description?: string
+  city_name?: string
+  latitude?: number
+  longitude?: number
+  star_rating?: number
+  tags?: string
+  hotel_type?: number
+  score?: number
+  reviews?: number
+  min_price?: number
+  image_url?: string
+  real_reviews_count?: number
+  original_price?: number
+  left_stock?: number
 }
 
 export interface IStatCardData {
   title: string
   value: number | string
-  icon: React.ReactNode
+  icon: any
   trend?: {
     value: number
     isPositive: boolean
