@@ -29,7 +29,7 @@ interface IAuditRecord extends IHotel {
 // ===== Mock 数据 =====
 const mockAuditData: IAuditRecord[] = [
   {
-    id: 'AUDIT-001',
+    hotel_id: 'AUDIT-001',
     name: '北京朝阳易宿酒店',
     submissionDate: '2023-10-27',
     submissionTime: '10:30',
@@ -39,7 +39,7 @@ const mockAuditData: IAuditRecord[] = [
     address: '北京市朝阳区建国路88号',
   },
   {
-    id: 'AUDIT-002',
+    hotel_id: 'AUDIT-002',
     name: '上海浦东星光酒店',
     submissionDate: '2023-10-27',
     submissionTime: '09:15',
@@ -49,7 +49,7 @@ const mockAuditData: IAuditRecord[] = [
     address: '上海市浦东新区陆家嘴环路1000号',
   },
   {
-    id: 'AUDIT-003',
+    hotel_id: 'AUDIT-003',
     name: '广州天河云端公寓',
     submissionDate: '2023-10-26',
     submissionTime: '18:45',
@@ -59,7 +59,7 @@ const mockAuditData: IAuditRecord[] = [
     address: '广州市天河区天河路385号',
   },
   {
-    id: 'AUDIT-004',
+    hotel_id: 'AUDIT-004',
     name: '深圳南山悦享酒店',
     submissionDate: '2023-10-26',
     submissionTime: '14:20',
@@ -69,7 +69,7 @@ const mockAuditData: IAuditRecord[] = [
     address: '深圳市南山区科技园南路68号',
   },
   {
-    id: 'AUDIT-005',
+    hotel_id: 'AUDIT-005',
     name: '杭州西湖山水客栈',
     submissionDate: '2023-10-26',
     submissionTime: '11:00',
@@ -82,8 +82,8 @@ const mockAuditData: IAuditRecord[] = [
 
 /** 将表格行转为抽屉详情 Mock */
 const toAuditDetail = (record: IAuditRecord): IAuditDetail => ({
-  id: record.id,
-  applicationNo: `2023102700${record.id.replace('AUDIT-', '')}89`,
+  id: String(record.hotel_id),
+  applicationNo: `2023102700${String(record.hotel_id).replace('AUDIT-', '')}89`,
   hotelName: record.name,
   merchantName: record.merchantName,
   merchantId: '882910',
@@ -309,7 +309,7 @@ const HotelAudit: React.FC = () => {
           <Table<IAuditRecord>
             columns={columns}
             dataSource={data}
-            rowKey="id"
+            rowKey="hotel_id"
             loading={loading}
             pagination={pagination}
             onChange={handleTableChange}
