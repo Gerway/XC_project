@@ -2,6 +2,7 @@ export default defineAppConfig({
   pages: [
     'pages/home/index',
     'pages/search/index',
+    'pages/welfare/index',
     'pages/hotel-details/index',
     'pages/reviews/index',
     'pages/write-review/index',
@@ -32,7 +33,7 @@ export default defineAppConfig({
         iconPath: "images/none.png",
       },
       {
-        pagePath: 'pages/search/index', text: '搜索',
+        pagePath: 'pages/welfare/index', text: '福利中心',
         selectedIconPath: "images/none.png",
         iconPath: "images/none.png",
       },

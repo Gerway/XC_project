@@ -281,5 +281,38 @@ export const hotelApi = {
             method: 'POST',
             data
         });
+    },
+
+    /**
+     * 获取全部福利中心优惠券列表
+     */
+    getCouponsList() {
+        return request<any[]>({
+            url: '/coupons',
+            method: 'GET'
+        });
+    },
+
+    /**
+     * 用户领取优惠券
+     */
+    claimCoupon(data: { coupon_id: string; user_id?: string }) {
+        return request<{ message: string; user_coupons_id: string }>({
+            url: '/user-coupons/claim',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 获取用户个人的优惠券列表
+     */
+    getUserCoupons(params?: { status?: number }) {
+        // user_id is handled by backend or optionally passed
+        return request<any[]>({
+            url: '/user-coupons/my',
+            method: 'GET',
+            data: params
+        });
     }
 };

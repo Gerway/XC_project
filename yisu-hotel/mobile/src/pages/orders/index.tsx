@@ -315,7 +315,7 @@ const Orders: React.FC = () => {
                         onClick={(e) => { e.stopPropagation(); handleAction('pay', order); }}
                         className="orders-page__card-btn orders-page__card-btn--primary"
                       >
-                        <Text>查看详情</Text>
+                        <Text>详情</Text>
                       </View>
                     )}
                     {isCompleted && (

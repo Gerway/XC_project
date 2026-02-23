@@ -27,7 +27,7 @@ const CouponsPage: React.FC = () => {
 
             <ScrollView scrollY className="coupons-page__main">
                 {/* Coupon Center Hero */}
-                <View className="coupons-page__hero">
+                {/* <View className="coupons-page__hero">
                     <View className="coupons-page__hero-inner">
                         <Text className="coupons-page__hero-badge">Summer Special</Text>
                         <Text className="coupons-page__hero-title">20% OFF</Text>
@@ -37,7 +37,7 @@ const CouponsPage: React.FC = () => {
                         </View>
                     </View>
                     <View className="coupons-page__hero-decor"></View>
-                </View>
+                </View> */}
 
                 {/* My Coupons */}
                 <View style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
