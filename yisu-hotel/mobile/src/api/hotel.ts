@@ -56,6 +56,8 @@ export interface Review {
     score: number;
     created_at: string;
     images?: any;
+    tags?: string[];
+    username?: string;
 }
 
 export interface HotelDetails extends Omit<Hotel, 'reviews'> {
@@ -195,6 +197,76 @@ export const hotelApi = {
     getOrderDetail(data: { order_id: string }) {
         return request<{ message: string; data: any }>({
             url: '/hotel/order/detail',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 获取酒店评价列表
+     */
+    getHotelReviews(data: { hotel_id: string }) {
+        return request<{ message: string; data: any }>({
+            url: '/hotel/reviews',
+            method: 'POST',
+            data
+        });
+    },
+
+    // ===================== 浏览历史 =====================
+
+    /**
+     * 添加浏览历史
+     */
+    addViewHistory(data: { user_id: string; hotel_id: string }) {
+        return request<{ message: string }>({
+            url: '/user/history/add',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 获取用户浏览历史
+     */
+    getViewHistory(data: { user_id: string }) {
+        return request<{ message: string; data: any[] }>({
+            url: '/user/history/list',
+            method: 'POST',
+            data
+        });
+    },
+
+    // ===================== 收藏 =====================
+
+    /**
+     * 切换收藏状态
+     */
+    toggleFavorite(data: { user_id: string; target_id: string; type: number }) {
+        return request<{ message: string; data: { is_favorite: boolean } }>({
+            url: '/user/favorite/toggle',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 检查是否已收藏
+     */
+    checkFavorite(data: { user_id: string; target_id: string; type: number }) {
+        return request<{ message: string; data: { is_favorite: boolean } }>({
+            url: '/user/favorite/check',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 获取用户收藏列表
+     */
+    getFavorites(data: { user_id: string }) {
+        return request<{ message: string; data: any[] }>({
+            url: '/user/favorite/list',
             method: 'POST',
             data
         });

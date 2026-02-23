@@ -25,7 +25,7 @@ users {
 interface RegisterRequestBody {
     username: string;
     password: string;
-    email: string; // 邮箱 (可选)
+    email: string;
     role: '用户' | '商户' | '管理'; // 对应数据库的 ENUM
     idcard?: string
     avatar?: string

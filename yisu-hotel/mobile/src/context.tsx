@@ -1,7 +1,7 @@
 import { createContext, useContext, useState } from 'react';
 import Taro from '@tarojs/taro';
 import { User, Order, Coupon } from '../types/types';
-import { MOCK_ORDERS, COUPONS } from './constants';
+import { COUPONS } from './constants';
 
 interface AppContextType {
     user: User | null;
@@ -26,7 +26,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const stored = Taro.getStorageSync('userInfo');
         return stored ? JSON.parse(stored) : null;
     });
-    const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+    const [orders, setOrders] = useState<Order[]>([]);
     const [coupons] = useState<Coupon[]>(COUPONS);
 
     const login = (userInfo: User) => {
