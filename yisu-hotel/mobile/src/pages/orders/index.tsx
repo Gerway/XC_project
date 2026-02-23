@@ -134,7 +134,7 @@ const Orders: React.FC = () => {
     } else if (action === 'pay') {
       Taro.navigateTo({ url: `/pages/order-details/index?orderId=${order.order_id}` });
     } else if (action === 'review') {
-      Taro.navigateTo({ url: `/pages/reviews/index?orderId=${order.order_id}` });
+      Taro.navigateTo({ url: `/pages/write-review/index?orderId=${order.order_id}` });
     }
   };
 

@@ -327,6 +327,60 @@ export const getHotelDetails = async (
     }
 };
 
+// 提交用户评价
+export const addReview = async (
+    req: Request<{}, {}, { order_id: string; hotel_id: string; user_id: string; score: number; content: string; tags: string[]; images?: string[] }>,
+    res: Response
+): Promise<void> => {
+    const { order_id, hotel_id, user_id, score, content, tags, images } = req.body;
+
+    if (!order_id || !hotel_id || !user_id || !score || !content) {
+        res.status(400).json({ message: '缺少必要参数 (order_id, hotel_id, user_id, score, content)' });
+        return;
+    }
+
+    if (score < 1 || score > 5) {
+        res.status(400).json({ message: '评分必须在 1~5 之间' });
+        return;
+    }
+
+    try {
+        // 检查该订单是否已评价过
+        const [existing] = await pool.execute<RowDataPacket[]>(
+            `SELECT review_id FROM reviews WHERE order_id = ?`,
+            [order_id]
+        );
+        if (existing.length > 0) {
+            res.status(409).json({ message: '该订单已评价过，不可重复评价' });
+            return;
+        }
+
+        const review_id = `RVW_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+        const tagsJson = JSON.stringify(tags || []);
+        const imagesJson = JSON.stringify(images || []);
+
+        await pool.execute(
+            `INSERT INTO reviews (review_id, order_id, hotel_id, user_id, score, content, tags, images, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+            [review_id, order_id, hotel_id, user_id, score, content, tagsJson, imagesJson]
+        );
+
+        // 更新 hotel 表的评分和评价数 (简单重算)
+        await pool.execute(
+            `UPDATE hotel SET
+                reviews = (SELECT COUNT(*) FROM reviews WHERE hotel_id = ?),
+                score   = (SELECT ROUND(AVG(score), 1) FROM reviews WHERE hotel_id = ?)
+             WHERE hotel_id = ?`,
+            [hotel_id, hotel_id, hotel_id]
+        );
+
+        res.status(200).json({ message: '评价提交成功', data: { review_id } });
+    } catch (err) {
+        console.error('addReview error:', err);
+        res.status(500).json({ message: '评价提交失败' });
+    }
+};
+
 // 获取某酒店的所有评价列表
 export const getHotelReviews = async (
     req: Request<{}, {}, { hotel_id: string }>,

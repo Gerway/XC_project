@@ -270,5 +270,16 @@ export const hotelApi = {
             method: 'POST',
             data
         });
+    },
+
+    /**
+     * 提交用户评价
+     */
+    addReview(data: { order_id: string; hotel_id: string; user_id: string; score: number; content: string; tags: string[]; images?: string[] }) {
+        return request<{ message: string; data: { review_id: string } }>({
+            url: '/hotel/review/add',
+            method: 'POST',
+            data
+        });
     }
 };

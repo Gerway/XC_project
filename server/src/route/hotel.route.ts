@@ -1,5 +1,5 @@
 import express from "express";
-import { searchHotels, getHotelDetails, getHotelReviews, getRoomInventory, createOrder, payOrder, updatePendingOrder, getUserOrders, deleteOrder, cancelOrder, getOrderDetail } from "../controller/hotel.controller";
+import { searchHotels, getHotelDetails, getHotelReviews, addReview, getRoomInventory, createOrder, payOrder, updatePendingOrder, getUserOrders, deleteOrder, cancelOrder, getOrderDetail } from "../controller/hotel.controller";
 
 const router = express.Router();
 
@@ -7,6 +7,7 @@ const router = express.Router();
 router.post("/search", searchHotels);
 router.post("/details", getHotelDetails);
 router.post("/reviews", getHotelReviews);
+router.post("/review/add", addReview);
 router.post("/room-inventory", getRoomInventory);
 router.post("/order/create", createOrder);
 router.post("/order/pay", payOrder);
