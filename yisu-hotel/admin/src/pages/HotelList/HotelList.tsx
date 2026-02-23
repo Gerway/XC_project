@@ -91,8 +91,8 @@ const HotelList: React.FC = () => {
     try {
       const res = await hotelApi.searchHotels({})
       if (res && res.data) {
-        setHotels(res.data.map(h => ({ ...h, status: HotelStatus.PUBLISHED })))
-        setPagination(prev => ({ ...prev, total: res.data.length }))
+        setHotels(res.data.map((h) => ({ ...h, status: HotelStatus.PUBLISHED })))
+        setPagination((prev) => ({ ...prev, total: res.data.length }))
       }
     } catch (err) {
       console.error(err)
@@ -138,7 +138,9 @@ const HotelList: React.FC = () => {
     // Update status to PENDING and clear rejection reason
     setHotels((prev) =>
       prev.map((h) =>
-        h.hotel_id === hotel.hotel_id ? { ...h, status: HotelStatus.PENDING, rejectionReason: undefined } : h,
+        h.hotel_id === hotel.hotel_id
+          ? { ...h, status: HotelStatus.PENDING, rejectionReason: undefined }
+          : h,
       ),
     )
     // Remove from edited set after submitting review
@@ -227,8 +229,8 @@ const HotelList: React.FC = () => {
   const columns: ColumnsType<IHotel> = [
     {
       title: '酒店ID',
-      dataIndex: 'id',
-      key: 'id',
+      dataIndex: 'hotel_id',
+      key: 'hotel_id',
       width: 140,
       render: (id: string) => <span className={styles.hotelId}>{id}</span>,
     },
