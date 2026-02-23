@@ -31,6 +31,7 @@ const Home: React.FC = () => {
   const [activeTab, setActiveTab] = useState('domestic');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [selectedStars, setSelectedStars] = useState<number[]>([]);
+  const [showLoginBanner, setShowLoginBanner] = useState(true);
   const hasFilter = priceRange[0] > 0 || priceRange[1] < 1000 || selectedStars.length > 0;
 
   const tabs = [
@@ -105,10 +106,6 @@ const Home: React.FC = () => {
     });
   };
 
-  const navigateToProfile = () => {
-    Taro.switchTab({ url: '/pages/profile/index' });
-  };
-
   const formatDate = (date: Date) => {
     const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
     return `${months[date.getMonth()]} ${date.getDate()}`;
@@ -140,13 +137,6 @@ const Home: React.FC = () => {
               <Text className="home__logo-letter">Y</Text>
             </View>
             <Text className="home__brand-name">易宿</Text>
-          </View>
-          <View className="home__avatar-btn" onClick={navigateToProfile}>
-            <Image
-              src={user?.avatar || 'https://ui-avatars.com/api/?name=GU&background=f0c040&color=fff&size=80'}
-              className="home__avatar-img"
-              mode="aspectFill"
-            />
           </View>
         </View>
       </View>
@@ -187,6 +177,24 @@ const Home: React.FC = () => {
                 </View>
               </View>
             </View>
+
+            {/* Login Banner (only shown when not logged in and not dismissed) */}
+            {!user && showLoginBanner && (
+              <View className="home__login-banner">
+                <View className="home__login-banner-left">
+                  <Image src="https://api.iconify.design/lucide:megaphone.svg?color=%23FF6B35" style={{ width: 16, height: 16 }} />
+                  <Text className="home__login-banner-text">登录可享预订优惠、积分等权益</Text>
+                </View>
+                <View className="home__login-banner-right">
+                  <View className="home__login-banner-link" onClick={() => Taro.navigateTo({ url: '/pages/login/index' })}>
+                    <Text className="home__login-banner-link-text">去登录 ›</Text>
+                  </View>
+                  <View className="home__login-banner-close" onClick={() => setShowLoginBanner(false)}>
+                    <Image src="https://api.iconify.design/lucide:x-circle.svg?color=%23999" style={{ width: 18, height: 18 }} />
+                  </View>
+                </View>
+              </View>
+            )}
 
             {/* Date Selector */}
             <View className="home__date-selector" onClick={() => setIsDatePickerOpen(true)}>
