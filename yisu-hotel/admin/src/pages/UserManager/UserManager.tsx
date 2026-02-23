@@ -5,12 +5,12 @@ import {
   SearchOutlined,
   FilterOutlined,
   TeamOutlined,
-  UserAddOutlined,
   RiseOutlined,
   StopOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons'
 import { UserRole } from '@yisu/shared'
+import { userApi } from '../../api/user'
 import styles from './UserManager.module.scss'
 
 // ===== 用户状态 =====
@@ -50,64 +50,7 @@ const roleStyleMap: Record<UserRole, string> = {
   [UserRole.CUSTOMER]: 'customer',
 }
 
-// ===== Mock 数据 =====
-const mockUsers: IUser[] = [
-  {
-    uid: '#1001',
-    name: '李明 (Li Ming)',
-    avatar:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBDZVr7yolEAUyGImCHwPzIbBLbJ1xTyJmilHTJ6fnEVO5E2gwyT2rULdwelLNsjiw_R0AYqskPV6Mxue9el2dD4QrfFcSKJlFh7H_-obQZ0IlE3T8rjizY5Anw_Tnl0DVA7jpw3eZdT1QN8D-LmGfeYu9bUTObqVIeZDYAD761bJmIVv35vcT6x8yP-3o9yfSJcjRyGFDAC_Ave8_1DtH_SBpFzxJChkJqqv1QMCdZawIh_pfSq3_tCCM3gdAXuqnxjO6vEYLTCq78',
-    contact: '138****1234',
-    role: UserRole.ADMIN,
-    registerDate: '2023-01-15',
-    lastLogin: '2023-10-24 09:30',
-    status: 'active',
-  },
-  {
-    uid: '#1002',
-    name: '王氏酒店集团',
-    avatar:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBm0GXH3c17ntrQcJPQACUUVmHVDY17wKF8plv5EdW2LZ6XgN41twLhV9co0wvlv-V8WxGmLyuf4p69LHYziTHjcVaQbcFWVOdFY-sc6xShwVgNcJACJj3jbFwvIo6Y5G_d5dLNOz1XDZjURDUQLD-Y5hlG6QfiFJQrv5Oz3ly2XiQvptD1VCo-vBy3r2LkErEUxm9b7PsN8gAeEX4y6rwiTyIuD3uonIMs08_Vr-1Fgb_B_F2qP-qoG3dRV0yg8hGacu-xIC1mO_nb',
-    contact: 'wang@hotel.com',
-    role: UserRole.MERCHANT,
-    registerDate: '2023-03-22',
-    lastLogin: '2023-10-23 14:15',
-    status: 'active',
-  },
-  {
-    uid: '#1003',
-    name: 'Sarah Chen',
-    avatar:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBJyW48a31XlRJZXoA1D_K1SWyhBa6OB32ZcetCuyLJHcsC4uGDx4q4A5WsiWrdfc-xULFaYDkKTmZM9fSGUG2UfXs_MoRbUaod91dqDai61PKAzvLXd4pwL1AhkYNWWa5SvWFF2rgqVD1XhA1XzyzOnnhfqHVTnpC84tZ0aTLDNMsvDxqncBNnaD010QlVO1Gn3LfYlKNKgumPKjMX4frkrfzpJ353qQfoXSLpB_ax-NJypG79IKOwYMePe4xx91zUKvVF76WCWjYJ',
-    contact: '139****5678',
-    role: UserRole.CUSTOMER,
-    registerDate: '2023-05-10',
-    lastLogin: '2023-10-20 18:45',
-    status: 'banned',
-  },
-  {
-    uid: '#1004',
-    name: 'Jack Ma',
-    avatar:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDdYSXwrtzl4J1Fr-Zt2ac3QIijZPSXZIm3Z_t1-_f7a0DcP_4W4M_V45ubuQ1goAUglxPkc2JAghqL0YGOyFGMyZJZKQPsIohIeHmSTVpJ0iFj7qfoS_dfXaS0TsqQMg63Z23mW9J1C9tW_mJcDilYf6D6piGsWOiRXWz8m4Hs0EkQHXOGbmkGiCJb_G1QOCWzm9I1ROTcvWfW6Vv-0a9M9VxTr-1A8DCugJGsczv1upusvL2dz1e7JiTyT4PO6Y-ezcaUucewuNB8',
-    contact: '136****9999',
-    role: UserRole.CUSTOMER,
-    registerDate: '2023-06-15',
-    lastLogin: '2023-10-24 11:20',
-    status: 'active',
-  },
-  {
-    uid: '#1005',
-    name: '易宿官方自营',
-    avatar:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBbmCVakwqddeATIg1s9lS5hKeeiyx0RD0onwKMvvDXX_KTbo6MdzDeMq1Bh-G78t0fBMLkNjywwXZbfSBVhhW0r8tRkH-MTCx0MA-uRjMfRGCEFLkfK-5lEzOU-j7ag66uBNxzyxFzt0asoPYn9EKQTouO6qAVvVoM9Io0y2ioC0DCFfmkFHVzw89d5din5ApaDW-QAA31P3du_szNHnJfDAioFO0lWikSLaBo2XgsewY0LfDEkHOPhimni1mMYREXNW2QZ_U4q4BA',
-    contact: 'official@yisu.com',
-    role: UserRole.MERCHANT,
-    registerDate: '2023-01-01',
-    lastLogin: '2023-10-24 08:00',
-    status: 'active',
-  },
-]
+// ===== API 动态数据 =====
 
 // ===== 封禁 Popover 内容 =====
 const BanPopContent: React.FC<{
@@ -153,42 +96,70 @@ const UserManager: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [banPopOpen, setBanPopOpen] = useState<string | null>(null)
+  const [stats, setStats] = useState({ totalUsers: 0, activeUsers: 0, bannedUsers: 0 })
   const [pagination, setPagination] = useState<TablePaginationConfig>({
     current: 1,
-    pageSize: 5,
-    total: 12543,
+    pageSize: 10,
+    total: 0,
     showTotal: (total, range) =>
       `显示 ${range[0]} 到 ${range[1]} 条，共 ${total.toLocaleString()} 条结果`,
   })
   const { message } = App.useApp()
 
-  // 模拟异步
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setData(mockUsers)
+  const fetchStats = async () => {
+    try {
+      const res = (await userApi.getUserStats()) as unknown as {
+        totalUsers: number
+        activeUsers: number
+        bannedUsers: number
+      }
+      setStats({
+        totalUsers: res.totalUsers || 0,
+        activeUsers: res.activeUsers || 0,
+        bannedUsers: res.bannedUsers || 0,
+      })
+    } catch (error) {
+      console.error('获取统计数据失败', error)
+    }
+  }
+
+  const fetchUsers = async (
+    page = 1,
+    pageSize = 10,
+    overrides?: { search?: string; role?: string; status?: string },
+  ) => {
+    setLoading(true)
+    try {
+      const res = (await userApi.getUserList({
+        page,
+        pageSize,
+        search: overrides?.search ?? searchText,
+        role: overrides?.role ?? roleFilter,
+        status: overrides?.status ?? statusFilter,
+      })) as unknown as { data: IUser[]; total: number }
+      setData(res.data || [])
+      setPagination((prev) => ({ ...prev, current: page, pageSize, total: res.total || 0 }))
+    } catch (error) {
+      message.error((error as Error).message || '获取用户列表失败')
+    } finally {
       setLoading(false)
-    }, 500)
-    return () => clearTimeout(timer)
+    }
+  }
+
+  useEffect(() => {
+    fetchStats()
+    fetchUsers(1, 10)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // 分页
   const handleTableChange = (pag: TablePaginationConfig) => {
-    setPagination(pag)
+    fetchUsers(pag.current || 1, pag.pageSize || 10)
   }
 
   // 筛选
   const handleFilter = () => {
-    let result = [...mockUsers]
-    if (searchText.trim()) {
-      result = result.filter((u) => u.name.includes(searchText) || u.contact.includes(searchText))
-    }
-    if (roleFilter !== 'all') {
-      result = result.filter((u) => u.role === roleFilter)
-    }
-    if (statusFilter !== 'all') {
-      result = result.filter((u) => u.status === statusFilter)
-    }
-    setData(result)
+    fetchUsers(1, pagination.pageSize || 10)
   }
 
   // 重置
@@ -196,7 +167,7 @@ const UserManager: React.FC = () => {
     setSearchText('')
     setRoleFilter('all')
     setStatusFilter('all')
-    setData(mockUsers)
+    fetchUsers(1, pagination.pageSize || 10, { search: '', role: 'all', status: 'all' })
   }
 
   // 查看详情 (预留)
@@ -205,22 +176,28 @@ const UserManager: React.FC = () => {
   }
 
   // 封禁
-  const handleBan = (record: IUser, reason: string) => {
+  const handleBan = async (record: IUser, reason: string) => {
     setBanPopOpen(null)
-    const updated = data.map((u) =>
-      u.uid === record.uid ? { ...u, status: 'banned' as UserStatus } : u,
-    )
-    setData(updated)
-    message.success(`已封禁用户「${record.name}」${reason ? `，原因：${reason}` : ''}`)
+    try {
+      await userApi.updateUserStatus(record.uid, 'banned')
+      message.success(`已封禁用户「${record.name}」${reason ? `，原因：${reason}` : ''}`)
+      fetchStats()
+      fetchUsers(pagination.current, pagination.pageSize)
+    } catch (error) {
+      message.error((error as Error).message || '封禁失败')
+    }
   }
 
   // 解封
-  const handleUnban = (record: IUser) => {
-    const updated = data.map((u) =>
-      u.uid === record.uid ? { ...u, status: 'active' as UserStatus } : u,
-    )
-    setData(updated)
-    message.success(`已解封用户「${record.name}」`)
+  const handleUnban = async (record: IUser) => {
+    try {
+      await userApi.updateUserStatus(record.uid, 'active')
+      message.success(`已解封用户「${record.name}」`)
+      fetchStats()
+      fetchUsers(pagination.current, pagination.pageSize)
+    } catch (error) {
+      message.error((error as Error).message || '解封失败')
+    }
   }
 
   // ===== 列定义 =====
@@ -332,7 +309,10 @@ const UserManager: React.FC = () => {
           <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>用户总数</p>
-              <Statistic value={12543} styles={{ content: { fontSize: 24, fontWeight: 700 } }} />
+              <Statistic
+                value={stats.totalUsers}
+                styles={{ content: { fontSize: 24, fontWeight: 700 } }}
+              />
             </div>
             <div className={`${styles.statIcon} ${styles.blue}`}>
               <TeamOutlined />
@@ -341,18 +321,11 @@ const UserManager: React.FC = () => {
 
           <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
-              <p>今日新增用户</p>
-              <Statistic value={128} styles={{ content: { fontSize: 24, fontWeight: 700 } }} />
-            </div>
-            <div className={`${styles.statIcon} ${styles.green}`}>
-              <UserAddOutlined />
-            </div>
-          </Card>
-
-          <Card className={styles.statCard} variant="borderless">
-            <div className={styles.statInfo}>
               <p>活跃用户</p>
-              <Statistic value={3420} styles={{ content: { fontSize: 24, fontWeight: 700 } }} />
+              <Statistic
+                value={stats.activeUsers}
+                styles={{ content: { fontSize: 24, fontWeight: 700 } }}
+              />
             </div>
             <div className={`${styles.statIcon} ${styles.purple}`}>
               <RiseOutlined />
@@ -362,7 +335,10 @@ const UserManager: React.FC = () => {
           <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
               <p>被封禁账户</p>
-              <Statistic value={45} styles={{ content: { fontSize: 24, fontWeight: 700 } }} />
+              <Statistic
+                value={stats.bannedUsers}
+                styles={{ content: { fontSize: 24, fontWeight: 700 } }}
+              />
             </div>
             <div className={`${styles.statIcon} ${styles.red}`}>
               <StopOutlined />
@@ -376,7 +352,7 @@ const UserManager: React.FC = () => {
             <Form.Item label="搜索用户" className={styles.searchField}>
               <Input
                 prefix={<SearchOutlined style={{ color: '#9ca3af' }} />}
-                placeholder="输入用户名或手机号"
+                placeholder="输入用户名或邮箱"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 allowClear
