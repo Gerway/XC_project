@@ -1,6 +1,12 @@
 import React, { useState } from 'react'
 import { Form, Input, Button, Radio, Checkbox, ConfigProvider, App } from 'antd'
-import { UserOutlined, MailOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons'
+import {
+  UserOutlined,
+  MailOutlined,
+  LockOutlined,
+  SafetyOutlined,
+  MobileOutlined,
+} from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router-dom'
 import styles from './Register.module.scss'
 import type { RadioChangeEvent } from 'antd'
@@ -16,6 +22,7 @@ enum UserRole {
 interface RegisterFormValues {
   username: string
   email: string
+  phone: string
   password?: string
   confirmPassword?: string
   agreement: boolean
@@ -52,6 +59,7 @@ const Register: React.FC = () => {
       const res = (await registerApi({
         username: values.username,
         email: values.email,
+        phone: values.phone,
         password: values.password,
         role: role === UserRole.MERCHANT ? '商户' : '管理',
       })) as unknown as { message: string; user: Record<string, unknown> }
@@ -143,13 +151,24 @@ const Register: React.FC = () => {
 
               <Form.Item
                 name="email"
-                label="邮箱 / 手机号"
+                label="邮箱"
                 rules={[
                   { required: true, message: '请输入邮箱' },
                   { type: 'email', message: '请输入有效的邮箱地址' },
                 ]}
               >
                 <Input prefix={<MailOutlined />} placeholder="manager@example.com" />
+              </Form.Item>
+
+              <Form.Item
+                name="phone"
+                label="手机号"
+                rules={[
+                  { required: true, message: '请输入手机号' },
+                  { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号' },
+                ]}
+              >
+                <Input prefix={<MobileOutlined />} placeholder="请输入手机号" />
               </Form.Item>
 
               <Form.Item label="密码" style={{ marginBottom: 0 }}>
