@@ -376,13 +376,14 @@ interface CreateOrderBody {
     real_pay: number;
     can_cancel: number;
     special_request?: string;
+    daily: DailyDetail[];
 }
 
 export const createOrder = async (
     req: Request<{}, {}, CreateOrderBody>,
     res: Response
 ): Promise<void> => {
-    const { user_id, hotel_id, room_id, check_in, check_out, nights, room_count, total_price, real_pay, can_cancel, special_request } = req.body;
+    const { user_id, hotel_id, room_id, check_in, check_out, nights, room_count, total_price, real_pay, can_cancel, special_request, daily } = req.body;
 
     if (!user_id || !hotel_id || !room_id || !check_in || !check_out) {
         res.status(400).json({ message: '缺少必要参数' });
@@ -401,6 +402,17 @@ export const createOrder = async (
                 nights, room_count, idcards, special_request || '',
                 total_price, real_pay, can_cancel]
         );
+
+        if (daily && daily.length > 0) {
+            for (let i = 0; i < daily.length; i++) {
+                const d = daily[i];
+                const cleanDate = d.date.split('T')[0];
+                await pool.execute(
+                    `INSERT INTO order_details (order_details_id, order_id, order_details_date, price, breakfast_count) VALUES (?, ?, ?, ?, ?)`,
+                    [`OD_${order_id}_${i + 1}`, order_id, `${cleanDate} 00:00:00`, d.price, d.breakfast_count]
+                );
+            }
+        }
 
         res.status(200).json({ message: '订单创建成功', data: { order_id } });
     } catch (err) {
@@ -442,12 +454,19 @@ export const payOrder = async (
             [real_pay, total_price, room_count, special_request || '', idcards || '[]', order_id]
         );
 
+        // 删除旧的明细，重新插入最新的
+        await pool.execute(
+            `DELETE FROM order_details WHERE order_id = ?`,
+            [order_id]
+        );
+
         if (daily && daily.length > 0) {
             for (let i = 0; i < daily.length; i++) {
                 const d = daily[i];
+                const cleanDate = d.date.split('T')[0];
                 await pool.execute(
                     `INSERT INTO order_details (order_details_id, order_id, order_details_date, price, breakfast_count) VALUES (?, ?, ?, ?, ?)`,
-                    [`OD_${order_id}_${i + 1}`, order_id, `${d.date} 00:00:00`, d.price, d.breakfast_count]
+                    [`OD_${order_id}_${i + 1}`, order_id, `${cleanDate} 00:00:00`, d.price, d.breakfast_count]
                 );
             }
         }
@@ -497,9 +516,10 @@ export const updatePendingOrder = async (
         if (daily && daily.length > 0) {
             for (let i = 0; i < daily.length; i++) {
                 const d = daily[i];
+                const cleanDate = d.date.split('T')[0];
                 await pool.execute(
                     `INSERT INTO order_details (order_details_id, order_id, order_details_date, price, breakfast_count) VALUES (?, ?, ?, ?, ?)`,
-                    [`OD_${order_id}_${i + 1}`, order_id, `${d.date} 00:00:00`, d.price, d.breakfast_count]
+                    [`OD_${order_id}_${i + 1}`, order_id, `${cleanDate} 00:00:00`, d.price, d.breakfast_count]
                 );
             }
         }
@@ -526,7 +546,9 @@ export const getUserOrders = async (
     try {
         const [rows] = await pool.execute<RowDataPacket[]>(
             `SELECT 
-                o.order_id, o.hotel_id, o.room_id, o.check_in, o.check_out, 
+                o.order_id, o.hotel_id, o.room_id, 
+                DATE_FORMAT(o.check_in, '%Y-%m-%d') as check_in, 
+                DATE_FORMAT(o.check_out, '%Y-%m-%d') as check_out, 
                 o.nights, o.room_count, o.total_price, o.real_pay, o.status, 
                 o.created_at, o.canCancel,
                 h.name AS hotel_name,
@@ -640,6 +662,8 @@ export const getOrderDetail = async (
         const [rows] = await pool.execute<RowDataPacket[]>(
             `SELECT 
                 o.*,
+                DATE_FORMAT(o.check_in, '%Y-%m-%d') as check_in_str,
+                DATE_FORMAT(o.check_out, '%Y-%m-%d') as check_out_str,
                 h.name AS hotel_name, h.address AS hotel_address,
                 r.name AS room_name, r.area AS room_area, r.room_bed, r.has_window, r.has_breakfast,
                 (SELECT hm.url FROM hotel_media hm WHERE hm.hotel_id = o.hotel_id ORDER BY hm.sort_order ASC LIMIT 1) AS hotel_image
@@ -659,7 +683,7 @@ export const getOrderDetail = async (
 
         // 2. 订单明细
         const [detailRows] = await pool.execute<RowDataPacket[]>(
-            `SELECT order_details_date, price, breakfast_count FROM order_details WHERE order_id = ? ORDER BY order_details_date ASC`,
+            `SELECT DATE_FORMAT(order_details_date, '%Y-%m-%d') as date_str, price, breakfast_count FROM order_details WHERE order_id = ? ORDER BY order_details_date ASC`,
             [order_id]
         );
 
@@ -678,8 +702,8 @@ export const getOrderDetail = async (
                 room_bed: orderRow.room_bed,
                 has_window: orderRow.has_window,
                 has_breakfast: orderRow.has_breakfast,
-                check_in: orderRow.check_in,
-                check_out: orderRow.check_out,
+                check_in: orderRow.check_in_str || orderRow.check_in,
+                check_out: orderRow.check_out_str || orderRow.check_out,
                 nights: orderRow.nights,
                 room_count: orderRow.room_count || 1,
                 idcards: orderRow.idcards,
@@ -691,7 +715,7 @@ export const getOrderDetail = async (
                 payed_at: orderRow.payed_at,
                 canCancel: orderRow.canCancel,
                 details: detailRows.map(d => ({
-                    date: d.order_details_date,
+                    date: d.date_str,
                     price: Number(d.price) || 0,
                     breakfast_count: d.breakfast_count || 0
                 }))

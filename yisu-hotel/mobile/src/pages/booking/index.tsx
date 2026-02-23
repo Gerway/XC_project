@@ -109,55 +109,72 @@ const Booking: React.FC = () => {
 
   // Fetch per-day inventory AND create a pending order on mount
   useEffect(() => {
-    const roomId = (room as any)?.room_id;
-    if (!roomId) return;
-    const fmt = (d: Date) => {
-      const y = d.getFullYear();
-      const m = (d.getMonth() + 1).toString().padStart(2, '0');
-      const day = d.getDate().toString().padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    };
-    const checkIn = fmt(safeDates.start);
-    const checkOut = fmt(safeDates.end);
+    const initOrder = async () => {
+      const roomId = (room as any)?.room_id;
+      if (!roomId) return;
+      const fmt = (d: Date) => {
+        const y = d.getFullYear();
+        const m = (d.getMonth() + 1).toString().padStart(2, '0');
+        const day = d.getDate().toString().padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      };
+      const checkIn = fmt(safeDates.start);
+      const checkOut = fmt(safeDates.end);
 
-    // 1. Fetch inventory
-    hotelApi.getRoomInventory({ room_id: roomId, check_in: checkIn, check_out: checkOut })
-      .then(res => {
-        if (res?.data) {
-          setDailyPrices(res.data.daily || []);
-          const ms = res.data.min_stock ?? 10;
+      try {
+        // 1. Fetch inventory
+        const invRes = await hotelApi.getRoomInventory({ room_id: roomId, check_in: checkIn, check_out: checkOut });
+        let dailyArray: any[] = [];
+        if (invRes?.data) {
+          dailyArray = invRes.data.daily || [];
+          setDailyPrices(dailyArray);
+          const ms = invRes.data.min_stock ?? 10;
           setMaxRoomCount(Math.max(1, ms));
           setRoomCount(prev => Math.min(prev, Math.max(1, ms)));
         }
-      }).catch(() => { });
 
-    // 2. Create pending order (status=0) in DB
-    try {
-      const userInfoStr = Taro.getStorageSync('userInfo');
-      const userId = userInfoStr ? JSON.parse(userInfoStr).user_id : null;
-      const hotelId = (hotel as any)?.hotel_id;
-      const canCancel = pkgCancellation.includes('免费') ? 1 : 0;
+        // 2. Create pending order (status=0) in DB
+        const userInfoStr = Taro.getStorageSync('userInfo');
+        const userId = userInfoStr ? JSON.parse(userInfoStr).user_id : null;
+        const hotelId = (hotel as any)?.hotel_id;
+        const canCancel = pkgCancellation.includes('免费') ? 1 : 0;
 
-      const initialTotalPrice = pkgPrice * nights * roomCount;
-      const initialRealPay = Math.max(0, initialTotalPrice - membershipValue);
+        const roomPriceTotal = dailyArray.length > 0
+          ? dailyArray.reduce((sum, d) => sum + d.price, 0) // initial roomCount is 1 here, but just in case, we'll use state
+          : pkgPrice * nights;
 
-      if (userId && hotelId) {
-        hotelApi.createOrder({
-          user_id: userId,
-          hotel_id: hotelId,
-          room_id: roomId,
-          check_in: checkIn,
-          check_out: checkOut,
-          nights,
-          room_count: roomCount,
-          total_price: initialTotalPrice,
-          real_pay: initialRealPay,
-          can_cancel: canCancel
-        }).then(res => {
-          if (res?.data?.order_id) setPendingOrderId(res.data.order_id);
-        }).catch(() => { });
+        const initialTotalPrice = roomPriceTotal;
+        const initialRealPay = Math.max(0, initialTotalPrice - membershipValue);
+
+        const dailyDetails = dailyArray.map(d => ({
+          date: d.date,
+          price: d.price,
+          breakfast_count: 0
+        }));
+
+        if (userId && hotelId) {
+          const ordRes = await hotelApi.createOrder({
+            user_id: userId,
+            hotel_id: hotelId,
+            room_id: roomId,
+            check_in: checkIn,
+            check_out: checkOut,
+            nights,
+            room_count: 1, // typically 1 on mount
+            total_price: initialTotalPrice,
+            real_pay: initialRealPay,
+            can_cancel: canCancel,
+            daily: dailyDetails
+          });
+          if (ordRes?.data?.order_id) {
+            setPendingOrderId(ordRes.data.order_id);
+          }
+        }
+      } catch (err) {
+        console.error('initOrder error', err);
       }
-    } catch { }
+    };
+    initOrder();
   }, []);
 
   if (!hotel || !room) {

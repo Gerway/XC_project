@@ -117,6 +117,7 @@ export const hotelApi = {
         user_id: string; hotel_id: string; room_id: string;
         check_in: string; check_out: string; nights: number; room_count: number;
         total_price: number; real_pay: number; can_cancel: number; special_request?: string;
+        daily: { date: string; price: number; breakfast_count: number }[];
     }) {
         return request<{ message: string; data: { order_id: string } }>({
             url: '/hotel/order/create',
