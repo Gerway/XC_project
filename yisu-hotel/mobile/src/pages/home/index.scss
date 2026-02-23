@@ -315,61 +315,213 @@
         }
     }
 
-    // ---- Categories ----
-    &__categories-grid {
-        display: flex;
-        justify-content: space-between;
-        padding: $spacing-2 $spacing-2;
+    // ---- Welfare Banner ----
+    &__welfare-banner {
+        background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+        border-radius: $rounded-xl;
+        padding: $spacing-4;
+        margin-bottom: $spacing-4;
+        box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.5);
     }
 
-    &__category-item {
+    &__welfare-header {
+        @include flex-between;
+        align-items: center;
+        margin-bottom: $spacing-3;
+    }
+
+    &__welfare-title {
+        font-size: 16px;
+        font-weight: 900;
+        background: linear-gradient(90deg, #FF6B35 0%, #FF2A00 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-style: italic;
+        letter-spacing: 0.5px;
+    }
+
+    &__welfare-more {
+        @include flex-center;
+        gap: 2px;
+        color: $gray-600;
+        font-size: 12px;
+    }
+
+    &__welfare-more-icon {
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    &__welfare-scroll {
+        width: 100%;
+        white-space: nowrap; // enable horizontal scroll
+
+        // hide scrollbar
+        ::-webkit-scrollbar {
+            display: none;
+            width: 0;
+            height: 0;
+            color: transparent;
+        }
+    }
+
+    &__welfare-list {
+        display: inline-flex; // inline-flex for horizontal scroll container
+        gap: $spacing-3;
+        padding-bottom: $spacing-1;
+    }
+
+    &__welfare-card {
+        width: 90px;
+        flex-shrink: 0;
+        border-radius: $rounded-lg;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+        background: #FFFDFC;
+        border: 1px solid rgba($primary, 0.15);
+        box-shadow: 0 2px 4px rgba(255, 107, 53, 0.08);
+
+        // 4 Warm tones based around orange/coral
+        &--theme0 {
+            .home__welfare-card-bottom {
+                background: linear-gradient(180deg, #FF8D4A 0%, #FF5A00 100%);
+            }
+
+            .home__welfare-amount,
+            .home__welfare-symbol {
+                color: #FF5A00;
+            }
+
+            border-color: rgba(#FF5A00, 0.3);
+        }
+
+        &--theme1 {
+            .home__welfare-card-bottom {
+                background: linear-gradient(180deg, #FFA750 0%, #FF7A00 100%);
+            }
+
+            .home__welfare-amount,
+            .home__welfare-symbol {
+                color: #FF7A00;
+            }
+
+            border-color: rgba(#FF7A00, 0.3);
+        }
+
+        &--theme2 {
+            .home__welfare-card-bottom {
+                background: linear-gradient(180deg, #FF7642 0%, #E64C00 100%);
+            }
+
+            .home__welfare-amount,
+            .home__welfare-symbol {
+                color: #E64C00;
+            }
+
+            border-color: rgba(#E64C00, 0.3);
+        }
+
+        &--theme3 {
+            .home__welfare-card-bottom {
+                background: linear-gradient(180deg, #FFB966 0%, #F59000 100%);
+            }
+
+            .home__welfare-amount,
+            .home__welfare-symbol {
+                color: #F59000;
+            }
+
+            border-color: rgba(#F59000, 0.3);
+        }
+    }
+
+    &__welfare-card-top {
+        padding: $spacing-2 0;
         @include flex-col;
         align-items: center;
-        gap: $spacing-2;
+        background: #FFFDFB;
+        height: 48px;
+        justify-content: center;
     }
 
-    &__category-icon-wrapper {
-        width: 56px;
-        height: 56px;
-        border-radius: $rounded-2xl;
-        @include flex-center;
-        box-shadow: $shadow-sm;
-        border-width: 1px;
-        border-style: solid;
-
-        &--red {
-            background: $red-50;
-            border-color: $red-100;
-        }
-
-        &--orange {
-            background: $orange-50;
-            border-color: $orange-100;
-        }
-
-        &--blue {
-            background: $blue-50;
-            border-color: $blue-100;
-        }
-
-        &--green {
-            background: $green-50;
-            border-color: $green-100;
-        }
-
-        &--purple {
-            background: $purple-50;
-            border-color: rgba($purple-600, 0.1);
-        }
+    &__welfare-price {
+        display: flex;
+        align-items: baseline;
+        gap: 1px;
     }
 
-    &__category-emoji {
-        font-size: 24px;
-    }
-
-    &__category-name {
-        font-size: $text-xs;
+    &__welfare-symbol {
+        font-size: 12px;
         font-weight: $font-bold;
-        color: $gray-700;
+    }
+
+    &__welfare-amount {
+        font-size: 24px;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    &__welfare-condition {
+        font-size: 10px;
+        color: $gray-500;
+        margin-top: 2px;
+        transform: scale(0.9);
+    }
+
+    &__welfare-card-divider {
+        height: 1px;
+        position: relative;
+        width: 100%;
+        z-index: 5;
+    }
+
+    &__welfare-dash {
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        top: 0;
+        border-top: 1px dashed rgba(255, 255, 255, 0.6);
+        z-index: 6;
+    }
+
+    &__welfare-notch-left,
+    &__welfare-notch-right {
+        width: 12px;
+        height: 12px;
+        background: #F4FCED; // blending into the banner background roughly
+        position: absolute;
+        border-radius: 50%;
+        top: -6px;
+        z-index: 7;
+        box-shadow: inset 1px 0 2px rgba(0, 0, 0, 0.05);
+    }
+
+    &__welfare-notch-left {
+        left: -6px;
+    }
+
+    &__welfare-notch-right {
+        right: -6px;
+        box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.05);
+    }
+
+    &__welfare-card-bottom {
+        padding: 5px 0;
+        @include flex-center;
+
+        // gradient comes from theme modifiers
+    }
+
+    &__welfare-type {
+        font-size: 11px;
+        color: $white;
+        font-weight: $font-bold;
+        letter-spacing: 1px;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 2px 8px;
+        border-radius: 10px;
     }
 }

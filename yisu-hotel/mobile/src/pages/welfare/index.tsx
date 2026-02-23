@@ -23,9 +23,21 @@ const WelfarePage: React.FC = () => {
 
     const fetchCouponsAndStatus = async () => {
         try {
+            const userInfoStr = Taro.getStorageSync('userInfo');
+            let userId: string | undefined = undefined;
+            if (userInfoStr) {
+                let userInfo;
+                try {
+                    userInfo = typeof userInfoStr === 'string' ? JSON.parse(userInfoStr) : userInfoStr;
+                } catch {
+                    userInfo = userInfoStr;
+                }
+                userId = userInfo?.user_id;
+            }
+
             const [allCouponsRes, myCouponsRes] = await Promise.all([
                 hotelApi.getCouponsList(),
-                hotelApi.getUserCoupons()
+                userId ? hotelApi.getUserCoupons({ user_id: userId }) : Promise.resolve([])
             ]);
 
             // Filter out expired coupons (where end_time < now)

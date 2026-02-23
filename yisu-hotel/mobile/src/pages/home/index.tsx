@@ -4,13 +4,24 @@ import Taro from '@tarojs/taro';
 import DatePicker from '../../components/DatePicker/DatePicker';
 import FilterModal from '../../components/FilterModal/FilterModal';
 import { useAppContext } from '../../context';
+import { hotelApi } from '../../api/hotel';
 
 import './index.scss';
+
+// Add Coupon Interface (simplified for banner)
+interface Coupon {
+  coupon_id: string;
+  title: string;
+  discount_amount: string;
+  min_spend: string;
+  end_time: string;
+}
 
 const Home: React.FC = () => {
   const { user } = useAppContext();
   const [keyword, setKeyword] = useState('');
   const [location, setLocation] = useState('重庆');
+  const [bannerCoupons, setBannerCoupons] = useState<Coupon[]>([]);
   const [dates, setDates] = useState<{ start: Date; end: Date }>({
     start: new Date(),
     end: new Date(new Date().setDate(new Date().getDate() + 1))
@@ -30,13 +41,26 @@ const Home: React.FC = () => {
 
   const tags = ['解放碑', '洪崖洞', '观音桥', '北站'];
 
-  const categories = [
-    { name: '优惠券', icon: '🎫', color: 'red' },
-    { name: '收藏', icon: '❤️', color: 'orange' },
-    { name: '历史', icon: '🕐', color: 'blue' },
-    { name: '机票', icon: '✈️', color: 'green' },
-    { name: '火车', icon: '🚄', color: 'purple' },
-  ];
+  // Fetch coupons for banner
+  Taro.useDidShow(() => {
+    const fetchCoupons = async () => {
+      try {
+        const res = await hotelApi.getCouponsList();
+        const now = new Date().getTime();
+        // Filter out expired & sold out logic is ideally done here too,
+        // but since getCouponsList returns all, we just filter expired.
+        // We'll also only take the first 6.
+        const validCoupons = (res as any[]).filter(c => {
+          if (!c.end_time) return true;
+          return new Date(c.end_time).getTime() > now;
+        }).slice(0, 6);
+        setBannerCoupons(validCoupons);
+      } catch (err) {
+        console.error('Failed to fetch banner coupons', err);
+      }
+    };
+    fetchCoupons();
+  });
 
   const handleSearch = () => {
     // Map tab into an integer `room_type`. (Dummy logic: domestic->1, hourly->2, homestay->3, international->4)
@@ -106,6 +130,8 @@ const Home: React.FC = () => {
 
   return (
     <View className="home">
+
+
       {/* Header */}
       <View className="home__header">
         <View className="home__header-content">
@@ -216,17 +242,57 @@ const Home: React.FC = () => {
             </Button>
           </View>
 
-          {/* Categories */}
-          <View className="home__categories-grid">
-            {categories.map(cat => (
-              <View key={cat.name} className="home__category-item">
-                <View className={`home__category-icon-wrapper home__category-icon-wrapper--${cat.color}`}>
-                  <Text className="home__category-emoji">{cat.icon}</Text>
+          {/* Horizontal Welfare Banner */}
+          {bannerCoupons.length > 0 && (
+            <View className="home__welfare-banner">
+              <View className="home__welfare-header">
+                <Text className="home__welfare-title">天天领神券</Text>
+                <View
+                  className="home__welfare-more"
+                  onClick={() => Taro.switchTab({ url: '/pages/welfare/index' })}
+                >
+                  <Text>更多福利</Text>
+                  <Text className="home__welfare-more-icon">›</Text>
                 </View>
-                <Text className="home__category-name">{cat.name}</Text>
               </View>
-            ))}
-          </View>
+
+              <ScrollView scrollX className="home__welfare-scroll" enableFlex>
+                <View className="home__welfare-list">
+                  {bannerCoupons.map((coupon, index) => {
+                    const amount = parseInt(coupon.discount_amount);
+                    const minSpend = parseInt(coupon.min_spend);
+                    // Cycle through 4 warm orange-toned themes
+                    const colorIndex = index % 4;
+                    const cardTheme = `theme${colorIndex}`;
+
+                    return (
+                      <View
+                        key={coupon.coupon_id}
+                        className={`home__welfare-card home__welfare-card--${cardTheme}`}
+                        onClick={() => Taro.switchTab({ url: '/pages/welfare/index' })}
+                      >
+                        <View className="home__welfare-card-top">
+                          <View className="home__welfare-price">
+                            <Text className="home__welfare-symbol">¥</Text>
+                            <Text className="home__welfare-amount">{amount}</Text>
+                          </View>
+                          <Text className="home__welfare-condition">满{minSpend}可用</Text>
+                        </View>
+                        <View className="home__welfare-card-divider">
+                          <View className="home__welfare-notch-left" />
+                          <View className="home__welfare-dash" />
+                          <View className="home__welfare-notch-right" />
+                        </View>
+                        <View className="home__welfare-card-bottom">
+                          <Text className="home__welfare-type">优惠券</Text>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+            </View>
+          )}
 
           {/* Bottom Spacer for TabBar */}
           <View style={{ height: '60px' }}></View>

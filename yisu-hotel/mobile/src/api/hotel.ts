@@ -307,8 +307,8 @@ export const hotelApi = {
     /**
      * 获取用户个人的优惠券列表
      */
-    getUserCoupons(params?: { status?: number }) {
-        // user_id is handled by backend or optionally passed
+    getUserCoupons(params?: { user_id?: string; status?: number }) {
+        // pass user_id explicitly via query params if provided
         return request<any[]>({
             url: '/user-coupons/my',
             method: 'GET',
