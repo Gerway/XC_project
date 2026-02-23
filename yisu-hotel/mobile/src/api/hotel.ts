@@ -135,6 +135,7 @@ export const hotelApi = {
         order_id: string; real_pay: number; total_price: number; room_count: number;
         special_request?: string; idcards: string;
         daily: { date: string; price: number; breakfast_count: number }[];
+        user_coupons_id?: string;
     }) {
         return request<{ message: string; data: { order_id: string } }>({
             url: '/hotel/order/pay',

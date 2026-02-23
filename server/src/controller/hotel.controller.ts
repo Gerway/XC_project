@@ -590,13 +590,14 @@ interface PayOrderBody {
     special_request?: string;
     idcards: string;
     daily: DailyDetail[];
+    user_coupons_id?: string;
 }
 
 export const payOrder = async (
     req: Request<{}, {}, PayOrderBody>,
     res: Response
 ): Promise<void> => {
-    const { order_id, real_pay, total_price, room_count, special_request, idcards, daily } = req.body;
+    const { order_id, real_pay, total_price, room_count, special_request, idcards, daily, user_coupons_id } = req.body;
 
     if (!order_id) {
         res.status(400).json({ message: '缺少 order_id' });
@@ -624,6 +625,14 @@ export const payOrder = async (
                     [`OD_${order_id}_${i + 1}`, order_id, `${cleanDate} 00:00:00`, d.price, d.breakfast_count]
                 );
             }
+        }
+
+        // 修改已选中的优惠券状态为已使用
+        if (user_coupons_id) {
+            await pool.execute(
+                `UPDATE user_coupons SET status = 1 WHERE user_coupons_id = ? AND status = 0`,
+                [user_coupons_id]
+            );
         }
 
         res.status(200).json({ message: '支付成功', data: { order_id } });
