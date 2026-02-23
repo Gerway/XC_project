@@ -29,6 +29,7 @@ interface RegisterRequestBody {
     role: '用户' | '商户' | '管理'; // 对应数据库的 ENUM
     idcard?: string
     avatar?: string
+    phone?: string
 }
 
 
@@ -40,7 +41,7 @@ export const register = async (
     req: Request<{}, {}, RegisterRequestBody>,
     res: Response
 ): Promise<void> => {
-    const { username, email, password, role, avatar } = req.body;
+    const { username, email, password, role, avatar, phone } = req.body;
 
     try {
         // 1 生成全局唯一的 user_id (例如: USR_8f9a3b...)
@@ -55,8 +56,8 @@ export const register = async (
         // 3 准备 SQL 语句 (使用 ? 占位符防止 SQL 注入)
         const sql = `
             INSERT INTO users 
-            (user_id, username, password, idcard, role, created_at, status, email, points)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (user_id, username, password, idcard, role, created_at, status, email, points, phone)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         // 按照 ? 的顺序准备对应的值
         const values = [
@@ -68,7 +69,8 @@ export const register = async (
             createdAt,
             1, // status=1 表示状态正常
             email,
-            0 // points初始为0
+            0, // points初始为0
+            phone || null
         ];
 
         // 4 执行插入操作 (使用 execute 性能比 query 更好，因为它有预编译缓存)
@@ -92,7 +94,8 @@ export const register = async (
             email: email,
             role: role,
             avatar: avatar || null,
-            points: 0
+            points: 0,
+            phone: phone || null
         };
 
         // 6. 响应前端

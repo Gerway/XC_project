@@ -314,7 +314,13 @@ const Search: React.FC = () => {
               <View
                 key={hotel.hotel_id}
                 className="search-page__hotel-card"
-                onClick={() => Taro.navigateTo({ url: `/pages/hotel-details/index?id=${hotel.hotel_id}` })}
+                onClick={() => {
+                  let url = `/pages/hotel-details/index?id=${hotel.hotel_id}`;
+                  if (searchState.check_in && searchState.check_out) {
+                    url += `&check_in=${searchState.check_in}&check_out=${searchState.check_out}`;
+                  }
+                  Taro.navigateTo({ url });
+                }}
               >
                 <View className="search-page__hotel-image-col">
                   <View className="search-page__hotel-image-wrapper">
@@ -355,9 +361,9 @@ const Search: React.FC = () => {
 
                   <View>
                     <Text className="search-page__hotel-quote">
-                      {(hotel.description || '舒适体验，品质之选').length > 10
-                        ? (hotel.description || '舒适体验，品质之选').substring(0, 10) + '...'
-                        : (hotel.description || '舒适体验，品质之选')}
+                      {(hotel.remark || '舒适体验，品质之选').length > 10
+                        ? (hotel.remark || '舒适体验，品质之选').substring(0, 10) + '...'
+                        : (hotel.remark || '舒适体验，品质之选')}
                     </Text>
                   </View>
 
@@ -411,8 +417,8 @@ const Search: React.FC = () => {
         )}
         {/* TabBar bottom spacer */}
         <View style={{ height: '60px' }}></View>
-      </ScrollView>
-    </View>
+      </ScrollView >
+    </View >
   );
 };
 

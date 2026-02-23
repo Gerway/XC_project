@@ -3,14 +3,17 @@ import pool from '../db'
 import { RowDataPacket } from 'mysql2'
 
 // 获取当前登录用户信息的接口
-export const getUserProfile = async (req: Request, res: Response): Promise<void> => {
-  //  req.userId 在 verifyToken 解密并挂载的
-  const userId = req.userId
+export const getUserProfile = async (
+    req: Request,
+    res: Response
+): Promise<void> => {
+    //  req.userId 在 verifyToken 解密并挂载的
+    const userId = req.userId;
 
-  try {
-    // 查询数据库
-    const sql = `
-            SELECT user_id, username, email, idcard, role, avatar, created_at, status, points
+    try {
+        // 查询数据库
+        const sql = `
+            SELECT user_id, username, email, idcard, role, avatar, created_at, status, points, phone
             FROM users 
             WHERE user_id = ?
         `

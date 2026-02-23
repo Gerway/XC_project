@@ -82,10 +82,12 @@ export interface Order {
   check_in: string;
   check_out: string;
   nights: number;
+  room_count: number;
   total_price: number;
   real_pay: number;
   status: OrderStatus;
   created_at: string;
+  canCancel: number;
   guest_name?: string;
   guest_phone?: string;
   arrival_time?: string;

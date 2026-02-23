@@ -1,45 +1,65 @@
 import React, { useState } from 'react';
 import Taro, { useDidShow, useRouter } from '@tarojs/taro';
-import { View, Text, Image, Button, ScrollView } from '@tarojs/components';
-import { Order, OrderStatus } from '../../../types/types';
-import { HOTELS } from '../../constants';
+import { View, Text, Image, ScrollView } from '@tarojs/components';
+import { OrderStatus } from '../../../types/types';
+import { hotelApi } from '../../api/hotel';
 import './index.scss';
+
+interface OrderDetail {
+    order_id: string;
+    user_id: string;
+    hotel_id: string;
+    hotel_name: string;
+    hotel_address: string;
+    hotel_image: string;
+    room_id: string;
+    room_name: string;
+    room_area: number;
+    room_bed: string;
+    has_window: number;
+    has_breakfast: number;
+    check_in: string;
+    check_out: string;
+    nights: number;
+    room_count: number;
+    idcards: string;
+    special_request: string;
+    total_price: number;
+    real_pay: number;
+    status: OrderStatus;
+    created_at: string;
+    payed_at: string | null;
+    canCancel: number;
+    details: { date: string; price: number; breakfast_count: number }[];
+}
 
 const OrderDetails: React.FC = () => {
     const router = useRouter();
     const { orderId } = router.params;
-    const [order, setOrder] = useState<Order | null>(null);
-    const [hotel, setHotel] = useState<any>(null); // Using any for HOTEL implicit type
+    const [order, setOrder] = useState<OrderDetail | null>(null);
     const { statusBarHeight } = Taro.getSystemInfoSync();
 
     useDidShow(() => {
-        try {
-            const raw = Taro.getStorageSync('orders');
-            if (raw) {
-                const orders: Order[] = JSON.parse(raw);
-                const foundOrder = orders.find(o => o.order_id === orderId);
-
-                if (foundOrder) {
-                    setOrder(foundOrder);
-                    const foundHotel = HOTELS.find(h => h.hotel_id === foundOrder.hotel_id);
-                    setHotel(foundHotel || null);
-                }
+        if (!orderId) return;
+        hotelApi.getOrderDetail({ order_id: orderId }).then(res => {
+            if (res?.data) {
+                setOrder(res.data as OrderDetail);
             }
-        } catch (e) {
-            console.error('Failed to load order details', e);
-        }
+        }).catch(err => {
+            console.error('Failed to load order detail', err);
+        });
     });
 
     if (!order) {
         return (
             <View className="order-details__not-found">
-                <Text className="order-details__not-found-text">Order not found</Text>
-                <Button onClick={() => Taro.navigateBack()} className="order-details__not-found-link">Back</Button>
+                <Text className="order-details__not-found-text">订单加载中...</Text>
             </View>
         );
     }
 
     const isPending = order.status === OrderStatus.PENDING;
+    const isPaid = order.status === OrderStatus.PAID || order.status === OrderStatus.CHECKED_IN;
     const isCompleted = order.status === OrderStatus.COMPLETED;
     const isCancelled = order.status === OrderStatus.CANCELLED;
 
@@ -49,6 +69,17 @@ const OrderDetails: React.FC = () => {
         const date = d.getDate();
         const weekMapCN = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
         return `${month.toString().padStart(2, '0')}月${date.toString().padStart(2, '0')}日 ${weekMapCN[d.getDay()]}`;
+    };
+
+    const formatDateTime = (dateStr: string) => {
+        const d = new Date(dateStr);
+        const y = d.getFullYear();
+        const m = (d.getMonth() + 1).toString().padStart(2, '0');
+        const day = d.getDate().toString().padStart(2, '0');
+        const h = d.getHours().toString().padStart(2, '0');
+        const min = d.getMinutes().toString().padStart(2, '0');
+        const s = d.getSeconds().toString().padStart(2, '0');
+        return `${y}-${m}-${day} ${h}:${min}:${s}`;
     };
 
     const getStatusText = () => {
@@ -68,60 +99,80 @@ const OrderDetails: React.FC = () => {
             content: '确认删除该订单吗?',
             success: (res) => {
                 if (res.confirm) {
-                    try {
-                        const raw = Taro.getStorageSync('orders');
-                        if (raw) {
-                            const orders: Order[] = JSON.parse(raw);
-                            const newOrders = orders.filter(o => o.order_id !== order.order_id);
-                            Taro.setStorageSync('orders', JSON.stringify(newOrders));
-                            Taro.showToast({ title: '已删除', icon: 'none' });
-                            setTimeout(() => Taro.navigateBack(), 1000);
-                        }
-                    } catch (e) {
-                        console.error('Failed to delete order', e);
-                    }
+                    hotelApi.deleteOrder({ order_id: order.order_id }).then(() => {
+                        Taro.showToast({ title: '已删除', icon: 'none' });
+                        setTimeout(() => Taro.navigateBack(), 1000);
+                    }).catch(() => {
+                        Taro.showToast({ title: '删除失败', icon: 'none' });
+                    });
                 }
             }
         });
     };
 
-    const handleAction = (type: string) => {
-        if (type === 'pay') {
-            Taro.showToast({ title: '支付功能开发中', icon: 'none' });
-        } else if (type === 'cancel') {
-            // Logic to cancel order (update status)
-            try {
-                const raw = Taro.getStorageSync('orders');
-                if (raw) {
-                    const orders: Order[] = JSON.parse(raw);
-                    const idx = orders.findIndex(o => o.order_id === order.order_id);
-                    if (idx > -1) {
-                        orders[idx].status = OrderStatus.CANCELLED;
-                        Taro.setStorageSync('orders', JSON.stringify(orders));
-                        setOrder({ ...orders[idx] });
-                        Taro.showToast({ title: '已取消', icon: 'none' });
-                    }
-                }
-            } catch (e) { }
-        } else if (type === 'book_again') {
-            Taro.navigateTo({ url: `/pages/hotel-details/index?id=${order.hotel_id}` });
+    const handleCancel = () => {
+        if (isPaid && !order.canCancel) {
+            Taro.showToast({ title: '该订单不可取消', icon: 'none' });
+            return;
         }
+        Taro.showModal({
+            title: '提示',
+            content: '确认取消该订单吗?',
+            success: (res) => {
+                if (res.confirm) {
+                    hotelApi.cancelOrder({ order_id: order.order_id }).then(() => {
+                        setOrder({ ...order, status: OrderStatus.CANCELLED });
+                        Taro.showToast({ title: '已取消', icon: 'none' });
+                    }).catch(() => {
+                        Taro.showToast({ title: '取消失败', icon: 'none' });
+                    });
+                }
+            }
+        });
     };
+
+    const handleBookAgain = () => {
+        Taro.navigateTo({ url: `/pages/hotel-details/index?id=${order.hotel_id}` });
+    };
+
+    const handlePay = () => {
+        Taro.showLoading({ title: '处理支付中' });
+        hotelApi.payOrder({
+            order_id: order.order_id,
+            real_pay: order.real_pay,
+            total_price: order.total_price,
+            room_count: order.room_count,
+            special_request: order.special_request || '',
+            idcards: order.idcards || '[]',
+            daily: order.details || []
+        }).then(() => {
+            Taro.hideLoading();
+            Taro.showToast({ title: '支付成功', icon: 'success' });
+            setOrder({ ...order, status: OrderStatus.PAID, payed_at: new Date().toISOString() });
+        }).catch(() => {
+            Taro.hideLoading();
+            Taro.showToast({ title: '支付失败', icon: 'none' });
+        });
+    };
+
+    const roomInfo = [
+        order.room_area ? `${order.room_area}m²` : '',
+        order.room_bed || '',
+        order.has_window ? '有窗' : '无窗'
+    ].filter(Boolean).join(' | ');
 
     return (
         <View className="order-details">
             <View className="order-details__header">
-                {/* Status bar spacer for custom nav */}
                 <View style={{ height: `${statusBarHeight}px` }}></View>
-
                 <View className="order-details__header-inner">
                     <View onClick={() => Taro.navigateBack()} className="order-details__back-btn">
                         <Text className="order-details__back-icon">‹</Text>
                     </View>
                     <Text className="order-details__title">订单详情</Text>
                     <View className="order-details__header-actions">
-                        <Text className="order-details__header-action-icon">🎧</Text>
-                        <Text className="order-details__header-action-icon">⋮</Text>
+                        <Text className="order-details__header-action-icon">☎</Text>
+                        <Text className="order-details__header-action-icon">⋯</Text>
                     </View>
                 </View>
             </View>
@@ -131,7 +182,6 @@ const OrderDetails: React.FC = () => {
                 <View className="order-details__status-section">
                     <View className="order-details__status-title">
                         <Text>{getStatusText()}</Text>
-                        {isPending && <Text className="order-details__status-countdown">17:50 后未支付将被取消</Text>}
                     </View>
                 </View>
 
@@ -143,18 +193,19 @@ const OrderDetails: React.FC = () => {
                             <View className="order-details__payment-amount">
                                 <Text className="order-details__payment-currency">¥</Text>
                                 <Text className="order-details__payment-value">{order.real_pay.toFixed(2)}</Text>
-                                <View className="order-details__payment-detail">
-                                    <Text>明细 </Text>
-                                    <Text className="order-details__payment-detail-arrow">›</Text>
-                                </View>
                             </View>
                         </View>
-                        <View className="order-details__cancel-policy">
-                            <Text className="order-details__cancel-label">取消政策</Text>
-                            <Text className="order-details__cancel-text">
-                                支付后1小时内可免费取消，超过1小时后不可取消。
-                            </Text>
-                        </View>
+                        {order.canCancel ? (
+                            <View className="order-details__cancel-policy">
+                                <Text className="order-details__cancel-label">取消政策</Text>
+                                <Text className="order-details__cancel-text">支付后可免费取消。</Text>
+                            </View>
+                        ) : (
+                            <View className="order-details__cancel-policy">
+                                <Text className="order-details__cancel-label">取消政策</Text>
+                                <Text className="order-details__cancel-text">该订单支付后不可取消。</Text>
+                            </View>
+                        )}
                     </View>
                 )}
 
@@ -167,7 +218,7 @@ const OrderDetails: React.FC = () => {
                         <View className="order-details__hotel-info">
                             <Text className="order-details__hotel-name">{order.hotel_name}</Text>
                             <View className="order-details__hotel-address">
-                                <Text className="order-details__hotel-address-text">{hotel?.address || 'Hotel Address Info'}</Text>
+                                <Text className="order-details__hotel-address-text">{order.hotel_address || '暂无地址信息'}</Text>
                                 <Text className="order-details__hotel-address-arrow">›</Text>
                             </View>
                         </View>
@@ -175,11 +226,11 @@ const OrderDetails: React.FC = () => {
 
                     <View className="order-details__action-buttons">
                         <View className="order-details__action-btn">
-                            <Text className="order-details__action-btn-icon">🗺️</Text>
+                            <Text className="order-details__action-btn-icon">⚲</Text>
                             <Text>导航/地图</Text>
                         </View>
                         <View className="order-details__action-btn">
-                            <Text className="order-details__action-btn-icon">📞</Text>
+                            <Text className="order-details__action-btn-icon">☏</Text>
                             <Text>联系酒店</Text>
                         </View>
                     </View>
@@ -188,7 +239,7 @@ const OrderDetails: React.FC = () => {
                 {/* Booking Details Card */}
                 <View className="order-details__card order-details__card--spaced">
                     <View className="order-details__detail-row">
-                        <Text className="order-details__detail-icon">📅</Text>
+                        <Text className="order-details__detail-icon">◷</Text>
                         <View className="order-details__detail-dates">
                             <Text className="order-details__detail-date">{formatDateWithWeek(order.check_in)}</Text>
                             <Text className="order-details__detail-nights">共{order.nights}晚</Text>
@@ -197,57 +248,47 @@ const OrderDetails: React.FC = () => {
                     </View>
 
                     <View className="order-details__detail-row order-details__detail-row--top">
-                        <Text className="order-details__detail-icon order-details__detail-icon--top">🛏️</Text>
+                        <Text className="order-details__detail-icon order-details__detail-icon--top">☖</Text>
                         <View style={{ flex: 1 }}>
                             <View className="order-details__detail-room-row">
-                                <Text className="order-details__detail-room-name">{order.room_name} 1间</Text>
-                                <View className="order-details__detail-link">
-                                    <Text>详情 </Text>
-                                    <Text className="order-details__detail-link-arrow">›</Text>
+                                <Text className="order-details__detail-room-name">{order.room_name} {order.room_count || 1}间</Text>
+                            </View>
+                            {roomInfo && (
+                                <View className="order-details__detail-room-info">
+                                    <Text>{roomInfo}</Text>
                                 </View>
-                            </View>
-                            <View className="order-details__detail-room-info">
-                                <Text>凌晨特价</Text>
-                                <Text>18-21m² | 1张2*1.5米床 | 外景窗</Text>
-                            </View>
+                            )}
                         </View>
                     </View>
                 </View>
 
-                {/* Membership Benefits */}
-                <View className="order-details__card order-details__card--gradient">
-                    <View className="order-details__membership-header">
-                        <Text className="order-details__membership-title">星会员专享</Text>
-                        <Text className="order-details__membership-worth">额外享14项权益共值 ¥60</Text>
-                    </View>
-                    <View className="order-details__benefits-grid">
-                        {[
-                            { icon: '🏷️', label: '房费折扣', sub: '门市价9.8折', badge: undefined },
-                            { icon: '🕒', label: '延迟退房', sub: '至12:00', badge: undefined },
-                            { icon: '✨', label: '积分加倍', sub: '1倍积分', badge: '限本人' },
-                            { icon: '📱', label: '在线选好房', sub: '移动端专享', badge: undefined }
-                        ].map(item => (
-                            <View key={item.label} className="order-details__benefit-item">
-                                <View className="order-details__benefit-icon-wrapper">
-                                    <Text className="order-details__benefit-icon">{item.icon}</Text>
-                                    {item.badge && <Text className="order-details__benefit-badge">{item.badge}</Text>}
+                {/* Price Breakdown (if details exist) */}
+                {order.details && order.details.length > 0 && (
+                    <View className="order-details__card order-details__card--spaced">
+                        <Text className="order-details__order-info-title">价格明细</Text>
+                        {order.details.map((d, i) => {
+                            const dateObj = new Date(d.date);
+                            const m = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+                            const day = dateObj.getDate().toString().padStart(2, '0');
+                            return (
+                                <View key={i} className="order-details__info-row">
+                                    <Text className="order-details__info-label">{m}月{day}日 房费{d.breakfast_count > 0 ? `(含${d.breakfast_count}份早餐)` : ''}</Text>
+                                    <Text className="order-details__info-value">¥{d.price.toFixed(2)}</Text>
                                 </View>
-                                <Text className="order-details__benefit-label">{item.label}</Text>
-                                <Text className="order-details__benefit-sub">{item.sub}</Text>
+                            );
+                        })}
+                        <View className="order-details__price-summary">
+                            <View className="order-details__info-row">
+                                <Text className="order-details__info-label">总价</Text>
+                                <Text className="order-details__info-value">¥{order.total_price.toFixed(2)}</Text>
                             </View>
-                        ))}
-                    </View>
-                    <View className="order-details__points-info">
-                        <View className="order-details__points-row">
-                            <Text className="order-details__points-label">本单积分 <Text className="order-details__points-info-icon">ℹ️</Text></Text>
-                            <Text className="order-details__points-value-text">离店预计送 <Text className="order-details__points-highlight">278积分</Text>，以实际到账为准</Text>
-                        </View>
-                        <View className="order-details__points-row">
-                            <Text className="order-details__points-label">间夜累计 <Text className="order-details__points-info-icon">ℹ️</Text></Text>
-                            <Text className="order-details__points-value-text">离店预计送 <Text className="order-details__points-highlight">1间夜</Text>，以实际到账为准</Text>
+                            <View className="order-details__info-row">
+                                <Text className="order-details__info-label order-details__info-label--bold">实付</Text>
+                                <Text className="order-details__info-value order-details__info-value--accent">¥{order.real_pay.toFixed(2)}</Text>
+                            </View>
                         </View>
                     </View>
-                </View>
+                )}
 
                 {/* Order Info */}
                 <View className="order-details__card order-details__card--spaced order-details__card--mb">
@@ -255,21 +296,27 @@ const OrderDetails: React.FC = () => {
                     <View className="order-details__info-row">
                         <Text className="order-details__info-label">订单号</Text>
                         <View className="order-details__info-value">
-                            <Text>9012333260212011624776006X05DEXD</Text>
-                            <Text className="order-details__copy-icon">📄</Text>
+                            <Text>{order.order_id}</Text>
                         </View>
                     </View>
                     <View className="order-details__info-row">
-                        <Text className="order-details__info-label">联系方式</Text>
-                        <Text className="order-details__info-value">18223597789</Text>
-                    </View>
-                    <View className="order-details__info-row">
                         <Text className="order-details__info-label">下单时间</Text>
-                        <Text className="order-details__info-value">2026-02-12 01:16:25</Text>
+                        <Text className="order-details__info-value">{formatDateTime(order.created_at)}</Text>
                     </View>
+                    {order.payed_at && (
+                        <View className="order-details__info-row">
+                            <Text className="order-details__info-label">支付时间</Text>
+                            <Text className="order-details__info-value">{formatDateTime(order.payed_at)}</Text>
+                        </View>
+                    )}
+                    {order.special_request && (
+                        <View className="order-details__info-row">
+                            <Text className="order-details__info-label">特殊要求</Text>
+                            <Text className="order-details__info-value">{order.special_request}</Text>
+                        </View>
+                    )}
                 </View>
 
-                {/* Spacer for bottom bar */}
                 <View style={{ height: '80px' }}></View>
             </ScrollView>
 
@@ -282,18 +329,18 @@ const OrderDetails: React.FC = () => {
                         </View>
                     )}
 
-                    {isPending && (
-                        <View onClick={() => handleAction('cancel')} className="order-details__footer-btn order-details__footer-btn--outline">
+                    {(isPending || isPaid) && (
+                        <View onClick={handleCancel} className="order-details__footer-btn order-details__footer-btn--outline">
                             <Text>取消订单</Text>
                         </View>
                     )}
 
-                    <View onClick={() => handleAction('book_again')} className="order-details__footer-btn order-details__footer-btn--outline">
+                    <View onClick={handleBookAgain} className="order-details__footer-btn order-details__footer-btn--outline">
                         <Text>再次预订</Text>
                     </View>
 
                     {isPending && (
-                        <View onClick={() => handleAction('pay')} className="order-details__footer-btn order-details__footer-btn--purple">
+                        <View onClick={handlePay} className="order-details__footer-btn order-details__footer-btn--primary">
                             <Text>去支付</Text>
                         </View>
                     )}

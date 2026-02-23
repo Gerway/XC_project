@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { View, Text, Image, Button, ScrollView } from '@tarojs/components';
 import { Order, OrderStatus } from '../../../types/types';
+import { hotelApi } from '../../api/hotel';
 import './index.scss';
 
 const Orders: React.FC = () => {
@@ -16,22 +17,26 @@ const Orders: React.FC = () => {
     setCanGoBack(pages.length > 1);
 
     // Check Login Status
-    const userInfo = Taro.getStorageSync('userInfo');
-    if (userInfo) {
+    const userInfoStr = Taro.getStorageSync('userInfo');
+    if (userInfoStr) {
       setIsLoggedIn(true);
-      // Load orders
       try {
-        const raw = Taro.getStorageSync('orders');
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) {
-            setOrders(parsed);
-          }
-        } else {
-          setOrders([]);
+        const userInfo = JSON.parse(userInfoStr);
+        const userId = userInfo.user_id;
+        if (userId) {
+          hotelApi.getUserOrders({ user_id: userId }).then(res => {
+            if (res?.data && Array.isArray(res.data)) {
+              setOrders(res.data as Order[]);
+            } else {
+              setOrders([]);
+            }
+          }).catch(err => {
+            console.error('Failed to fetch orders', err);
+            setOrders([]);
+          });
         }
       } catch (e) {
-        console.error('Failed to load orders', e);
+        console.error('Failed to parse userInfo', e);
         setOrders([]);
       }
     } else {
@@ -59,9 +64,12 @@ const Orders: React.FC = () => {
   };
 
   const removeOrder = (orderId: string) => {
-    const newOrders = orders.filter(o => o.order_id !== orderId);
-    setOrders(newOrders);
-    Taro.setStorageSync('orders', JSON.stringify(newOrders));
+    hotelApi.deleteOrder({ order_id: orderId }).then(() => {
+      setOrders(prev => prev.filter(o => o.order_id !== orderId));
+      Taro.showToast({ title: '已删除', icon: 'none' });
+    }).catch(() => {
+      Taro.showToast({ title: '删除失败', icon: 'none' });
+    });
   };
 
   const handleDelete = (orderId: string) => {
@@ -71,22 +79,60 @@ const Orders: React.FC = () => {
       success: (res) => {
         if (res.confirm) {
           removeOrder(orderId);
-          Taro.showToast({ title: '已删除', icon: 'none' });
         }
       }
     });
+  };
+
+  const doCancelOrder = (orderId: string) => {
+    hotelApi.cancelOrder({ order_id: orderId }).then(() => {
+      // 更新本地状态：将该订单状态改为已取消
+      setOrders(prev => prev.map(o =>
+        o.order_id === orderId ? { ...o, status: OrderStatus.CANCELLED } : o
+      ));
+      Taro.showToast({ title: '已取消', icon: 'none' });
+    }).catch(() => {
+      Taro.showToast({ title: '取消失败', icon: 'none' });
+    });
+  };
+
+  const handleCancel = (order: Order) => {
+    // 待支付订单直接取消
+    if (order.status === OrderStatus.PENDING) {
+      Taro.showModal({
+        title: '提示',
+        content: '确认取消该订单吗?',
+        success: (res) => {
+          if (res.confirm) doCancelOrder(order.order_id);
+        }
+      });
+      return;
+    }
+    // 待入住订单需要判断 canCancel
+    if (order.status === OrderStatus.PAID || order.status === OrderStatus.CHECKED_IN) {
+      if (!order.canCancel) {
+        Taro.showToast({ title: '该订单不可取消', icon: 'none' });
+        return;
+      }
+      Taro.showModal({
+        title: '提示',
+        content: '确认取消该订单吗?',
+        success: (res) => {
+          if (res.confirm) doCancelOrder(order.order_id);
+        }
+      });
+    }
   };
 
   const handleLogin = () => {
     Taro.navigateTo({ url: '/pages/login/index' });
   };
 
-  const handleAction = (action: string, order: Order) => {
+  const handleAction = async (action: string, order: Order) => {
     if (action === 'book_again') {
-      // Check if hotel exists in constant? For now simplify to navigate to details
       Taro.navigateTo({ url: `/pages/hotel-details/index?id=${order.hotel_id}` });
     } else if (action === 'pay') {
-      Taro.navigateTo({ url: `/pages/booking/index?orderId=${order.order_id}` });
+      Taro.navigateTo({ url: `/pages/order-details/index?orderId=${order.order_id}` });
     } else if (action === 'review') {
       Taro.navigateTo({ url: `/pages/reviews/index?orderId=${order.order_id}` });
     }
@@ -95,11 +141,11 @@ const Orders: React.FC = () => {
   const filteredOrders = useMemo(() => {
     if (!isLoggedIn) return [];
     switch (activeTab) {
-      case 0: return orders; // All
-      case 1: return orders.filter(o => o.status === OrderStatus.PENDING); // To Pay
-      case 2: return orders.filter(o => o.status === OrderStatus.PAID || o.status === OrderStatus.CHECKED_IN); // To Check-in (Paid or Checked-in)
-      case 3: return orders.filter(o => o.status === OrderStatus.COMPLETED); // To Review (Completed)
-      case 4: return orders.filter(o => o.status === OrderStatus.CANCELLED); // Cancelled
+      case 0: return orders;
+      case 1: return orders.filter(o => o.status === OrderStatus.PENDING);
+      case 2: return orders.filter(o => o.status === OrderStatus.PAID || o.status === OrderStatus.CHECKED_IN);
+      case 3: return orders.filter(o => o.status === OrderStatus.COMPLETED);
+      case 4: return orders.filter(o => o.status === OrderStatus.CANCELLED);
       default: return orders;
     }
   }, [activeTab, orders, isLoggedIn]);
@@ -195,6 +241,7 @@ const Orders: React.FC = () => {
           filteredOrders.map(order => {
             const statusMeta = getStatusDisplay(order.status);
             const isToPay = order.status === OrderStatus.PENDING;
+            const isPaid = order.status === OrderStatus.PAID || order.status === OrderStatus.CHECKED_IN;
             const isCancelled = order.status === OrderStatus.CANCELLED;
             const isCompleted = order.status === OrderStatus.COMPLETED;
 
@@ -225,7 +272,7 @@ const Orders: React.FC = () => {
                     <Text>{formatDateRange(order.check_in, order.check_out)} <Text style={{ margin: '0 4px' }}>共{order.nights}晚</Text></Text>
                   </View>
                   <View className="orders-page__card-room">
-                    <Text>{order.room_name} <Text style={{ margin: '0 4px' }}>|</Text> 1间</Text>
+                    <Text>{order.room_name} <Text style={{ margin: '0 4px' }}>|</Text> {order.room_count || 1}间</Text>
                   </View>
 
                   <View className="orders-page__card-spacer"></View>
@@ -236,12 +283,23 @@ const Orders: React.FC = () => {
                   </View>
 
                   <View className="orders-page__card-actions">
+                    {/* 已完成 / 已取消 → 删除按钮 */}
                     {(isCancelled || isCompleted) && (
                       <View
                         onClick={(e) => { e.stopPropagation(); handleDelete(order.order_id); }}
                         className="orders-page__card-delete-btn"
                       >
                         <Text className="orders-page__card-delete-icon">🗑️</Text>
+                      </View>
+                    )}
+
+                    {/* 待支付 / 待入住 → 取消订单按钮 */}
+                    {(isToPay || isPaid) && (
+                      <View
+                        onClick={(e) => { e.stopPropagation(); handleCancel(order); }}
+                        className="orders-page__card-btn orders-page__card-btn--outline"
+                      >
+                        <Text>取消订单</Text>
                       </View>
                     )}
 
@@ -257,7 +315,7 @@ const Orders: React.FC = () => {
                         onClick={(e) => { e.stopPropagation(); handleAction('pay', order); }}
                         className="orders-page__card-btn orders-page__card-btn--primary"
                       >
-                        <Text>去支付</Text>
+                        <Text>查看详情</Text>
                       </View>
                     )}
                     {isCompleted && (
