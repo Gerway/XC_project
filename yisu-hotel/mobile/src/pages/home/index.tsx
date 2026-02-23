@@ -57,7 +57,7 @@ const Home: React.FC = () => {
       room_type: room_type,
     };
     Taro.setStorageSync('searchParams', JSON.stringify(searchParams));
-    Taro.switchTab({
+    Taro.navigateTo({
       url: '/pages/search/index'
     });
   };
