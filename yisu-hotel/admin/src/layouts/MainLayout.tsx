@@ -81,7 +81,12 @@ const MainLayout: React.FC = () => {
           <div className={styles.logoIcon}>
             <AppstoreOutlined style={{ fontSize: '20px', color: 'white' }} />
           </div>
-          {!collapsed && <h1>易宿酒店</h1>}
+          {!collapsed && (
+            <div className={styles.logoText}>
+              <h1>易宿酒店</h1>
+              <span className={styles.logoSub}>商家端</span>
+            </div>
+          )}
         </div>
         <Menu
           theme="dark"
