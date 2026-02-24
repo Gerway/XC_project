@@ -135,7 +135,7 @@ export const hotelApi = {
         order_id: string; real_pay: number; total_price: number; room_count: number;
         special_request?: string; idcards: string;
         daily: { date: string; price: number; breakfast_count: number }[];
-        user_coupons_id?: string;
+        user_coupons_ids?: string[]; // array of user_coupons_id
     }) {
         return request<{ message: string; data: { order_id: string } }>({
             url: '/hotel/order/pay',
@@ -151,6 +151,7 @@ export const hotelApi = {
         order_id: string; real_pay: number; total_price: number; room_count: number;
         special_request?: string; idcards: string;
         daily: { date: string; price: number; breakfast_count: number }[];
+        user_coupons_ids?: string[]; // array of user_coupons_id selected by user
     }) {
         return request<{ message: string }>({
             url: '/hotel/order/update',

@@ -590,14 +590,14 @@ interface PayOrderBody {
     special_request?: string;
     idcards: string;
     daily: DailyDetail[];
-    user_coupons_id?: string;
+    user_coupons_ids?: string[]; // array of user_coupons_id
 }
 
 export const payOrder = async (
     req: Request<{}, {}, PayOrderBody>,
     res: Response
 ): Promise<void> => {
-    const { order_id, real_pay, total_price, room_count, special_request, idcards, daily, user_coupons_id } = req.body;
+    const { order_id, real_pay, total_price, room_count, special_request, idcards, daily, user_coupons_ids } = req.body;
 
     if (!order_id) {
         res.status(400).json({ message: '缺少 order_id' });
@@ -605,12 +605,14 @@ export const payOrder = async (
     }
 
     try {
+        // 1. 将 coupon_ids JSON 保存到 orders
+        const couponIdsJson = JSON.stringify(user_coupons_ids && user_coupons_ids.length > 0 ? user_coupons_ids : []);
         await pool.execute(
-            `UPDATE orders SET status = 1, real_pay = ?, total_price = ?, room_count = ?, special_request = ?, idcards = ?, payed_at = NOW() WHERE order_id = ?`,
-            [real_pay, total_price, room_count, special_request || '', idcards || '[]', order_id]
+            `UPDATE orders SET status = 1, real_pay = ?, total_price = ?, room_count = ?, special_request = ?, idcards = ?, coupon_ids = ?, payed_at = NOW() WHERE order_id = ?`,
+            [real_pay, total_price, room_count, special_request || '', idcards || '[]', couponIdsJson, order_id]
         );
 
-        // 删除旧的明细，重新插入最新的
+        // 2. 删除旧的明细，重新插入最新的
         await pool.execute(
             `DELETE FROM order_details WHERE order_id = ?`,
             [order_id]
@@ -627,12 +629,14 @@ export const payOrder = async (
             }
         }
 
-        // 修改已选中的优惠券状态为已使用
-        if (user_coupons_id) {
-            await pool.execute(
-                `UPDATE user_coupons SET status = 1 WHERE user_coupons_id = ? AND status = 0`,
-                [user_coupons_id]
-            );
+        // 3. 将所有选中的优惠券状态改为已使用
+        if (user_coupons_ids && user_coupons_ids.length > 0) {
+            for (const ucId of user_coupons_ids) {
+                await pool.execute(
+                    `UPDATE user_coupons SET status = 1 WHERE user_coupons_id = ? AND status = 0`,
+                    [ucId]
+                );
+            }
         }
 
         res.status(200).json({ message: '支付成功', data: { order_id } });
@@ -650,13 +654,14 @@ interface UpdatePendingOrderBody {
     special_request?: string;
     idcards: string;
     daily: DailyDetail[];
+    user_coupons_ids?: string[]; // 退出预订时保存当前选择的优惠券
 }
 
 export const updatePendingOrder = async (
     req: Request<{}, {}, UpdatePendingOrderBody>,
     res: Response
 ): Promise<void> => {
-    const { order_id, real_pay, total_price, room_count, special_request, idcards, daily } = req.body;
+    const { order_id, real_pay, total_price, room_count, special_request, idcards, daily, user_coupons_ids } = req.body;
 
     if (!order_id) {
         res.status(400).json({ message: '缺少 order_id' });
@@ -664,14 +669,16 @@ export const updatePendingOrder = async (
     }
 
     try {
+        // 1. 保存 coupon_ids 和常规订单信息
+        const couponIdsJson = JSON.stringify(user_coupons_ids && user_coupons_ids.length > 0 ? user_coupons_ids : []);
         await pool.execute(
             `UPDATE orders 
-             SET real_pay = ?, total_price = ?, room_count = ?, special_request = ?, idcards = ? 
+             SET real_pay = ?, total_price = ?, room_count = ?, special_request = ?, idcards = ?, coupon_ids = ? 
              WHERE order_id = ? AND status = 0`,
-            [real_pay, total_price, room_count, special_request || '', idcards || '[]', order_id]
+            [real_pay, total_price, room_count, special_request || '', idcards || '[]', couponIdsJson, order_id]
         );
 
-        // 删除旧的明细，重新插入最新的
+        // 2. 删除旧的明细，重新插入最新的
         await pool.execute(
             `DELETE FROM order_details WHERE order_id = ?`,
             [order_id]
@@ -685,6 +692,36 @@ export const updatePendingOrder = async (
                     `INSERT INTO order_details (order_details_id, order_id, order_details_date, price, breakfast_count) VALUES (?, ?, ?, ?, ?)`,
                     [`OD_${order_id}_${i + 1}`, order_id, `${cleanDate} 00:00:00`, d.price, d.breakfast_count]
                 );
+            }
+        }
+
+        // 3. 将选中的优惠券标记为已使用（退出预订界面时记录）
+        if (user_coupons_ids && user_coupons_ids.length > 0) {
+            // 先把该订单之前已用的优惠券恢复（防止重复提交时重复磁失）
+            const [oldOrder] = await pool.execute<RowDataPacket[]>(
+                `SELECT coupon_ids FROM orders WHERE order_id = ?`, [order_id]
+            );
+            const oldCouponIds: string[] = (oldOrder[0]?.coupon_ids) || [];
+            for (const oldId of oldCouponIds) {
+                if (!user_coupons_ids.includes(oldId)) {
+                    await pool.execute(`UPDATE user_coupons SET status = 0 WHERE user_coupons_id = ?`, [oldId]);
+                }
+            }
+            // 将新选中的标为已使用
+            for (const ucId of user_coupons_ids) {
+                await pool.execute(
+                    `UPDATE user_coupons SET status = 1 WHERE user_coupons_id = ? AND status = 0`,
+                    [ucId]
+                );
+            }
+        } else {
+            // 没有选中优惠券，将之前该订单特向的优惠券全部安全退回
+            const [oldOrder] = await pool.execute<RowDataPacket[]>(
+                `SELECT coupon_ids FROM orders WHERE order_id = ?`, [order_id]
+            );
+            const oldCouponIds: string[] = (oldOrder[0]?.coupon_ids) || [];
+            for (const oldId of oldCouponIds) {
+                await pool.execute(`UPDATE user_coupons SET status = 0 WHERE user_coupons_id = ?`, [oldId]);
             }
         }
 
@@ -797,10 +834,35 @@ export const cancelOrder = async (
     }
 
     try {
+        // 1. 先获取该订单的 coupon_ids 和当前状态
+        const [orderRows] = await pool.execute<RowDataPacket[]>(
+            `SELECT status, coupon_ids FROM orders WHERE order_id = ?`,
+            [order_id]
+        );
+
+        if (orderRows.length === 0) {
+            res.status(404).json({ message: '订单不存在' });
+            return;
+        }
+
+        const orderStatus = orderRows[0].status;
+        const couponIds: string[] = orderRows[0].coupon_ids || [];
+
+        // 2. 将订单状态改为已取消（仅待支付状态=0才需要还原优惠券）
         await pool.execute(
             `UPDATE orders SET status = 4 WHERE order_id = ? AND status IN (0, 1, 2)`,
             [order_id]
         );
+
+        // 3. 如果是待支付状态且有优惠券，将优惠券状态还原为未使用
+        if (orderStatus === 0 && couponIds.length > 0) {
+            for (const ucId of couponIds) {
+                await pool.execute(
+                    `UPDATE user_coupons SET status = 0 WHERE user_coupons_id = ?`,
+                    [ucId]
+                );
+            }
+        }
 
         res.status(200).json({ message: '订单已取消' });
     } catch (err) {
@@ -851,6 +913,29 @@ export const getOrderDetail = async (
             [order_id]
         );
 
+        // 3. 获取该订单使用的优惠券详情
+        const couponIds: string[] = orderRow.coupon_ids || [];
+        let usedCoupons: any[] = [];
+        if (couponIds.length > 0) {
+            const placeholders = couponIds.map(() => '?').join(',');
+            const [couponRows] = await pool.execute<RowDataPacket[]>(
+                `SELECT uc.user_coupons_id, uc.coupon_id, uc.status,
+                        c.title, c.discount_amount, c.min_spend
+                 FROM user_coupons uc
+                 LEFT JOIN coupons c ON uc.coupon_id = c.coupon_id
+                 WHERE uc.user_coupons_id IN (${placeholders})`,
+                couponIds
+            );
+            usedCoupons = couponRows.map(c => ({
+                user_coupons_id: c.user_coupons_id,
+                coupon_id: c.coupon_id,
+                title: c.title,
+                discount_amount: Number(c.discount_amount) || 0,
+                min_spend: Number(c.min_spend) || 0,
+                status: c.status
+            }));
+        }
+
         res.status(200).json({
             message: '查询成功',
             data: {
@@ -878,6 +963,8 @@ export const getOrderDetail = async (
                 created_at: orderRow.created_at,
                 payed_at: orderRow.payed_at,
                 canCancel: orderRow.canCancel,
+                coupon_ids: couponIds,
+                used_coupons: usedCoupons,
                 details: detailRows.map(d => ({
                     date: d.date_str,
                     price: Number(d.price) || 0,

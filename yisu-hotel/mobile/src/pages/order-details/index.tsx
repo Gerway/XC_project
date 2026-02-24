@@ -31,6 +31,8 @@ interface OrderDetail {
     payed_at: string | null;
     canCancel: number;
     details: { date: string; price: number; breakfast_count: number }[];
+    coupon_ids?: string[];
+    used_coupons?: { user_coupons_id: string; coupon_id: string; title: string; discount_amount: number; min_spend: number }[];
 }
 
 const OrderDetails: React.FC = () => {
@@ -278,6 +280,15 @@ const OrderDetails: React.FC = () => {
                             );
                         })}
                         <View className="order-details__price-summary">
+                            {/* 优惠券抵扣 */}
+                            {order.used_coupons && order.used_coupons.length > 0 && (
+                                order.used_coupons.map((c, i) => (
+                                    <View key={i} className="order-details__info-row">
+                                        <Text className="order-details__info-label">🎫 {c.title}</Text>
+                                        <Text className="order-details__info-value" style={{ color: '#FF6B35' }}>-¥{c.discount_amount.toFixed(2)}</Text>
+                                    </View>
+                                ))
+                            )}
                             <View className="order-details__info-row">
                                 <Text className="order-details__info-label">总价</Text>
                                 <Text className="order-details__info-value">¥{order.total_price.toFixed(2)}</Text>
