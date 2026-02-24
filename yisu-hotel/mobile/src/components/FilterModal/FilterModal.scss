@@ -175,6 +175,7 @@
         background: $gray-50;
         @include flex-col;
         flex-shrink: 0;
+        height: 100%;
         overflow-y: auto;
         @include hide-scrollbar;
     }
@@ -216,6 +217,7 @@
     // ---- Main Content ----
     &__main-content {
         flex: 1;
+        height: 100%;
         overflow-y: auto;
         padding: $spacing-4;
         padding-bottom: $spacing-24;
@@ -391,11 +393,11 @@
     // ---- Footer ----
     &__footer {
         flex-shrink: 0;
-        padding: $spacing-4;
+        padding: $spacing-2;
         border-top: 1px solid $gray-100;
         display: flex;
-        gap: $spacing-3;
-        padding-bottom: $spacing-8;
+        gap: $spacing-1;
+        padding-bottom: $spacing-2;
         background: $white;
         z-index: $z-20;
         box-shadow: 0 -4px 20px -10px rgba($black, 0.05);
@@ -411,6 +413,8 @@
         background: $white;
         cursor: pointer;
         transition: transform $transition-normal;
+        padding: 0;
+        @include flex-center;
 
         &:active {
             transform: scale(0.95);
@@ -432,6 +436,8 @@
         border: none;
         cursor: pointer;
         transition: all $transition-normal;
+        padding: 0;
+        @include flex-center;
 
         &:active {
             transform: scale(0.95);
