@@ -480,7 +480,7 @@ const OrderList: React.FC = () => {
         onCancel={() => setEditVisible(false)}
         okText="保存修改"
         cancelText="取消"
-        destroyOnClose
+        destroyOnHidden
         width={480}
       >
         <Form form={editForm} layout="vertical" style={{ marginTop: 16 }}>

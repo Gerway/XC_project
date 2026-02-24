@@ -204,7 +204,7 @@ const AuditDrawer: React.FC<AuditDrawerProps> = ({
       title={drawerTitle}
       footer={drawerFooter}
       className={styles.drawer}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className={styles.drawerBody}>
         {/* ===== 1. 基本信息 ===== */}

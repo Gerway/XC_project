@@ -725,7 +725,7 @@ const HotelList: React.FC = () => {
           </Button>,
         ]}
         width={700}
-        destroyOnClose
+        destroyOnHidden
       >
         {viewingHotel && (
           <Descriptions column={2} bordered size="small">

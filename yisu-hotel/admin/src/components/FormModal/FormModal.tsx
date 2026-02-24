@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react'
-import { Modal, ModalProps, App } from 'antd'
+import { Modal, App } from 'antd'
+import type { ModalProps } from 'antd'
 
 export interface FormModalProps extends Omit<ModalProps, 'onOk' | 'confirmLoading'> {
   /**
@@ -17,28 +18,26 @@ export const FormModal: React.FC<FormModalProps> = ({
   const [loading, setLoading] = useState(false)
   const { message } = App.useApp()
 
-  const handleOk = useCallback(
-    async (e: React.MouseEvent<HTMLButtonElement>) => {
-      if (loading) return // 防抖保护
+  const handleOk = useCallback(async () => {
+    if (loading) return // 防抖保护
 
-      try {
-        setLoading(true)
-        const result = onFinish()
-        if (result instanceof Promise) {
-          await result
-        }
-      } catch (err: any) {
-        if (err?.errorFields) {
-          // antd form validation failed, silently ignore
-        } else {
-          message.error(err?.message || '操作失败')
-        }
-      } finally {
-        setLoading(false)
+    try {
+      setLoading(true)
+      const result = onFinish()
+      if (result instanceof Promise) {
+        await result
       }
-    },
-    [loading, onFinish, message],
-  )
+    } catch (err: unknown) {
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      if ((err as any)?.errorFields) {
+        // antd form validation failed, silently ignore
+      } else {
+        message.error((err as Error)?.message || '操作失败')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [loading, onFinish, message])
 
   const handleCancel = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -52,9 +51,15 @@ export const FormModal: React.FC<FormModalProps> = ({
     <Modal
       {...restProps}
       onCancel={handleCancel}
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
       onOk={handleOk as any}
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
       confirmLoading={(loading || (restProps as any).confirmLoading) as any}
-      maskClosable={!loading && restProps.maskClosable}
+      mask={
+        restProps.mask !== false
+          ? { ...((restProps.mask as object) || {}), closable: !loading && restProps.maskClosable }
+          : false
+      }
       closable={!loading && restProps.closable}
       keyboard={!loading && restProps.keyboard}
     >

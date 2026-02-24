@@ -6,7 +6,6 @@ import {
   Card,
   Statistic,
   App,
-  Modal,
   Popconfirm,
   InputNumber,
   Row,
@@ -444,7 +443,7 @@ const AdminHotelManager: React.FC = () => {
         onCancel={() => setEditVisible(false)}
         okText="保存修改"
         cancelText="取消"
-        destroyOnClose
+        destroyOnHidden
         width={680}
         className={styles.editModal}
       >
