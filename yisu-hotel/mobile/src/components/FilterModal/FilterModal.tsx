@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Button, ScrollView } from '@tarojs/components';
-import Taro, { useReady } from '@tarojs/taro';
+import Taro from '@tarojs/taro';
 import './FilterModal.scss';
 
 interface FilterModalProps {
@@ -26,7 +26,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
     initialRange = [0, 1000],
     initialStars = []
 }) => {
-    const [activeTab, setActiveTab] = useState('Star Rating');
+    const [activeTab, setActiveTab] = useState('星级/价格');
     const [minPrice, setMinPrice] = useState(initialRange[0]);
     const [maxPrice, setMaxPrice] = useState(initialRange[1]);
     const [selectedStars, setSelectedStars] = useState<number[]>(initialStars);
@@ -49,11 +49,11 @@ const FilterModal: React.FC<FilterModalProps> = ({
     }, [isOpen]);
 
     const starsList = [
-        { id: 5, name: '5 Stars (Luxury)' },
-        { id: 4, name: '4 Stars (Premium)' },
-        { id: 3, name: '3 Stars (Comfort)' },
-        { id: 2, name: '2 Stars (Economy)' },
-        { id: 1, name: '1 Star (Budget)' },
+        { id: 5, name: '5钻 (豪华)' },
+        { id: 4, name: '4钻 (高档)' },
+        { id: 3, name: '3钻 (舒适)' },
+        { id: 2, name: '2钻 (经济)' },
+        { id: 1, name: '1钻 (平价)' },
     ];
 
     const pricePresets = [
@@ -95,9 +95,9 @@ const FilterModal: React.FC<FilterModalProps> = ({
         const value = getValueFromClientX(clientX);
 
         if (type === 'min') {
-            setMinPrice(prev => Math.min(Math.max(minLimit, value), maxPrice - 50));
+            setMinPrice(Math.min(Math.max(minLimit, value), maxPrice - 50));
         } else {
-            setMaxPrice(prev => Math.max(Math.min(maxLimit, value), minPrice + 50));
+            setMaxPrice(Math.max(Math.min(maxLimit, value), minPrice + 50));
         }
     };
 
@@ -148,14 +148,14 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 {/* Header */}
                 <View className="filter-modal__header">
                     <View onClick={onClose} className="filter-modal__close-btn">
-                        <Text className="material-symbols-outlined filter-modal__close-icon">close</Text>
+                        <Text className="material-symbols-outlined filter-modal__close-icon">×</Text>
                     </View>
-                    <Text className="filter-modal__title">Filter Stars & Price</Text>
+                    <Text className="filter-modal__title">筛选价格与星级</Text>
                 </View>
 
                 {/* Price Section */}
                 <View className="filter-modal__price-section">
-                    <Text className="filter-modal__price-title">Price Range</Text>
+                    <Text className="filter-modal__price-title">价格区间</Text>
 
                     <View className="filter-modal__price-labels">
                         <Text>¥{minPrice}</Text>
@@ -213,7 +213,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 <View className="filter-modal__split-view">
                     {/* Sidebar */}
                     <ScrollView scrollY className="filter-modal__sidebar">
-                        {['Star Rating', 'Hot Spot', 'District', 'Distance'].map(item => (
+                        {['星级/价格', '热门位置', '行政区', '与我距离'].map(item => (
                             <View
                                 key={item}
                                 onClick={() => setActiveTab(item)}
@@ -229,15 +229,15 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
                     {/* Main Content */}
                     <ScrollView scrollY className="filter-modal__main-content">
-                        {activeTab === 'Star Rating' && (
+                        {activeTab === '星级/价格' && (
                             <View>
                                 <View className="filter-modal__brands-header">
-                                    <Text className="filter-modal__brands-title">Hotel Star Ratings</Text>
+                                    <Text className="filter-modal__brands-title">酒店星级</Text>
                                     <View
                                         onClick={handleSelectAllStars}
                                         className="filter-modal__select-all-btn"
                                     >
-                                        <Text>{selectedStars.length === starsList.length ? 'Deselect All' : 'Select All'}</Text>
+                                        <Text>{selectedStars.length === starsList.length ? '取消全选' : '全选'}</Text>
                                     </View>
                                 </View>
 
@@ -277,13 +277,13 @@ const FilterModal: React.FC<FilterModalProps> = ({
                         onClick={handleClear}
                         className="filter-modal__clear-all-btn"
                     >
-                        Clear All
+                        清除全部
                     </Button>
                     <Button
                         onClick={handleConfirm}
                         className="filter-modal__confirm-btn"
                     >
-                        Confirm {selectedStars.length > 0 ? `(${selectedStars.length})` : ''}
+                        确定 {selectedStars.length > 0 ? `(${selectedStars.length})` : ''}
                     </Button>
                 </View>
             </View>

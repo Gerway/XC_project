@@ -4,6 +4,7 @@ import Taro, { useRouter } from '@tarojs/taro';
 import { Order, OrderStatus } from '../../../types/types';
 import { hotelApi, HotelDetails, RoomDetails } from '../../api/hotel';
 import DatePicker from '../../components/DatePicker/DatePicker';
+import RoomDetailModal from '../../components/RoomDetailModal/RoomDetailModal';
 import './index.scss';
 
 const HotelDetailsPage: React.FC = () => {
@@ -18,6 +19,7 @@ const HotelDetailsPage: React.FC = () => {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<RoomDetails | null>(null);
 
   // Try to read dates from storage (set by search page)
   const [dates, setDates] = useState<{ start: Date; end: Date }>(() => {
@@ -77,8 +79,19 @@ const HotelDetailsPage: React.FC = () => {
         if (res.data) {
           setHotelDetails(res.data);
         }
-      } catch (e) {
-        console.error('Failed to fetch hotel details', e);
+      } catch (e: any) {
+        // Check if hotel is offline (backend returns 410 with offline flag)
+        if (e?.offline) {
+          Taro.showModal({
+            title: '提示',
+            content: e?.message || '该酒店已下线，暂时无法查看',
+            showCancel: false,
+            confirmText: '返回',
+            success: () => Taro.navigateBack()
+          });
+        } else {
+          console.error('Failed to fetch hotel details', e);
+        }
       } finally {
         setLoading(false);
       }
@@ -503,12 +516,12 @@ const HotelDetailsPage: React.FC = () => {
             <View key={room.room_id} className="hotel-details__room-container">
               {/* Summary Card */}
               <View className="hotel-details__room-summary" onClick={() => toggleRoomExpand(room.room_id)}>
-                <View className="hotel-details__room-summary-img-box">
+                <View className="hotel-details__room-summary-img-box" onClick={(e) => { e.stopPropagation(); setSelectedRoom(room); }}>
                   <Image src={room.image_url || ''} className="hotel-details__room-summary-img" mode="aspectFill" />
                   {idx === 0 && <Text className="hotel-details__room-summary-tag">热门推荐</Text>}
                   <View className="hotel-details__room-summary-img-count">
                     <Image src="https://api.iconify.design/lucide:image.svg?color=white" style={{ width: 10, height: 10 }} />
-                    <Text> 5</Text>
+                    <Text> {room.images && room.images.length > 0 ? room.images.length : 1}</Text>
                   </View>
                 </View>
 
@@ -721,6 +734,18 @@ const HotelDetailsPage: React.FC = () => {
 
       {/* Bottom spacer */}
       <View style={{ height: '40px' }}></View>
+
+      <RoomDetailModal
+        isOpen={!!selectedRoom}
+        room={selectedRoom}
+        onClose={() => setSelectedRoom(null)}
+        onBook={() => {
+          if (selectedRoom) {
+            setExpandedRooms(prev => ({ ...prev, [selectedRoom.room_id]: true }));
+          }
+          setSelectedRoom(null);
+        }}
+      />
 
       <DatePicker
         isOpen={showDatePicker}

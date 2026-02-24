@@ -573,4 +573,71 @@ $accent: $orange-500;
             }
         }
     }
+
+    // ---- Review Section ----
+    &__review-section {
+        padding: $spacing-2 0;
+    }
+
+    &__review-score-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+        margin-bottom: $spacing-2;
+    }
+
+    &__review-score-label {
+        font-size: $text-sm;
+        color: $gray-500;
+    }
+
+    &__review-stars-row {
+        display: flex;
+        align-items: center;
+    }
+
+    &__review-content {
+        font-size: $text-sm;
+        color: $gray-700;
+        line-height: 1.6;
+        margin-bottom: $spacing-2;
+    }
+
+    &__review-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacing-1;
+        margin-bottom: $spacing-2;
+    }
+
+    &__review-tag {
+        font-size: $text-xs;
+        color: $orange-500;
+        background: rgba($orange-500, 0.08);
+        padding: 2px 8px;
+        border-radius: $rounded-md;
+    }
+
+    &__review-date {
+        font-size: $text-xs;
+        color: $gray-400;
+    }
+
+    &__write-review-btn {
+        padding: $spacing-3 0;
+        @include flex-center;
+        border: 1px dashed $orange-400;
+        border-radius: $rounded-xl;
+        cursor: pointer;
+
+        &:active {
+            background: rgba($orange-500, 0.05);
+        }
+    }
+
+    &__write-review-text {
+        font-size: $text-sm;
+        color: $orange-500;
+        font-weight: $font-bold;
+    }
 }

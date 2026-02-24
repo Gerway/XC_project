@@ -206,7 +206,7 @@ const Home: React.FC = () => {
                 </View>
               </View>
               <View className="home__nights-badge">
-                <Text>共{nightCount} 晚{nightCount > 1 ? 's' : ''}</Text>
+                <Text>共{nightCount} 晚</Text>
               </View>
               <View className="home__date-col home__date-col--right">
                 <Text className="home__date-label">退房日期</Text>

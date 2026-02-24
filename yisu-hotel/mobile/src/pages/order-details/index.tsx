@@ -33,6 +33,14 @@ interface OrderDetail {
     details: { date: string; price: number; breakfast_count: number }[];
     coupon_ids?: string[];
     used_coupons?: { user_coupons_id: string; coupon_id: string; title: string; discount_amount: number; min_spend: number }[];
+    review?: {
+        review_id: string;
+        score: number;
+        content: string;
+        images?: string[];
+        tags?: string[];
+        created_at: string;
+    } | null;
 }
 
 const OrderDetails: React.FC = () => {
@@ -151,9 +159,17 @@ const OrderDetails: React.FC = () => {
             Taro.hideLoading();
             Taro.showToast({ title: '支付成功', icon: 'success' });
             setOrder({ ...order, status: OrderStatus.PAID, payed_at: new Date().toISOString() });
-        }).catch(() => {
+        }).catch((e: any) => {
             Taro.hideLoading();
-            Taro.showToast({ title: '支付失败', icon: 'none' });
+            const errMsg = e?.message || '支付失败';
+            setTimeout(() => {
+                Taro.showModal({
+                    title: '支付失败',
+                    content: errMsg,
+                    showCancel: false,
+                    confirmText: '知道了'
+                });
+            }, 300);
         });
     };
 
@@ -327,6 +343,45 @@ const OrderDetails: React.FC = () => {
                         </View>
                     )}
                 </View>
+
+                {/* Review Section (for completed orders) */}
+                {isCompleted && order.review && (
+                    <View className="order-details__card order-details__card--spaced">
+                        <Text className="order-details__order-info-title">我的评价</Text>
+                        <View className="order-details__review-section">
+                            <View className="order-details__review-score-row">
+                                <Text className="order-details__review-score-label">评分</Text>
+                                <View className="order-details__review-stars-row">
+                                    {[1, 2, 3, 4, 5].map(i => (
+                                        <Text key={i} style={{ color: i <= order.review!.score ? '#ff7d00' : '#e0e0e0', fontSize: '16px' }}>★</Text>
+                                    ))}
+                                    <Text style={{ marginLeft: '8px', color: '#ff7d00', fontWeight: 'bold' }}>{order.review.score}分</Text>
+                                </View>
+                            </View>
+                            <Text className="order-details__review-content">{order.review.content}</Text>
+                            {order.review.tags && order.review.tags.length > 0 && (
+                                <View className="order-details__review-tags">
+                                    {order.review.tags.map((tag, i) => (
+                                        <Text key={i} className="order-details__review-tag">{tag}</Text>
+                                    ))}
+                                </View>
+                            )}
+                            <Text className="order-details__review-date">评价于 {order.review.created_at?.slice(0, 10)}</Text>
+                        </View>
+                    </View>
+                )}
+
+                {/* Write Review Button (for completed orders without review) */}
+                {isCompleted && !order.review && (
+                    <View className="order-details__card order-details__card--spaced">
+                        <View
+                            className="order-details__write-review-btn"
+                            onClick={() => Taro.navigateTo({ url: `/pages/write-review/index?orderId=${order.order_id}&hotelId=${order.hotel_id}` })}
+                        >
+                            <Text className="order-details__write-review-text">写评价</Text>
+                        </View>
+                    </View>
+                )}
 
                 <View style={{ height: '80px' }}></View>
             </ScrollView>

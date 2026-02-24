@@ -204,7 +204,7 @@ export const getHotelDetails = async (
         // 1. Fetch Basic Hotel Info
         const [hotelRows] = await pool.execute<RowDataPacket[]>(
             `SELECT hotel_id, name, address, city_name, latitude, longitude, 
-                    star_rating, tags, description, hotel_type, score, reviews, open_time 
+                    star_rating, tags, description, hotel_type, score, reviews, open_time, status 
              FROM hotel WHERE hotel_id = ?`,
             [hotel_id]
         );
@@ -215,6 +215,13 @@ export const getHotelDetails = async (
         }
 
         const hotelInfo = hotelRows[0];
+
+        // Check if hotel is online (status=1)
+        if (hotelInfo.status !== undefined && hotelInfo.status !== 1) {
+            res.status(410).json({ message: '该酒店已下线，暂时无法查看', code: -1, offline: true });
+            return;
+        }
+
         const city_name = hotelInfo.city_name;
         const score = hotelInfo.score || 0;
 
@@ -237,10 +244,11 @@ export const getHotelDetails = async (
             [hotel_id]
         );
 
-        // 4. Fetch Rooms (simplified info)
+        // 4. Fetch Rooms (full info including all fields)
         let roomSql = `
             SELECT 
                 r.room_id, r.name, r.area, r.has_breakfast, r.has_window, r.room_bed, r.ori_price,
+                r.max_occupancy, r.floor, r.add_bed, r.has_wifi, r.remark, r.room_type,
                 ROUND(AVG(ri.price), 2) as avg_price,
                 (SELECT url FROM room_media rm WHERE rm.room_id = r.room_id ORDER BY rm.sort_order ASC LIMIT 1) as image_url
             FROM room r
@@ -267,6 +275,28 @@ export const getHotelDetails = async (
         }
 
         const [roomRows] = await pool.execute<RowDataPacket[]>(roomSql, roomParams);
+
+        // 4.1 Fetch all room_media images for returned rooms
+        const roomIds = roomRows.map(r => r.room_id);
+        let roomImagesMap: Record<string, string[]> = {};
+        if (roomIds.length > 0) {
+            const imgPlaceholders = roomIds.map(() => '?').join(',');
+            const [imgRows] = await pool.execute<RowDataPacket[]>(
+                `SELECT room_id, url FROM room_media WHERE room_id IN (${imgPlaceholders}) ORDER BY sort_order ASC`,
+                roomIds
+            );
+            imgRows.forEach(row => {
+                if (!roomImagesMap[row.room_id]) roomImagesMap[row.room_id] = [];
+                roomImagesMap[row.room_id].push(row.url);
+            });
+        }
+
+        // Attach images array and parse floor JSON for each room
+        const enrichedRooms = roomRows.map(r => ({
+            ...r,
+            floor: typeof r.floor === 'string' ? JSON.parse(r.floor) : (r.floor || []),
+            images: roomImagesMap[r.room_id] || (r.image_url ? [r.image_url] : [])
+        }));
 
         // 5. Fetch Top 2 Reviews & Aggregate Tags from reviews.tags field
         const [allReviews] = await pool.execute<RowDataPacket[]>(
@@ -314,7 +344,7 @@ export const getHotelDetails = async (
                     total_rank: totalRank
                 },
                 media: mediaRows,
-                rooms: roomRows,
+                rooms: enrichedRooms,
                 reviews_count: allReviews.length,
                 reviews: topReviews,
                 review_keywords: sortedKeywords
@@ -605,7 +635,43 @@ export const payOrder = async (
     }
 
     try {
-        // 1. 将 coupon_ids JSON 保存到 orders
+        // ===== 0. 先获取订单的房型和日期信息，校验库存 =====
+        const [orderInfo] = await pool.execute<RowDataPacket[]>(
+            `SELECT room_id, DATE_FORMAT(check_in, '%Y-%m-%d') as ci, DATE_FORMAT(check_out, '%Y-%m-%d') as co FROM orders WHERE order_id = ?`,
+            [order_id]
+        );
+        if (orderInfo.length === 0) {
+            res.status(404).json({ message: '订单不存在' });
+            return;
+        }
+
+        const { room_id: rId, ci, co } = orderInfo[0];
+        const rc = room_count || 1;
+
+        // 0.1 查询日期区间内每天的库存，检查是否都 >= room_count
+        const [stockRows] = await pool.execute<RowDataPacket[]>(
+            `SELECT DATE_FORMAT(date, '%Y-%m-%d') as date_str, stock FROM room_inventory WHERE room_id = ? AND date >= ? AND date < ?`,
+            [rId, ci, co]
+        );
+
+        const insufficientDates: string[] = [];
+        for (const row of stockRows) {
+            if (Number(row.stock) < rc) {
+                insufficientDates.push(`${row.date_str}(剩余${row.stock}间)`);
+            }
+        }
+
+        if (insufficientDates.length > 0) {
+            res.status(400).json({
+                message: `以下日期库存不足，无法完成预订: ${insufficientDates.join('、')}`,
+                code: -1
+            });
+            return;
+        }
+
+        // ===== 库存校验通过，开始执行支付操作 =====
+
+        // 1. 更新订单状态为已支付
         const couponIdsJson = JSON.stringify(user_coupons_ids && user_coupons_ids.length > 0 ? user_coupons_ids : []);
         await pool.execute(
             `UPDATE orders SET status = 1, real_pay = ?, total_price = ?, room_count = ?, special_request = ?, idcards = ?, coupon_ids = ?, payed_at = NOW() WHERE order_id = ?`,
@@ -638,6 +704,12 @@ export const payOrder = async (
                 );
             }
         }
+
+        // 4. 扣减库存
+        await pool.execute(
+            `UPDATE room_inventory SET stock = stock - ? WHERE room_id = ? AND date >= ? AND date < ?`,
+            [rc, rId, ci, co]
+        );
 
         res.status(200).json({ message: '支付成功', data: { order_id } });
     } catch (err) {
@@ -854,8 +926,23 @@ export const cancelOrder = async (
             [order_id]
         );
 
-        // 3. 如果是待支付状态且有优惠券，将优惠券状态还原为未使用
-        if (orderStatus === 0 && couponIds.length > 0) {
+        // 4. 如果是已支付(1)或已入住(2)状态的取消，恢复库存
+        if ((orderStatus === 1 || orderStatus === 2)) {
+            const [oInfo] = await pool.execute<RowDataPacket[]>(
+                `SELECT room_id, room_count, DATE_FORMAT(check_in, '%Y-%m-%d') as ci, DATE_FORMAT(check_out, '%Y-%m-%d') as co FROM orders WHERE order_id = ?`,
+                [order_id]
+            );
+            if (oInfo.length > 0) {
+                const { room_id: rId, room_count: rc, ci, co } = oInfo[0];
+                await pool.execute(
+                    `UPDATE room_inventory SET stock = stock + ? WHERE room_id = ? AND date >= ? AND date < ?`,
+                    [rc || 1, rId, ci, co]
+                );
+            }
+        }
+
+        // 5. 如果是已支付状态且有优惠券，将优惠券状态还原为未使用
+        if ((orderStatus === 1 || orderStatus === 2) && couponIds.length > 0) {
             for (const ucId of couponIds) {
                 await pool.execute(
                     `UPDATE user_coupons SET status = 0 WHERE user_coupons_id = ?`,
@@ -936,6 +1023,26 @@ export const getOrderDetail = async (
             }));
         }
 
+        // 4. 如果是已完成订单(status=3)，查询该订单的评价
+        let review: any = null;
+        if (orderRow.status === 3) {
+            const [reviewRows] = await pool.execute<RowDataPacket[]>(
+                `SELECT review_id, score, content, images, tags, created_at FROM reviews WHERE order_id = ?`,
+                [order_id]
+            );
+            if (reviewRows.length > 0) {
+                const rv = reviewRows[0];
+                review = {
+                    review_id: rv.review_id,
+                    score: rv.score,
+                    content: rv.content,
+                    images: typeof rv.images === 'string' ? JSON.parse(rv.images || '[]') : (rv.images || []),
+                    tags: typeof rv.tags === 'string' ? JSON.parse(rv.tags || '[]') : (rv.tags || []),
+                    created_at: rv.created_at
+                };
+            }
+        }
+
         res.status(200).json({
             message: '查询成功',
             data: {
@@ -969,7 +1076,8 @@ export const getOrderDetail = async (
                     date: d.date_str,
                     price: Number(d.price) || 0,
                     breakfast_count: d.breakfast_count || 0
-                }))
+                })),
+                review
             }
         });
     } catch (err) {
