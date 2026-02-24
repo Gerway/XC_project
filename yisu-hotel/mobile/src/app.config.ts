@@ -53,5 +53,6 @@ export default defineAppConfig({
     'scope.userLocation': {
       desc: '您的位置将用于显示附近酒店'
     }
-  }
+  },
+  requiredPrivateInfos: ["getLocation"]
 })
