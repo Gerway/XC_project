@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
-import { Select, Empty, Modal, Form, Input, InputNumber, App, Switch, Row, Col } from 'antd'
-import { ShopOutlined } from '@ant-design/icons'
+import { Select, Empty, Modal, Form, Input, InputNumber, App, Switch, Row, Col, Upload } from 'antd'
+import { ShopOutlined, PlusOutlined } from '@ant-design/icons'
+import type { UploadFile } from 'antd/es/upload/interface'
 import { type IHotel } from '@yisu/shared'
 import RoomList from './RoomList'
 import InventoryCalendar from './InventoryCalendar'
@@ -26,6 +27,9 @@ const InventoryContainer: React.FC = () => {
   const [createForm] = Form.useForm()
 
   const { message, modal } = App.useApp()
+
+  // Room image upload state
+  const [roomFileList, setRoomFileList] = useState<UploadFile[]>([])
 
   // Fetch hotels on mount
   useEffect(() => {
@@ -128,6 +132,11 @@ const InventoryContainer: React.FC = () => {
       const values = await createForm.validateFields()
       if (!selectedHotelId) return
 
+      // Collect uploaded image URLs
+      const roomPhotos = roomFileList
+        .filter((f) => f.status === 'done' && f.response)
+        .map((f) => f.response as string)
+
       const payload = {
         user_id: currentUserId,
         hotel_id: selectedHotelId,
@@ -143,6 +152,7 @@ const InventoryContainer: React.FC = () => {
         has_wifi: values.has_wifi,
         remark: values.remark,
         room_bed: values.room_bed,
+        room_photos: roomPhotos.length > 0 ? roomPhotos : undefined,
       }
 
       const res = await roomApi.createRoom(payload)
@@ -150,6 +160,7 @@ const InventoryContainer: React.FC = () => {
         message.success(`房型「${values.name}」创建成功`)
         setCreateModalOpen(false)
         createForm.resetFields()
+        setRoomFileList([])
         fetchRooms(selectedHotelId)
       } else {
         message.error(res.message || '创建房型失败')
@@ -245,6 +256,7 @@ const InventoryContainer: React.FC = () => {
         onCancel={() => {
           setCreateModalOpen(false)
           createForm.resetFields()
+          setRoomFileList([])
         }}
         okText="创建房型"
         cancelText="取消"
@@ -357,6 +369,46 @@ const InventoryContainer: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
+
+          <Form.Item label="房型图片">
+            <Upload
+              listType="picture-card"
+              fileList={roomFileList}
+              onChange={(info) => setRoomFileList([...info.fileList])}
+              customRequest={async (options) => {
+                const { file, onSuccess, onError, onProgress } = options as {
+                  file: File
+                  onSuccess: (body: string, xhr?: XMLHttpRequest) => void
+                  onError: (err: Error) => void
+                  onProgress: (event: { percent: number }) => void
+                }
+                const formData = new FormData()
+                formData.append('file', file)
+                try {
+                  onProgress({ percent: 50 })
+                  const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData,
+                  })
+                  if (!response.ok) throw new Error('Upload failed')
+                  const resData = await response.json()
+                  onProgress({ percent: 100 })
+                  onSuccess(resData.data.url)
+                } catch (err) {
+                  onError(err as Error)
+                  message.error('图片上传失败')
+                }
+              }}
+              accept="image/*"
+            >
+              {roomFileList.length >= 6 ? null : (
+                <div style={{ textAlign: 'center' }}>
+                  <PlusOutlined style={{ fontSize: 20, color: '#999' }} />
+                  <div style={{ marginTop: 4, fontSize: 12, color: '#666' }}>上传图片</div>
+                </div>
+              )}
+            </Upload>
+          </Form.Item>
 
           <Form.Item label="房型备注" name="remark">
             <Input.TextArea
