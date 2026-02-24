@@ -140,13 +140,18 @@ const Register: React.FC = () => {
               layout="vertical"
               size="large"
               requiredMark={false}
+              autoComplete="off"
             >
               <Form.Item
                 name="username"
                 label="用户名"
                 rules={[{ required: true, message: '请输入用户名' }]}
               >
-                <Input prefix={<UserOutlined />} placeholder="请输入用户名" />
+                <Input
+                  prefix={<UserOutlined />}
+                  placeholder="请输入用户名"
+                  autoComplete="new-username"
+                />
               </Form.Item>
 
               <Form.Item
@@ -157,7 +162,11 @@ const Register: React.FC = () => {
                   { type: 'email', message: '请输入有效的邮箱地址' },
                 ]}
               >
-                <Input prefix={<MailOutlined />} placeholder="manager@example.com" />
+                <Input
+                  prefix={<MailOutlined />}
+                  placeholder="manager@example.com"
+                  autoComplete="new-email"
+                />
               </Form.Item>
 
               <Form.Item
@@ -168,7 +177,11 @@ const Register: React.FC = () => {
                   { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号' },
                 ]}
               >
-                <Input prefix={<MobileOutlined />} placeholder="请输入手机号" />
+                <Input
+                  prefix={<MobileOutlined />}
+                  placeholder="请输入手机号"
+                  autoComplete="new-phone"
+                />
               </Form.Item>
 
               <Form.Item label="密码" style={{ marginBottom: 0 }}>
@@ -181,6 +194,7 @@ const Register: React.FC = () => {
                     <Input.Password
                       prefix={<LockOutlined />}
                       placeholder="********"
+                      autoComplete="new-password"
                       onChange={(e) => calculateStrength(e.target.value)}
                     />
                   </Form.Item>
@@ -200,7 +214,11 @@ const Register: React.FC = () => {
                     ]}
                     className={styles.passwordField}
                   >
-                    <Input.Password prefix={<SafetyOutlined />} placeholder="********" />
+                    <Input.Password
+                      prefix={<SafetyOutlined />}
+                      placeholder="********"
+                      autoComplete="new-password"
+                    />
                   </Form.Item>
                 </div>
               </Form.Item>
@@ -233,7 +251,6 @@ const Register: React.FC = () => {
                   <div className={passwordStrength > 2 ? styles.active : ''}></div>
                   <div className={passwordStrength > 3 ? styles.active : ''}></div>
                 </div>
-                <div className={styles.strengthHint}>至少包含8个字符，并包含符号。</div>
               </div>
 
               <Form.Item

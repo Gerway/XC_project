@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Form, Input, Button, Radio, Checkbox, ConfigProvider, App } from 'antd'
+import { Form, Input, Button, Radio, ConfigProvider, App } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router-dom'
 import styles from './Login.module.scss'
@@ -10,7 +10,6 @@ import { loginApi } from '../../api/auth'
 interface LoginFormValues {
   username: string
   password?: string
-  remember?: boolean
 }
 
 const Login: React.FC = () => {
@@ -35,7 +34,6 @@ const Login: React.FC = () => {
         account: values.username,
         password: values.password,
         role: role === UserRole.MERCHANT ? '商户' : '管理',
-        remember: values.remember,
       })) as unknown as { message?: string; user?: Record<string, unknown> }
 
       message.success({ content: res.message || '登录成功！', key: 'login', duration: 2 })
@@ -120,7 +118,6 @@ const Login: React.FC = () => {
               onFinish={handleLogin}
               layout="vertical"
               size="large"
-              initialValues={{ remember: true }}
               requiredMark={false}
             >
               <Form.Item
@@ -146,12 +143,6 @@ const Login: React.FC = () => {
                   autoComplete="current-password"
                 />
               </Form.Item>
-
-              <div className={styles.optionsRow}>
-                <Form.Item name="remember" valuePropName="checked" noStyle>
-                  <Checkbox>记住我</Checkbox>
-                </Form.Item>
-              </div>
 
               <Form.Item>
                 <Button type="primary" htmlType="submit" block className={styles.submitButton}>
