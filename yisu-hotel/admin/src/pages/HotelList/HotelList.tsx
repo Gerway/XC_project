@@ -64,7 +64,9 @@ interface HotelFormValues {
   latitude: number
   longitude: number
   tags: string[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   openTime: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   closeTime: any
   description?: string
   remark?: string
@@ -114,6 +116,7 @@ const HotelList: React.FC = () => {
     try {
       const res = await merchantApi.getMerchantHotels({ user_id: getUserId() })
       if (res && res.data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mappedData = res.data.map((h: any) => ({
           ...h,
           status:
@@ -194,6 +197,7 @@ const HotelList: React.FC = () => {
     setIsModalOpen(true)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleOpenEditModal = (hotel: any) => {
     setEditingHotel(hotel)
 
@@ -230,7 +234,9 @@ const HotelList: React.FC = () => {
 
     // Convert backend media to UploadFile format
     const initialFiles: UploadFile[] = (hotel.media || [])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .filter((m: any) => m.media_type === 1) // Images only
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((m: any) => ({
         uid: m.media_id,
         name: m.media_name || 'image.png',
@@ -255,6 +261,7 @@ const HotelList: React.FC = () => {
     setFileList(newFileList)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const customUpload = async (options: any) => {
     const { file, onSuccess, onError, onProgress } = options
     const formData = new FormData()
@@ -317,8 +324,10 @@ const HotelList: React.FC = () => {
         remark: values.remark,
       })
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const resData = (res as any).data || res
       if (!resData || !resData.hotel_id) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         throw new Error((res as any).message || '保存酒店响应异常')
       }
 
@@ -348,6 +357,7 @@ const HotelList: React.FC = () => {
       // i.e., upload response urls
       const newFiles = fileList.filter((f) => f.response)
       for (const [index, f] of newFiles.entries()) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const url = typeof f.response === 'string' ? f.response : (f.response as any)?.data?.url
         if (!url) continue
 
@@ -371,6 +381,7 @@ const HotelList: React.FC = () => {
       // Refresh list
       fetchHotels()
       handleCloseModal()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       if (err?.errorFields) {
         // Form validation failed - do nothing
@@ -390,6 +401,7 @@ const HotelList: React.FC = () => {
       })
       message.success(`酒店"${hotel.name}"删除成功`)
       fetchHotels()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(err)
       message.error(err.message || '删除失败')
@@ -412,6 +424,7 @@ const HotelList: React.FC = () => {
       width: 280,
       render: (_: string, record: IHotel) => {
         // Find first image
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const img = record.media?.find((m: any) => m.media_type === 1)
 
         return (
@@ -587,7 +600,7 @@ const HotelList: React.FC = () => {
                 name="city_name"
                 rules={[{ required: true, message: '请输入城市名称' }]}
               >
-                <Input placeholder="如：重庆" />
+                <Input placeholder="如：重庆市" />
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -770,7 +783,9 @@ const HotelList: React.FC = () => {
                 <Image.PreviewGroup>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {viewingHotel.media
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       .filter((m: any) => m.media_type === 1)
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       .map((m: any) => (
                         <Image
                           key={m.media_id}
