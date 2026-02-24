@@ -246,7 +246,7 @@ export const createRoom = async (
         const {
             hotel_id, name, room_type, has_breakfast, max_occupancy,
             area, ori_price, floor, has_window, add_bed, has_wifi,
-            remark, room_bed, user_id
+            remark, room_bed, user_id, room_photos
         } = req.body;
 
         if (!hotel_id || !name || !user_id) {
@@ -284,6 +284,17 @@ export const createRoom = async (
         ];
 
         await pool.execute(insertSql, params);
+
+        // 插入房型图片到 room_media
+        if (room_photos && Array.isArray(room_photos) && room_photos.length > 0) {
+            for (let i = 0; i < room_photos.length; i++) {
+                const mediaId = `RM_${Date.now()}_${Math.floor(Math.random() * 10000)}_${i}`;
+                await pool.execute(
+                    `INSERT INTO room_media (media_id, room_id, url, sort_order) VALUES (?, ?, ?, ?)`,
+                    [mediaId, room_id, room_photos[i], i]
+                );
+            }
+        }
 
         res.status(200).json({ code: 200, message: '房型添加成功', data: { room_id } });
     } catch (err) {

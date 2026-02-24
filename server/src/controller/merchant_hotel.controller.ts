@@ -499,6 +499,7 @@ export interface SaveRoomBody extends MerchantAuthBody {
   has_wifi: number // 1 / 0
   remark: string
   room_bed: string
+  room_photos?: string[] // 房型图片URL数组
 }
 
 export interface DeleteRoomBody extends MerchantAuthBody {
@@ -555,7 +556,7 @@ export const getRoomList = async (
       if (typeof r.floor === 'string') {
         try {
           r.floor = JSON.parse(r.floor)
-        } catch {}
+        } catch { }
       }
     }
 
@@ -586,6 +587,7 @@ export const saveRoom = async (
     has_wifi,
     remark,
     room_bed,
+    room_photos,
   } = req.body
 
   if (!user_id || !name) {
@@ -640,6 +642,19 @@ export const saveRoom = async (
           room_id,
         ],
       )
+
+      // 如果提供了新图片，替换旧的 room_media
+      if (room_photos && Array.isArray(room_photos)) {
+        await pool.execute(`DELETE FROM room_media WHERE room_id = ?`, [room_id])
+        for (let i = 0; i < room_photos.length; i++) {
+          const mediaId = `RM_${Date.now()}_${crypto.randomUUID().substring(0, 6)}_${i}`
+          await pool.execute(
+            `INSERT INTO room_media (media_id, room_id, url, sort_order) VALUES (?, ?, ?, ?)`,
+            [mediaId, room_id, room_photos[i], i],
+          )
+        }
+      }
+
       res.status(200).json({ message: '房型更新成功', data: { room_id } })
     } else {
       const new_room_id = `R_${Date.now()}_${crypto.randomUUID().substring(0, 6)}`
@@ -663,6 +678,18 @@ export const saveRoom = async (
           room_bed || '',
         ],
       )
+
+      // 插入房型图片到 room_media
+      if (room_photos && Array.isArray(room_photos) && room_photos.length > 0) {
+        for (let i = 0; i < room_photos.length; i++) {
+          const mediaId = `RM_${Date.now()}_${crypto.randomUUID().substring(0, 6)}_${i}`
+          await pool.execute(
+            `INSERT INTO room_media (media_id, room_id, url, sort_order) VALUES (?, ?, ?, ?)`,
+            [mediaId, new_room_id, room_photos[i], i],
+          )
+        }
+      }
+
       res.status(200).json({ message: '房型创建成功', data: { room_id: new_room_id } })
     }
   } catch (err) {
