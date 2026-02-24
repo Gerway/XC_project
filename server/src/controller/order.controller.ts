@@ -33,7 +33,7 @@ export const getMerchantOrderList = async (
         } = req.query;
 
         if (!user_id) {
-            res.status(400).json({ message: '缺少商户 user_id 参数' });
+            res.status(400).json({ code: -1, message: '缺少商户 user_id 参数' });
             return;
         }
 
@@ -100,6 +100,7 @@ export const getMerchantOrderList = async (
 
         if (orders.length === 0) {
             res.status(200).json({
+                code: 200,
                 message: '查询成功',
                 data: {
                     total: 0,
@@ -144,6 +145,7 @@ export const getMerchantOrderList = async (
         }));
 
         res.status(200).json({
+            code: 200,
             message: '查询成功',
             data: {
                 total,
@@ -154,7 +156,7 @@ export const getMerchantOrderList = async (
         });
     } catch (err) {
         console.error('getMerchantOrderList error:', err);
-        res.status(500).json({ message: '获取订单列表失败', error: String(err) });
+        res.status(500).json({ code: -1, message: '获取订单列表失败', error: String(err) });
     }
 };
 
@@ -180,7 +182,7 @@ export const updateOrderAdmin = async (
         const { order_id, status, check_in, check_out } = req.body;
 
         if (!order_id) {
-            res.status(400).json({ message: '缺少 order_id' });
+            res.status(400).json({ code: -1, message: '缺少 order_id' });
             return;
         }
 
@@ -201,7 +203,7 @@ export const updateOrderAdmin = async (
         }
 
         if (updates.length === 0) {
-            res.status(400).json({ message: '没有提供需要更新的字段' });
+            res.status(400).json({ code: -1, message: '没有提供需要更新的字段' });
             return;
         }
 
@@ -210,9 +212,9 @@ export const updateOrderAdmin = async (
 
         await pool.execute(sql, params);
 
-        res.status(200).json({ message: '订单更新成功' });
+        res.status(200).json({ code: 200, message: '订单更新成功' });
     } catch (err) {
         console.error('updateOrderAdmin error:', err);
-        res.status(500).json({ message: '订单更新失败', error: String(err) });
+        res.status(500).json({ code: -1, message: '订单更新失败', error: String(err) });
     }
 };
