@@ -13,27 +13,64 @@ import styles from './HotelAudit.module.scss'
 interface IAuditRecord extends IHotel {
   /** 商家名称 */
   merchant_name?: string
+  /** 商家 ID */
+  user_id?: string
+  /** 营业时间 */
+  open_time?: string
+  /** 结业时间 */
+  close_time?: string
   /** 创建时间 */
   created_at?: string
 }
 
 /** 将表格行转为抽屉详情 */
-const toAuditDetail = (record: IAuditRecord): IAuditDetail => ({
-  id: String(record.hotel_id),
-  applicationNo: String(record.hotel_id),
-  hotelName: record.name,
-  merchantName: record.merchant_name || '未知商家',
-  merchantId: '-',
-  phone: '-',
-  address: record.address || '',
-  applyTime: record.created_at || '',
-  description: record.remark || record.description || '暂无描述',
-  status: HotelStatus.PENDING,
-  scenePhotos: (record.media || [])
-    .filter((m: { media_type: number }) => m.media_type === 1)
-    .map((m: { url: string }) => m.url),
-  facilities: [],
-})
+const toAuditDetail = (record: IAuditRecord): IAuditDetail => {
+  let tags: string[] = []
+  if (typeof record.tags === 'string') {
+    try {
+      tags = JSON.parse(record.tags)
+    } catch {
+      tags = []
+    }
+  } else if (Array.isArray(record.tags)) {
+    tags = record.tags
+  }
+
+  return {
+    id: String(record.hotel_id),
+    applicationNo: String(record.hotel_id),
+    hotelName: record.name,
+    merchantName: record.merchant_name || '未知商家',
+    merchantId: record.user_id || '-',
+    phone: '-',
+    address: record.address || '',
+    cityName: record.city_name || '',
+    latitude: record.latitude,
+    longitude: record.longitude,
+    hotelType: record.hotel_type,
+    starRating: record.star_rating,
+    openTime: record.open_time
+      ? new Date(record.open_time).toLocaleTimeString('zh-CN', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : undefined,
+    closeTime: record.close_time
+      ? new Date(record.close_time).toLocaleTimeString('zh-CN', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : undefined,
+    applyTime: record.created_at || '',
+    description: record.description || '暂无描述',
+    remark: record.remark || '',
+    status: HotelStatus.PENDING,
+    scenePhotos: (record.media || [])
+      .filter((m: { media_type: number }) => m.media_type === 1)
+      .map((m: { url: string }) => m.url),
+    facilities: tags,
+  }
+}
 
 // ===== 组件 =====
 const HotelAudit: React.FC = () => {
