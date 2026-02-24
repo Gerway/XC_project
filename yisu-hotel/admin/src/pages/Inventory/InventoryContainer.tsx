@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
-import { Select, Empty, Modal, Form, Input, InputNumber, App } from 'antd'
+import { Select, Empty, Modal, Form, Input, InputNumber, App, Switch, Row, Col } from 'antd'
 import { ShopOutlined } from '@ant-design/icons'
 import { type IHotel } from '@yisu/shared'
 import RoomList from './RoomList'
@@ -134,6 +134,15 @@ const InventoryContainer: React.FC = () => {
         name: values.name,
         ori_price: values.ori_price,
         max_occupancy: values.max_occupancy,
+        room_type: values.room_type,
+        has_breakfast: values.has_breakfast,
+        area: values.area,
+        floor: values.floor,
+        has_window: values.has_window,
+        add_bed: values.add_bed,
+        has_wifi: values.has_wifi,
+        remark: values.remark,
+        room_bed: values.room_bed,
       }
 
       const res = await roomApi.createRoom(payload)
@@ -242,31 +251,120 @@ const InventoryContainer: React.FC = () => {
         forceRender
         className={styles.modal}
       >
-        <Form form={createForm} layout="vertical" requiredMark="optional" style={{ marginTop: 16 }}>
-          <Form.Item
-            label="房型名称"
-            name="name"
-            rules={[
-              { required: true, message: '请输入房型名称' },
-              { max: 30, message: '房型名称不能超过30个字符' },
-            ]}
-          >
-            <Input placeholder="请输入房型名称" maxLength={30} />
-          </Form.Item>
-          <Form.Item
-            label="门市价格 (¥)"
-            name="ori_price"
-            rules={[{ required: true, message: '请输入基础门市价格' }]}
-          >
-            <InputNumber min={1} style={{ width: '100%' }} placeholder="请输入价格" />
-          </Form.Item>
-          <Form.Item
-            label="最大入住人数"
-            name="max_occupancy"
-            initialValue={2}
-            rules={[{ required: true, message: '请输入人数' }]}
-          >
-            <InputNumber min={1} max={10} style={{ width: '100%' }} placeholder="请输入人数" />
+        <Form form={createForm} layout="vertical" style={{ marginTop: 16 }}>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                label="房型名称"
+                name="name"
+                rules={[
+                  { required: true, message: '请输入房型名称' },
+                  { max: 30, message: '房型名称不能超过30个字符' },
+                ]}
+              >
+                <Input placeholder="例: 豪华大床房" maxLength={30} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="房型类型"
+                name="room_type"
+                initialValue={1}
+                rules={[{ required: true, message: '请选择房型类型' }]}
+              >
+                <Select
+                  options={[
+                    { value: 1, label: '大床房' },
+                    { value: 2, label: '双床房' },
+                    { value: 3, label: '单人房' },
+                    { value: 4, label: '多床房' },
+                    { value: 5, label: '套房' },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
+                label="门市价格 (¥)"
+                name="ori_price"
+                rules={[{ required: true, message: '请输入基础门市价格' }]}
+              >
+                <InputNumber min={1} style={{ width: '100%' }} placeholder="例: 599" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label="最大入住人数"
+                name="max_occupancy"
+                initialValue={2}
+                rules={[{ required: true, message: '请输入人数' }]}
+              >
+                <InputNumber min={1} max={10} style={{ width: '100%' }} placeholder="例: 2" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item label="面积 (㎡)" name="area" initialValue={20}>
+                <InputNumber min={1} style={{ width: '100%' }} placeholder="例: 35" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="所在楼层" name="floor">
+                <Input placeholder="例: 10,11,12" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="床型信息" name="room_bed">
+                <Input placeholder="例: 1*1.8m大床" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={6}>
+              <Form.Item
+                label="含早餐"
+                name="has_breakfast"
+                valuePropName="checked"
+                initialValue={false}
+              >
+                <Switch checkedChildren="是" unCheckedChildren="否" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item label="有窗" name="has_window" valuePropName="checked" initialValue={true}>
+                <Switch checkedChildren="是" unCheckedChildren="否" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item label="可加床" name="add_bed" valuePropName="checked" initialValue={false}>
+                <Switch checkedChildren="是" unCheckedChildren="否" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item
+                label="独立WiFi"
+                name="has_wifi"
+                valuePropName="checked"
+                initialValue={true}
+              >
+                <Switch checkedChildren="是" unCheckedChildren="否" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item label="房型备注" name="remark">
+            <Input.TextArea
+              placeholder="例: 无烟处理，带阳台等"
+              rows={2}
+              maxLength={200}
+              showCount
+            />
           </Form.Item>
         </Form>
       </Modal>
