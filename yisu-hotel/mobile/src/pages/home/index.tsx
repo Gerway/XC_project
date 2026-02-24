@@ -3,6 +3,7 @@ import { View, Text, Image, ScrollView, Input, Button } from '@tarojs/components
 import Taro from '@tarojs/taro';
 import DatePicker from '../../components/DatePicker/DatePicker';
 import FilterModal from '../../components/FilterModal/FilterModal';
+import CityPicker from '../../components/CityPicker/CityPicker';
 import { useAppContext } from '../../context';
 import { hotelApi } from '../../api/hotel';
 
@@ -28,6 +29,7 @@ const Home: React.FC = () => {
   });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isCityPickerOpen, setIsCityPickerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('domestic');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [selectedStars, setSelectedStars] = useState<number[]>([]);
@@ -160,7 +162,7 @@ const Home: React.FC = () => {
 
             {/* Location & Search */}
             <View className="home__location-row">
-              <View className="home__location-btn">
+              <View className="home__location-btn" onClick={() => setIsCityPickerOpen(true)}>
                 <Text className="home__location-text">{location}</Text>
                 <Text className="home__location-icon">▼</Text>
               </View>
@@ -321,6 +323,16 @@ const Home: React.FC = () => {
         onConfirm={handleFilterConfirm}
         initialRange={priceRange}
         initialStars={selectedStars}
+      />
+
+      <CityPicker
+        isOpen={isCityPickerOpen}
+        currentCity={location}
+        onClose={() => setIsCityPickerOpen(false)}
+        onSelect={(city) => {
+          setLocation(city);
+          setIsCityPickerOpen(false);
+        }}
       />
     </View>
   );
