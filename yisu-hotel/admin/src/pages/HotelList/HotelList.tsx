@@ -1,6 +1,21 @@
 import React, { useState, useEffect } from 'react'
-import { Table, Tag, Button, Tooltip, Modal, Form, Input, Select, App } from 'antd'
+import {
+  Table,
+  Tag,
+  Button,
+  Tooltip,
+  Modal,
+  Form,
+  Input,
+  Select,
+  App,
+  Upload,
+  Descriptions,
+  Image,
+  Popconfirm,
+} from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
+import type { UploadFile, UploadProps } from 'antd/es/upload/interface'
 import {
   PlusOutlined,
   HomeOutlined,
@@ -12,7 +27,7 @@ import {
 } from '@ant-design/icons'
 import { HotelStatus, type IHotel } from '@yisu/shared'
 import styles from './HotelList.module.scss'
-import { hotelApi } from '../../api/hotel'
+import { merchantApi } from '../../api/merchant'
 
 // Hotel type options
 const hotelTypeOptions = [
@@ -61,20 +76,7 @@ const getHotelIcon = (id: string): React.ReactNode => {
   return iconMap[id] || <BankOutlined style={{ fontSize: 20 }} />
 }
 
-// Generate a unique hotel ID based on current year and sequence
-let hotelIdCounter = 13
-
-const generateHotelId = (): string => {
-  const year = new Date().getFullYear()
-  const seq = String(hotelIdCounter++).padStart(3, '0')
-  return `H-${year}-${seq}`
-}
-
-// Format current date in Chinese
-const formatDateCN = (): string => {
-  const now = new Date()
-  return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`
-}
+// Generate a unique hotel ID based on current year and sequence (removed unused generateHotelId and formatDateCN)
 
 // Status config (reused in table & edit modal)
 const statusConfig: Record<HotelStatus, { color: string; text: string }> = {
@@ -86,12 +88,37 @@ const statusConfig: Record<HotelStatus, { color: string; text: string }> = {
 const HotelList: React.FC = () => {
   const [hotels, setHotels] = useState<IHotel[]>([])
   const [loading, setLoading] = useState(false)
-  const fetchHotels = async () => {
+  const { message, modal } = App.useApp()
+
+  const getUserId = () => {
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      try {
+        const u = JSON.parse(userStr)
+        return u.user_id || u.id || 'M_001' // mock fallback
+      } catch {
+        return 'M_001'
+      }
+    }
+    return 'M_001'
+  }
+
+  const fetchHotels = React.useCallback(async () => {
     setLoading(true)
     try {
-      const res = await hotelApi.searchHotels({})
+      const res = await merchantApi.getMerchantHotels({ user_id: getUserId() })
       if (res && res.data) {
-        setHotels(res.data.map((h) => ({ ...h, status: HotelStatus.PUBLISHED })))
+        const mappedData = res.data.map((h: any) => ({
+          ...h,
+          status:
+            h.status === 1
+              ? HotelStatus.PUBLISHED
+              : h.status === 2
+                ? HotelStatus.REJECTED
+                : HotelStatus.PENDING,
+          rejectionReason: h.rejection_reason || undefined,
+        }))
+        setHotels(mappedData)
         setPagination((prev) => ({ ...prev, total: res.data.length }))
       }
     } catch (err) {
@@ -100,17 +127,20 @@ const HotelList: React.FC = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [message])
 
   useEffect(() => {
     fetchHotels()
-  }, [])
+  }, [fetchHotels])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingHotel, setEditingHotel] = useState<IHotel | null>(null) // null = Add mode
   const [confirmLoading, setConfirmLoading] = useState(false)
-  const [editedHotelIds, setEditedHotelIds] = useState<Set<string>>(new Set())
+
   const [form] = Form.useForm<HotelFormValues>()
-  const { message, modal } = App.useApp()
+  const [fileList, setFileList] = useState<UploadFile[]>([])
+
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [viewingHotel, setViewingHotel] = useState<IHotel | null>(null)
 
   const isEditMode = editingHotel !== null
 
@@ -134,28 +164,27 @@ const HotelList: React.FC = () => {
     })
   }
 
-  const handleSubmitReview = (hotel: IHotel) => {
-    // Update status to PENDING and clear rejection reason
-    setHotels((prev) =>
-      prev.map((h) =>
-        h.hotel_id === hotel.hotel_id
-          ? { ...h, status: HotelStatus.PENDING, rejectionReason: undefined }
-          : h,
-      ),
-    )
-    // Remove from edited set after submitting review
-    setEditedHotelIds((prev) => {
-      const next = new Set(prev)
-      next.delete(String(hotel.hotel_id))
-      return next
-    })
-    message.success(`已提交"${hotel.name}"的审核申请`)
-    // TODO: Call API to submit review
+  // --- Modal handlers (Add + Edit + Detail) ---
+  const handleOpenDetailModal = (hotel: IHotel) => {
+    setViewingHotel(hotel)
+    setIsDetailModalOpen(true)
   }
 
-  // --- Modal handlers (Add + Edit) ---
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false)
+    setViewingHotel(null)
+  }
+
+  const handleEditFromDetail = () => {
+    if (viewingHotel) {
+      setIsDetailModalOpen(false)
+      handleOpenEditModal(viewingHotel)
+    }
+  }
+
   const handleOpenAddModal = () => {
     setEditingHotel(null)
+    setFileList([])
     setIsModalOpen(true)
   }
 
@@ -167,8 +196,20 @@ const HotelList: React.FC = () => {
       type,
       starRating,
       address: hotel.address || '',
-      description: undefined, // description field is for extra notes, not the type·star string
+      description: hotel.remark, // Map db remark to form description textarea
     })
+
+    // Convert backend media to UploadFile format
+    const initialFiles: UploadFile[] = (hotel.media || [])
+      .filter((m: any) => m.media_type === 1) // Images only
+      .map((m: any) => ({
+        uid: m.media_id,
+        name: m.media_name || 'image.png',
+        status: 'done',
+        url: m.url,
+      }))
+    setFileList(initialFiles)
+
     setIsModalOpen(true)
   }
 
@@ -176,6 +217,42 @@ const HotelList: React.FC = () => {
     setIsModalOpen(false)
     setEditingHotel(null)
     form.resetFields()
+    setFileList([])
+  }
+
+  // --- Image Upload Handlers ---
+  const handleUploadChange: UploadProps['onChange'] = (info) => {
+    const newFileList = [...info.fileList]
+    setFileList(newFileList)
+  }
+
+  const customUpload = async (options: any) => {
+    const { file, onSuccess, onError, onProgress } = options
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      // Simulate progress
+      onProgress({ percent: 50 })
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error('Upload failed')
+      }
+
+      const resData = await response.json()
+      onProgress({ percent: 100 })
+
+      // Call onSuccess with the response url (so antd sets the url property correctly)
+      onSuccess(resData.data.url, file)
+    } catch (err) {
+      onError(err)
+      message.error('文件上传失败')
+    }
   }
 
   const handleSubmit = async () => {
@@ -183,46 +260,95 @@ const HotelList: React.FC = () => {
       const values = await form.validateFields()
       setConfirmLoading(true)
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 600))
+      const userId = getUserId()
 
-      if (isEditMode) {
-        // --- Edit mode ---
-        setHotels((prev) =>
-          prev.map((h) =>
-            h.hotel_id === editingHotel.hotel_id
-              ? {
-                  ...h,
-                  name: values.name,
-                  description: `${values.type} · ${values.starRating}`,
-                  address: values.address,
-                }
-              : h,
-          ),
-        )
-        // Mark hotel as edited so "提交审核" button becomes enabled
-        setEditedHotelIds((prev) => new Set(prev).add(String(editingHotel.hotel_id)))
-        message.success(`酒店"${values.name}"的信息已更新`)
-      } else {
-        // --- Add mode ---
-        const newHotel: IHotel = {
-          hotel_id: generateHotelId(),
-          name: values.name,
-          description: `${values.type} · ${values.starRating}`,
-          address: values.address,
-          submissionDate: formatDateCN(),
-          status: HotelStatus.PENDING,
-        }
-        setHotels((prev) => [newHotel, ...prev])
-        setPagination((prev) => ({ ...prev, total: (prev.total || 0) + 1 }))
-        message.success(`酒店"${values.name}"已成功添加，等待审核`)
+      // Step 1: Save hotel basic info
+      const res = await merchantApi.saveMerchantHotel({
+        user_id: userId,
+        hotel_id: editingHotel?.hotel_id,
+        name: values.name,
+        description: `${values.type} · ${values.starRating}`,
+        address: values.address,
+        star_rating: parseInt(values.starRating) || 0,
+        remark: values.description,
+      })
+
+      if (!res.data || !res.data.hotel_id) {
+        throw new Error(res.message || '保存酒店响应异常')
       }
 
+      const hotelId = res.data.hotel_id
+
+      // Step 2: Handle Media Sync
+      // Determine what was deleted vs newly uploaded based on fileList state vs initial
+
+      // Deletions: Initial files not in current fileList
+      if (editingHotel && editingHotel.media) {
+        const currentUids = new Set(fileList.map((f) => f.uid))
+        for (const dbMedia of editingHotel.media) {
+          if (dbMedia.media_type === 1 && !currentUids.has(dbMedia.media_id)) {
+            await merchantApi
+              .manageHotelMedia({
+                user_id: userId,
+                action: 'delete',
+                hotel_id: hotelId,
+                media_id: dbMedia.media_id,
+              })
+              .catch((e) => console.error('Delete media failed', e))
+          }
+        }
+      }
+
+      // Additions: uploaded files that do not have an initial backend ID
+      // i.e., upload response urls
+      const newFiles = fileList.filter((f) => f.response)
+      for (const [index, f] of newFiles.entries()) {
+        const url = typeof f.response === 'string' ? f.response : (f.response as any)?.data?.url
+        if (!url) continue
+
+        await merchantApi
+          .manageHotelMedia({
+            user_id: userId,
+            action: 'add',
+            hotel_id: hotelId,
+            media_type: 1,
+            url: url,
+            sort_order: index,
+            media_name: f.name,
+          })
+          .catch((e) => console.error('Add media failed', e))
+      }
+
+      message.success(
+        isEditMode ? `酒店"${values.name}"的信息已更新` : `酒店"${values.name}"已成功添加`,
+      )
+
+      // Refresh list
+      fetchHotels()
       handleCloseModal()
-    } catch {
-      // Form validation failed — do nothing, AntD will show inline errors
+    } catch (err: any) {
+      if (err?.errorFields) {
+        // Form validation failed - do nothing
+      } else {
+        message.error(err.message || '操作失败')
+      }
     } finally {
       setConfirmLoading(false)
+    }
+  }
+  const handleDeleteHotel = async (hotel: IHotel) => {
+    try {
+      setLoading(true)
+      await merchantApi.deleteMerchantHotel({
+        user_id: getUserId(),
+        hotel_id: String(hotel.hotel_id),
+      })
+      message.success(`酒店"${hotel.name}"删除成功`)
+      fetchHotels()
+    } catch (err: any) {
+      console.error(err)
+      message.error(err.message || '删除失败')
+      setLoading(false)
     }
   }
 
@@ -238,16 +364,25 @@ const HotelList: React.FC = () => {
       title: '酒店名称',
       dataIndex: 'name',
       key: 'name',
-      width: 240,
-      render: (_: string, record: IHotel) => (
-        <div className={styles.hotelInfo}>
-          <div className={styles.iconWrapper}>{getHotelIcon(String(record.hotel_id))}</div>
-          <div className={styles.details}>
-            <p className={styles.name}>{record.name}</p>
-            {record.description && <p className={styles.desc}>{record.description}</p>}
+      width: 280,
+      render: (_: string, record: IHotel) => {
+        // Find first image
+        const img = record.media?.find((m: any) => m.media_type === 1)
+
+        return (
+          <div className={styles.hotelInfo}>
+            {img && img.url ? (
+              <img src={img.url} alt="hotel" className={styles.coverImage} />
+            ) : (
+              <div className={styles.iconWrapper}>{getHotelIcon(String(record.hotel_id))}</div>
+            )}
+            <div className={styles.details}>
+              <p className={styles.name}>{record.name}</p>
+              {record.description && <p className={styles.desc}>{record.description}</p>}
+            </div>
           </div>
-        </div>
-      ),
+        )
+      },
     },
     {
       title: '地址',
@@ -282,31 +417,16 @@ const HotelList: React.FC = () => {
       width: 220,
       render: (_: unknown, record: IHotel) => {
         const isRejected = record.status === HotelStatus.REJECTED
-        const isEdited = editedHotelIds.has(String(record.hotel_id))
-        const canSubmit = isRejected || isEdited
 
         return (
           <div className={styles.actions}>
             <button
               type="button"
               className={styles.actionBtn}
-              onClick={() => handleOpenEditModal(record)}
+              onClick={() => handleOpenDetailModal(record)}
             >
-              编辑详情
+              详情
             </button>
-            {canSubmit ? (
-              <button
-                type="button"
-                className={styles.actionBtn}
-                onClick={() => handleSubmitReview(record)}
-              >
-                提交审核
-              </button>
-            ) : (
-              <button type="button" className={`${styles.actionBtn} ${styles.disabled}`} disabled>
-                提交审核
-              </button>
-            )}
             {isRejected && record.rejectionReason && (
               <button
                 type="button"
@@ -316,6 +436,17 @@ const HotelList: React.FC = () => {
                 查看原因
               </button>
             )}
+            <Popconfirm
+              title="确定要删除该酒店吗？"
+              description="删除后将无法恢复（包括已关联的客房或图片）。"
+              onConfirm={() => handleDeleteHotel(record)}
+              okText="确定删除"
+              cancelText="取消"
+            >
+              <button type="button" className={`${styles.actionBtn} ${styles.danger}`}>
+                删除
+              </button>
+            </Popconfirm>
           </div>
         )
       },
@@ -447,6 +578,32 @@ const HotelList: React.FC = () => {
               showCount
             />
           </Form.Item>
+
+          <Form.Item label="酒店图片 (由服务器图库提供响应支持)">
+            <Upload
+              listType="picture-card"
+              fileList={fileList}
+              onChange={handleUploadChange}
+              customRequest={customUpload}
+              accept="image/*"
+            >
+              {fileList.length >= 8 ? null : (
+                <div
+                  style={{
+                    padding: 4,
+                    minHeight: 90,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <PlusOutlined style={{ fontSize: 24, color: '#999' }} />
+                  <div style={{ marginTop: 8, color: '#666' }}>点击上传</div>
+                </div>
+              )}
+            </Upload>
+          </Form.Item>
         </Form>
 
         {/* Edit mode: show rejection reason if exists */}
@@ -458,6 +615,74 @@ const HotelList: React.FC = () => {
               <div className={styles.rejectionContent}>{editingHotel.rejectionReason}</div>
             </div>
           )}
+      </Modal>
+
+      {/* Hotel Detail Modal */}
+      <Modal
+        title="酒店详情"
+        open={isDetailModalOpen}
+        onCancel={handleCloseDetailModal}
+        footer={[
+          <Button key="close" onClick={handleCloseDetailModal}>
+            关闭
+          </Button>,
+          <Button key="edit" type="primary" onClick={handleEditFromDetail}>
+            编辑酒店详情
+          </Button>,
+        ]}
+        width={700}
+        destroyOnClose
+      >
+        {viewingHotel && (
+          <Descriptions column={2} bordered size="small">
+            <Descriptions.Item label="酒店名称" span={2}>
+              <strong>{viewingHotel.name}</strong>
+            </Descriptions.Item>
+            <Descriptions.Item label="酒店地址" span={2}>
+              {viewingHotel.address || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="酒店类型">
+              {parseDescription(viewingHotel.description).type || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="酒店星级">
+              {parseDescription(viewingHotel.description).starRating || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="审核状态">
+              <Tag color={statusConfig[viewingHotel.status]?.color}>
+                {statusConfig[viewingHotel.status]?.text}
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="建档日期">
+              {viewingHotel.created_at
+                ? new Date(viewingHotel.created_at).toLocaleDateString()
+                : '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="图文介绍" span={2}>
+              {viewingHotel.remark || '（无）'}
+            </Descriptions.Item>
+            <Descriptions.Item label="酒店图片/图库" span={2}>
+              {viewingHotel.media && viewingHotel.media.length > 0 ? (
+                <Image.PreviewGroup>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {viewingHotel.media
+                      .filter((m: any) => m.media_type === 1)
+                      .map((m: any) => (
+                        <Image
+                          key={m.media_id}
+                          src={m.url}
+                          width={100}
+                          height={100}
+                          style={{ objectFit: 'cover' }}
+                        />
+                      ))}
+                  </div>
+                </Image.PreviewGroup>
+              ) : (
+                <span style={{ color: '#999' }}>暂无图片</span>
+              )}
+            </Descriptions.Item>
+          </Descriptions>
+        )}
       </Modal>
     </div>
   )

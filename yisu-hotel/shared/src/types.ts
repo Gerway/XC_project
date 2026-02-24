@@ -1,5 +1,3 @@
-
-
 export enum HotelStatus {
   PENDING = 'PENDING',
   PUBLISHED = 'PUBLISHED',
@@ -14,6 +12,8 @@ export interface IHotel {
   rejectionReason?: string
   address?: string
   description?: string
+  remark?: string
+  created_at?: string
   city_name?: string
   latitude?: number
   longitude?: number
@@ -27,6 +27,7 @@ export interface IHotel {
   real_reviews_count?: number
   original_price?: number
   left_stock?: number
+  media?: any[]
 }
 
 export interface IStatCardData {
