@@ -1,11 +1,10 @@
 import React from 'react'
-import { Layout, Menu, Avatar, Badge, Breadcrumb, Dropdown } from 'antd'
+import { Layout, Menu, Avatar, Breadcrumb, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import {
   SafetyCertificateOutlined,
   TagsOutlined,
   TeamOutlined,
-  BellOutlined,
   LogoutOutlined,
   DownOutlined,
 } from '@ant-design/icons'
@@ -121,11 +120,7 @@ const AdminLayout: React.FC = () => {
           </div>
           <div className={styles.headerRight}>
             {/* 通知 */}
-            <Badge count={1} dot>
-              <button className={styles.notificationBtn}>
-                <BellOutlined />
-              </button>
-            </Badge>
+
             <div className={styles.divider} />
             {/* 用户信息 */}
             <Dropdown menu={userMenu}>
