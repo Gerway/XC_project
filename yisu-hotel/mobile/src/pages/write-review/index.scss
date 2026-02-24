@@ -1,0 +1,303 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.write-review {
+    background: $background;
+    min-height: 100vh;
+    @include flex-col;
+    position: relative;
+
+    // ---- Header ----
+    &__header {
+        background: $white;
+        position: sticky;
+        top: 0;
+        z-index: $z-50;
+        border-bottom: 1px solid $gray-100;
+    }
+
+    &__header-inner {
+        @include flex-between;
+        padding: 0 $spacing-4;
+        height: 48px;
+        align-items: center;
+    }
+
+    &__close-btn {
+        width: 32px;
+        height: 32px;
+        @include flex-center;
+        border-radius: 50%;
+        background: $gray-100;
+    }
+
+    &__close-icon {
+        font-size: 13px;
+        color: $gray-600;
+        line-height: 1;
+    }
+
+    &__title {
+        font-size: 17px;
+        font-weight: $font-bold;
+        color: $gray-900;
+    }
+
+    // ---- Scroll Container ----
+    &__scroll {
+        flex: 1;
+        height: 100%;
+    }
+
+    // ---- Hotel Card ----
+    &__hotel-card {
+        background: $white;
+        margin: $spacing-4;
+        border-radius: $rounded-xl;
+        padding: $spacing-3;
+        display: flex;
+        align-items: center;
+        gap: $spacing-3;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
+
+    &__hotel-img {
+        width: 64px;
+        height: 64px;
+        border-radius: $rounded-lg;
+        flex-shrink: 0;
+        background: $gray-100;
+    }
+
+    &__hotel-img-placeholder {
+        width: 64px;
+        height: 64px;
+        border-radius: $rounded-lg;
+        flex-shrink: 0;
+        background: $orange-50;
+        @include flex-center;
+
+        text {
+            font-size: 28px;
+        }
+    }
+
+    &__hotel-info {
+        @include flex-col;
+        gap: 4px;
+        flex: 1;
+    }
+
+    &__hotel-name {
+        font-size: 15px;
+        font-weight: $font-bold;
+        color: $gray-900;
+        display: block;
+    }
+
+    &__hotel-dates {
+        font-size: 12px;
+        color: $gray-500;
+        display: block;
+    }
+
+    &__verified-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        margin-top: 2px;
+    }
+
+    &__verified-icon {
+        font-size: 11px;
+        color: $primary;
+        font-weight: bold;
+    }
+
+    &__verified-text {
+        font-size: 11px;
+        color: $primary;
+        font-weight: $font-medium;
+        letter-spacing: 0.2px;
+    }
+
+    // ---- Rating Section ----
+    &__rating-section {
+        background: $white;
+        margin: 0 $spacing-4 $spacing-4;
+        border-radius: $rounded-xl;
+        padding: $spacing-5 $spacing-4;
+        @include flex-col;
+        align-items: center;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
+
+    &__rating-question {
+        font-size: 20px;
+        font-weight: $font-bold;
+        color: $gray-900;
+        display: block;
+        text-align: center;
+    }
+
+    &__rating-sub {
+        font-size: 13px;
+        color: $gray-400;
+        display: block;
+        text-align: center;
+        margin-top: 4px;
+        margin-bottom: $spacing-4;
+    }
+
+    &__stars {
+        display: flex;
+        gap: $spacing-3;
+        margin-bottom: $spacing-3;
+    }
+
+    &__star {
+        width: 44px;
+        height: 44px;
+        @include flex-center;
+        transition: transform 0.15s ease;
+
+        &--active {
+            .write-review__star-icon {
+                color: $primary;
+            }
+        }
+
+        &:active {
+            transform: scale(1.15);
+        }
+    }
+
+    &__star-icon {
+        font-size: 40px;
+        color: $gray-200;
+        line-height: 1;
+        transition: color 0.15s ease;
+    }
+
+    &__score-label {
+        font-size: 15px;
+        font-weight: $font-bold;
+        color: $primary;
+        display: block;
+        text-align: center;
+        min-height: 20px;
+    }
+
+    // ---- Generic Section ----
+    &__section {
+        background: $white;
+        margin: 0 $spacing-4 $spacing-4;
+        border-radius: $rounded-xl;
+        padding: $spacing-4;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
+
+    &__section-title {
+        font-size: 15px;
+        font-weight: $font-bold;
+        color: $gray-900;
+        display: block;
+        margin-bottom: $spacing-3;
+    }
+
+    // ---- Tags Grid ----
+    &__tags-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacing-2;
+    }
+
+    &__tag {
+        padding: 7px 14px;
+        border-radius: $rounded-full;
+        border: 1.5px solid $gray-200;
+        background: $white;
+        transition: all 0.15s ease;
+
+        text {
+            font-size: 13px;
+            color: $gray-600;
+            font-weight: $font-medium;
+        }
+
+        &--selected {
+            border-color: $primary;
+            background: $orange-50;
+
+            text {
+                color: $primary;
+                font-weight: $font-bold;
+            }
+        }
+    }
+
+    // ---- Textarea ----
+    &__textarea-wrap {
+        background: $gray-50;
+        border-radius: $rounded-lg;
+        padding: $spacing-3;
+        border: 1.5px solid $gray-100;
+        position: relative;
+        min-height: 120px;
+    }
+
+    &__textarea {
+        width: 100%;
+        height: 120px;
+        font-size: 14px;
+        color: $gray-800;
+        line-height: 1.6;
+        background: transparent;
+        padding: 0;
+    }
+
+    &__textarea-placeholder {
+        color: $gray-400;
+        font-size: 14px;
+    }
+
+    &__char-count {
+        position: absolute;
+        bottom: $spacing-2;
+        right: $spacing-3;
+        font-size: 11px;
+        color: $gray-400;
+    }
+
+    // ---- Submit Button ----
+    &__submit-wrap {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: $spacing-3 $spacing-4;
+        padding-bottom: calc(#{$spacing-3} + env(safe-area-inset-bottom));
+        background: $white;
+        border-top: 1px solid $gray-100;
+    }
+
+    &__submit-btn {
+        background: linear-gradient(135deg, $primary 0%, #FF9A6C 100%);
+        border-radius: $rounded-2xl;
+        height: 52px;
+        @include flex-center;
+        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.35);
+        transition: opacity 0.15s ease;
+
+        &--disabled {
+            opacity: 0.6;
+        }
+    }
+
+    &__submit-text {
+        font-size: 16px;
+        font-weight: $font-bold;
+        color: $white;
+        letter-spacing: 0.5px;
+    }
+}

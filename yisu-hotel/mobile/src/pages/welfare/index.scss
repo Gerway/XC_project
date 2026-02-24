@@ -1,0 +1,288 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.welfare-page {
+    background: $background;
+    min-height: 100vh;
+    @include flex-col;
+
+    &__header {
+        background: linear-gradient(135deg, #FF8960 0%, $primary 100%);
+        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    &__header-inner {
+        height: 48px;
+        @include flex-center;
+        position: relative;
+        z-index: 2;
+    }
+
+    &__title {
+        font-size: 18px;
+        font-weight: $font-bold;
+        color: $white;
+        letter-spacing: 0.5px;
+    }
+
+    &__hero {
+        padding: $spacing-5 $spacing-4 $spacing-6;
+        @include flex-between;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+    }
+
+    &__hero-content {
+        @include flex-col;
+        gap: $spacing-2;
+    }
+
+    &__hero-title {
+        font-size: 32px;
+        font-weight: 900;
+        color: $white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        letter-spacing: 1px;
+    }
+
+    &__hero-sub {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(4px);
+        padding: 4px 12px;
+        border-radius: $rounded-full;
+        font-size: 13px;
+        font-weight: $font-medium;
+        color: $white;
+    }
+
+    &__hero-decor {
+        font-size: 56px;
+        line-height: 1;
+        opacity: 0.9;
+        transform: rotate(15deg);
+    }
+
+    &__scroll {
+        flex: 1;
+        height: 100%;
+        margin-top: -16px;
+        background: $background;
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        position: relative;
+        z-index: 10;
+        padding-top: $spacing-5;
+    }
+
+    &__section-header {
+        padding: 0 $spacing-4 $spacing-4;
+        display: flex;
+        align-items: baseline;
+        gap: $spacing-2;
+    }
+
+    &__section-title {
+        font-size: 18px;
+        font-weight: 900;
+        color: $gray-900;
+    }
+
+    &__section-desc {
+        font-size: 12px;
+        color: $gray-500;
+    }
+
+    &__list {
+        padding: 0 $spacing-4;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: $spacing-3;
+
+        // Single column fallback if container is narrow, but 2-col requested
+    }
+
+    &__card {
+        background: #FFF5F0; // Very light warm tone
+        border-radius: $rounded-lg;
+        display: flex;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba($primary, 0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        height: 110px;
+
+        &--sold-out {
+            background: $gray-100;
+            border-color: $gray-200;
+
+            .welfare-page__card-symbol,
+            .welfare-page__card-amount,
+            .welfare-page__card-condition,
+            .welfare-page__card-name {
+                color: $gray-400;
+            }
+        }
+    }
+
+    &__card-left {
+        flex: 1;
+        padding: $spacing-3;
+        @include flex-col;
+        justify-content: center;
+        align-items: center;
+    }
+
+    &__card-price {
+        display: flex;
+        align-items: baseline;
+        color: $primary;
+        gap: 2px;
+    }
+
+    &__card-symbol {
+        font-size: 12px;
+        font-weight: $font-bold;
+    }
+
+    &__card-amount {
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    &__card-condition {
+        font-size: 11px;
+        color: $gray-600;
+        margin-top: 4px;
+        text-align: center;
+    }
+
+    &__card-divider {
+        width: 1px;
+        position: relative;
+    }
+
+    &__card-dash {
+        position: absolute;
+        top: 10px;
+        bottom: 10px;
+        left: 0;
+        border-left: 1px dashed rgba($primary, 0.3);
+
+        // Update to gray for sold out via specific targeting if needed
+        .welfare-page__card--sold-out & {
+            border-left-color: $gray-300;
+        }
+    }
+
+    &__card-notch-top,
+    &__card-notch-bottom {
+        width: 12px;
+        height: 6px;
+        background: $background;
+        position: absolute;
+        left: -6px;
+    }
+
+    &__card-notch-top {
+        top: 0;
+        border-bottom-left-radius: 6px;
+        border-bottom-right-radius: 6px;
+    }
+
+    &__card-notch-bottom {
+        bottom: 0;
+        border-top-left-radius: 6px;
+        border-top-right-radius: 6px;
+    }
+
+    &__card-right {
+        width: 45%;
+        padding: $spacing-3;
+        @include flex-col;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    &__card-name {
+        font-size: 13px;
+        font-weight: $font-bold;
+        color: $gray-800;
+        text-align: center;
+        line-height: 1.2;
+        @include truncate;
+        width: 100%;
+    }
+
+    &__btn {
+        background: linear-gradient(135deg, $primary 0%, #FF9A6C 100%);
+        border-radius: $rounded-full;
+        padding: 6px 14px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        box-shadow: 0 2px 6px rgba($primary, 0.3);
+
+        text {
+            font-size: 11px;
+            font-weight: $font-bold;
+            color: $white;
+            white-space: nowrap;
+        }
+
+        &--secondary {
+            background: transparent;
+            border: 1px solid $primary;
+            box-shadow: none;
+
+            text {
+                color: $primary;
+            }
+        }
+
+        &--disabled {
+            background: $gray-300;
+            box-shadow: none;
+            border: none;
+
+            text {
+                color: $white;
+            }
+        }
+    }
+
+    &__watermark {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 2px solid rgba($gray-400, 0.3);
+        @include flex-center;
+        transform: rotate(-25deg);
+        right: -5px;
+        top: -5px;
+        pointer-events: none;
+
+        text {
+            font-size: 11px;
+            font-weight: 900;
+            color: rgba($gray-400, 0.4);
+        }
+    }
+
+    &__loading,
+    &__empty {
+        padding: $spacing-8;
+        @include flex-center;
+
+        text {
+            color: $gray-500;
+            font-size: 14px;
+        }
+    }
+}

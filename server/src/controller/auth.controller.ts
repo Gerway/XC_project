@@ -23,13 +23,13 @@ users {
 }
 */
 interface RegisterRequestBody {
-  username: string
-  password: string
-  email: string // 邮箱 (可选)
-  role: '用户' | '商户' | '管理' // 对应数据库的 ENUM
-  idcard?: string
-  avatar?: string
-  phone?: string
+    username: string;
+    password: string;
+    email: string;
+    role: '用户' | '商户' | '管理'; // 对应数据库的 ENUM
+    idcard?: string
+    avatar?: string
+    phone?: string
 }
 
 /*

@@ -624,4 +624,157 @@ $spacing-3-5: 14px;
         font-weight: $font-normal;
         margin-left: 2px;
     }
+
+    // ---- Map View ----
+    &__map-container {
+        position: relative;
+        overflow: hidden;
+        // WeChat map MUST have a fixed pixel or calc() height — flex:1 / height:0 does NOT work
+        height: calc(100vh - 150px);
+        width: 100%;
+    }
+
+    &__map {
+        width: 100%;
+        height: 100%;
+    }
+
+    // Top-centre badge "当前共 X 家酒店"
+    &__map-count-badge {
+        position: absolute;
+        top: $spacing-3;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba($black, 0.55);
+        border-radius: $rounded-full;
+        padding: $spacing-1-5 $spacing-4;
+        pointer-events: none;
+    }
+
+    &__map-count-text {
+        color: $white;
+        font-size: $text-xs;
+        font-weight: $font-medium;
+    }
+
+    // Bottom-right "回列表" FAB
+    &__map-list-fab {
+        position: absolute;
+        bottom: 140px;
+        right: $spacing-4;
+        background: $white;
+        border-radius: $rounded-full;
+        padding: $spacing-2 $spacing-3;
+        box-shadow: $shadow-lg;
+        display: flex;
+        align-items: center;
+        gap: $spacing-1-5;
+        z-index: $z-10;
+    }
+
+    &__map-list-fab-text {
+        font-size: $text-xs;
+        font-weight: $font-bold;
+        color: $primary;
+    }
+
+    // Bottom hotel popup card
+    &__map-popup {
+        position: absolute;
+        bottom: $spacing-5;
+        left: $spacing-3;
+        right: $spacing-3;
+        z-index: $z-20;
+        display: flex;
+        align-items: flex-start;
+        gap: $spacing-2;
+    }
+
+    &__map-popup-card {
+        flex: 1;
+        background: $white;
+        border-radius: $rounded-xl;
+        box-shadow: $shadow-xl;
+        display: flex;
+        overflow: hidden;
+        border: 1px solid $gray-100;
+    }
+
+    &__map-popup-img {
+        width: 90px;
+        height: 90px;
+        flex-shrink: 0;
+    }
+
+    &__map-popup-info {
+        flex: 1;
+        padding: $spacing-2 $spacing-3 $spacing-2 $spacing-2;
+        @include flex-col;
+        gap: 4px;
+        justify-content: center;
+    }
+
+    &__map-popup-name {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-900;
+        line-height: 1.3;
+        @include truncate;
+    }
+
+    &__map-popup-rating {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1-5;
+    }
+
+    &__map-popup-reviews {
+        font-size: $text-10px;
+        color: $gray-500;
+        @include truncate;
+        flex: 1;
+    }
+
+    &__map-popup-addr {
+        font-size: $text-10px;
+        color: $gray-400;
+        @include truncate;
+    }
+
+    &__map-popup-price-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 2px;
+    }
+
+    &__map-popup-price {
+        font-size: 16px;
+        font-weight: $font-bold;
+        color: $primary;
+    }
+
+    &__map-popup-arrow {
+        width: 24px;
+        height: 24px;
+        border-radius: $rounded-full;
+        background: $orange-50;
+        @include flex-center;
+        color: $primary;
+        font-size: 18px;
+        font-weight: $font-bold;
+    }
+
+    &__map-popup-close {
+        width: 28px;
+        height: 28px;
+        background: $white;
+        border-radius: $rounded-full;
+        @include flex-center;
+        box-shadow: $shadow-md;
+        color: $gray-500;
+        font-size: 13px;
+        flex-shrink: 0;
+        margin-top: $spacing-1;
+    }
 }

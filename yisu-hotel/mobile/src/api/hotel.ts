@@ -56,6 +56,8 @@ export interface Review {
     score: number;
     created_at: string;
     images?: any;
+    tags?: string[];
+    username?: string;
 }
 
 export interface HotelDetails extends Omit<Hotel, 'reviews'> {
@@ -133,6 +135,7 @@ export const hotelApi = {
         order_id: string; real_pay: number; total_price: number; room_count: number;
         special_request?: string; idcards: string;
         daily: { date: string; price: number; breakfast_count: number }[];
+        user_coupons_ids?: string[]; // array of user_coupons_id
     }) {
         return request<{ message: string; data: { order_id: string } }>({
             url: '/hotel/order/pay',
@@ -148,6 +151,7 @@ export const hotelApi = {
         order_id: string; real_pay: number; total_price: number; room_count: number;
         special_request?: string; idcards: string;
         daily: { date: string; price: number; breakfast_count: number }[];
+        user_coupons_ids?: string[]; // array of user_coupons_id selected by user
     }) {
         return request<{ message: string }>({
             url: '/hotel/order/update',
@@ -197,6 +201,120 @@ export const hotelApi = {
             url: '/hotel/order/detail',
             method: 'POST',
             data
+        });
+    },
+
+    /**
+     * 获取酒店评价列表
+     */
+    getHotelReviews(data: { hotel_id: string }) {
+        return request<{ message: string; data: any }>({
+            url: '/hotel/reviews',
+            method: 'POST',
+            data
+        });
+    },
+
+    // ===================== 浏览历史 =====================
+
+    /**
+     * 添加浏览历史
+     */
+    addViewHistory(data: { user_id: string; hotel_id: string }) {
+        return request<{ message: string }>({
+            url: '/user/history/add',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 获取用户浏览历史
+     */
+    getViewHistory(data: { user_id: string }) {
+        return request<{ message: string; data: any[] }>({
+            url: '/user/history/list',
+            method: 'POST',
+            data
+        });
+    },
+
+    // ===================== 收藏 =====================
+
+    /**
+     * 切换收藏状态
+     */
+    toggleFavorite(data: { user_id: string; target_id: string; type: number }) {
+        return request<{ message: string; data: { is_favorite: boolean } }>({
+            url: '/user/favorite/toggle',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 检查是否已收藏
+     */
+    checkFavorite(data: { user_id: string; target_id: string; type: number }) {
+        return request<{ message: string; data: { is_favorite: boolean } }>({
+            url: '/user/favorite/check',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 获取用户收藏列表
+     */
+    getFavorites(data: { user_id: string }) {
+        return request<{ message: string; data: any[] }>({
+            url: '/user/favorite/list',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 提交用户评价
+     */
+    addReview(data: { order_id: string; hotel_id: string; user_id: string; score: number; content: string; tags: string[]; images?: string[] }) {
+        return request<{ message: string; data: { review_id: string } }>({
+            url: '/hotel/review/add',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 获取全部福利中心优惠券列表
+     */
+    getCouponsList() {
+        return request<any[]>({
+            url: '/coupons',
+            method: 'GET'
+        });
+    },
+
+    /**
+     * 用户领取优惠券
+     */
+    claimCoupon(data: { coupon_id: string; user_id?: string }) {
+        return request<{ message: string; user_coupons_id: string }>({
+            url: '/user-coupons/claim',
+            method: 'POST',
+            data
+        });
+    },
+
+    /**
+     * 获取用户个人的优惠券列表
+     */
+    getUserCoupons(params?: { user_id?: string; status?: number }) {
+        // pass user_id explicitly via query params if provided
+        return request<any[]>({
+            url: '/user-coupons/my',
+            method: 'GET',
+            data: params
         });
     }
 };

@@ -1,14 +1,24 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { View, Text, Input, ScrollView, Image } from '@tarojs/components';
-import Taro, { useRouter, useUnload } from '@tarojs/taro';
-import { Hotel, Room, Coupon } from '../../../types/types';
-import { COUPONS } from '../../constants';
+import Taro, { useUnload } from '@tarojs/taro';
+import { Hotel, Room } from '../../../types/types';
 import { hotelApi, DailyInventory } from '../../api/hotel';
 import './index.scss';
 
+interface UserCoupon {
+  user_coupons_id: string;
+  status: number;
+  coupon_id: string;
+  title: string;
+  discount_amount: string;
+  min_spend: string;
+  start_time: string;
+  end_time: string;
+}
+
 const Booking: React.FC = () => {
-  const router = useRouter();
-  const { orderId } = router.params;
+  // const router = useRouter(); // unused for now
+  // const { orderId } = router.params; // unused for now
 
   // Read booking info from storage (set by HotelDetails page)
   const bookingData = useMemo(() => {
@@ -35,16 +45,13 @@ const Booking: React.FC = () => {
 
   const hotel = bookingData?.hotel;
   const room = bookingData?.room;
-  const coupons = COUPONS;
-
-
   const safeDates = useMemo(() => bookingData?.dates || {
     start: new Date(),
     end: new Date(new Date().setDate(new Date().getDate() + 1))
   }, [bookingData]);
 
   const pkgPrice = bookingData?.pkgPrice || 0;
-  const pkgBreakfast = bookingData?.pkgBreakfast || '无餐食';
+  // const pkgBreakfast = bookingData?.pkgBreakfast || '无餐食';
   const pkgCancellation = bookingData?.pkgCancellation || '不可取消';
   const pkgDesc = bookingData?.pkgDesc || '立即确认';
 
@@ -65,7 +72,8 @@ const Booking: React.FC = () => {
   const [showArrivalModal, setShowArrivalModal] = useState(false);
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [showPriceDetailModal, setShowPriceDetailModal] = useState(false);
-  const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
+  const [availableCoupons, setAvailableCoupons] = useState<UserCoupon[]>([]);
+  const [selectedCoupon, setSelectedCoupon] = useState<UserCoupon | null>(null);
   const [showBreakfast, setShowBreakfast] = useState(false);
   const [breakfastCounts, setBreakfastCounts] = useState<Record<string, number>>({});
   const [breakfastInitialized, setBreakfastInitialized] = useState(false);
@@ -170,6 +178,18 @@ const Booking: React.FC = () => {
             setPendingOrderId(ordRes.data.order_id);
           }
         }
+
+        // 3. Fetch user coupons
+        if (userId) {
+          const couponRes = await hotelApi.getUserCoupons({ user_id: userId, status: 0 });
+          const userCoupons = couponRes as unknown as UserCoupon[];
+          const now = new Date().getTime();
+          const valid = userCoupons.filter(c =>
+            c.status === 0 && (!c.end_time || new Date(c.end_time).getTime() > now)
+          );
+          setAvailableCoupons(valid);
+        }
+
       } catch (err) {
         console.error('initOrder error', err);
       }
@@ -225,12 +245,12 @@ const Booking: React.FC = () => {
   const totalBreakfastCount = (Object.values(breakfastCounts) as number[]).reduce((a, b) => a + b, 0);
   const breakfastTotal = totalBreakfastCount * breakfastPricePerUnit;
   const rawTotal = roomPriceTotal + breakfastTotal;
-  const discountAmount = selectedCoupon ? selectedCoupon.discount_amount : 0;
+  const discountAmount = selectedCoupon ? parseInt(selectedCoupon.discount_amount) || 0 : 0;
   const total = Math.max(0, rawTotal - discountAmount - membershipValue);
   // Points = pre-discount room cost only (no breakfast, no coupon, no membership deduction)
   const pointsEarned = Math.floor(roomPriceTotal);
 
-  const availableCoupons = coupons.filter(c => !c.is_used && c.min_spend <= rawTotal);
+  const usableCoupons = availableCoupons.filter(c => parseInt(c.min_spend) <= rawTotal);
 
   // Auto-update ref so useUnload gets latest data
   const isPaidRef = useRef(false);
@@ -246,6 +266,7 @@ const Booking: React.FC = () => {
     breakfastDates: string[];
     stayDates: string[];
     pkgPrice: number;
+    selectedCoupon: UserCoupon | null;
   }>({
     pendingOrderId: null,
     rawTotal: 0,
@@ -257,7 +278,8 @@ const Booking: React.FC = () => {
     breakfastCounts: {},
     breakfastDates: [],
     stayDates: [],
-    pkgPrice: 0
+    pkgPrice: 0,
+    selectedCoupon: null
   });
 
   useEffect(() => {
@@ -272,9 +294,10 @@ const Booking: React.FC = () => {
       breakfastCounts,
       breakfastDates,
       stayDates,
-      pkgPrice
+      pkgPrice,
+      selectedCoupon
     };
-  }, [pendingOrderId, rawTotal, total, notes, idcards, dailyPrices, roomCount, breakfastCounts, breakfastDates, stayDates, pkgPrice]);
+  }, [pendingOrderId, rawTotal, total, notes, idcards, dailyPrices, roomCount, breakfastCounts, breakfastDates, stayDates, pkgPrice, selectedCoupon]);
 
   useUnload(() => {
     // If not paid and we have an order id, update the order details with user selection
@@ -307,7 +330,8 @@ const Booking: React.FC = () => {
         room_count: v.roomCount,
         special_request: v.notes,
         idcards: JSON.stringify(validIdcards),
-        daily: dailyDetail
+        daily: dailyDetail,
+        user_coupons_ids: v.selectedCoupon ? [v.selectedCoupon.user_coupons_id] : []
       }).catch(e => console.error('Failed to sync order on unload:', e));
     }
   });
@@ -345,8 +369,8 @@ const Booking: React.FC = () => {
     });
   };
 
-  const handleCouponSelect = (coupon: Coupon) => {
-    if (selectedCoupon?.coupon_id === coupon.coupon_id) {
+  const handleCouponSelect = (coupon: UserCoupon) => {
+    if (selectedCoupon?.user_coupons_id === coupon.user_coupons_id) {
       setSelectedCoupon(null);
     } else {
       setSelectedCoupon(coupon);
@@ -393,7 +417,8 @@ const Booking: React.FC = () => {
           room_count: roomCount,
           special_request: notes,
           idcards: JSON.stringify(validIdcards),
-          daily: dailyDetail
+          daily: dailyDetail,
+          user_coupons_ids: selectedCoupon ? [selectedCoupon.user_coupons_id] : []
         });
         isPaidRef.current = true; // Mark as paid so useUnload doesn't sync again
       } else {
@@ -647,15 +672,14 @@ const Booking: React.FC = () => {
           </View>
         </View>
 
-        {/* Coupons Trigger */}
         <View className="booking-page__coupons-trigger" onClick={() => setShowCouponModal(true)}>
           <Text className="booking-page__form-label">优惠券</Text>
           <View className="booking-page__form-value">
             {selectedCoupon ? (
-              <Text className="booking-page__coupon-discount">- ¥{selectedCoupon.discount_amount}</Text>
+              <Text className="booking-page__coupon-discount">- ¥{parseInt(selectedCoupon.discount_amount) || 0}</Text>
             ) : (
               <Text className="booking-page__form-value-plain">
-                {availableCoupons.length > 0 ? `${availableCoupons.length} 张可用` : '无可用优惠券'}
+                {usableCoupons.length > 0 ? `${usableCoupons.length} 张可用` : '无可用优惠券'}
               </Text>
             )}
             <Text className="booking-page__form-arrow">›</Text>
@@ -757,28 +781,33 @@ const Booking: React.FC = () => {
               </View>
             </View>
             <ScrollView scrollY className="booking-page__modal-scroll-content">
-              {availableCoupons.length === 0 ? (
+              {usableCoupons.length === 0 ? (
                 <View className="booking-page__modal-empty">
-                  <Text>无可用优惠券</Text>
+                  <Text>无满减条件吻合的优惠券</Text>
                 </View>
               ) : (
                 <View>
-                  {availableCoupons.map(coupon => {
-                    const isSelected = selectedCoupon?.coupon_id === coupon.coupon_id;
+                  {usableCoupons.map(coupon => {
+                    const isSelected = selectedCoupon?.user_coupons_id === coupon.user_coupons_id;
+                    const amount = parseInt(coupon.discount_amount) || 0;
+                    const minSpend = parseInt(coupon.min_spend) || 0;
+
                     return (
                       <View
-                        key={coupon.coupon_id}
+                        key={coupon.user_coupons_id}
                         onClick={() => handleCouponSelect(coupon)}
                         className={`booking-page__coupon-card ${isSelected ? 'booking-page__coupon-card--selected' : ''}`}
                       >
                         <View className="booking-page__coupon-value">
-                          <Text className="booking-page__coupon-amount">¥{coupon.discount_amount}</Text>
+                          <Text className="booking-page__coupon-amount">¥{amount}</Text>
                           <Text className="booking-page__coupon-label-text">优惠券</Text>
                         </View>
                         <View className="booking-page__coupon-info">
                           <Text className="booking-page__coupon-title">{coupon.title}</Text>
-                          <Text className="booking-page__coupon-min-spend">满¥{coupon.min_spend}可用</Text>
-                          <Text className="booking-page__coupon-expiry">有效期至: {coupon.end_time}</Text>
+                          <Text className="booking-page__coupon-min-spend">满¥{minSpend}可用</Text>
+                          <Text className="booking-page__coupon-expiry">
+                            有效期至: {coupon.end_time ? new Date(coupon.end_time).toLocaleDateString() : '长期有效'}
+                          </Text>
                         </View>
                         <View className={`booking-page__coupon-check ${isSelected ? 'booking-page__coupon-check--selected' : ''}`}>
                           {isSelected && <Text className="booking-page__coupon-check-icon">✓</Text>}
@@ -881,7 +910,7 @@ const Booking: React.FC = () => {
                 <View className="booking-page__price-section-border">
                   <View className="booking-page__price-total-row" style={{ borderBottom: 'none', paddingBottom: 0 }}>
                     <Text className="booking-page__price-section-title">优惠券</Text>
-                    <Text className="booking-page__price-coupon-value">- ¥{selectedCoupon.discount_amount}</Text>
+                    <Text className="booking-page__price-coupon-value">- ¥{parseInt(selectedCoupon.discount_amount) || 0}</Text>
                   </View>
                 </View>
               )}

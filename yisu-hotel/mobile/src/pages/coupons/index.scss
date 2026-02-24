@@ -205,11 +205,28 @@
         border: 1px solid $gray-100;
         overflow: hidden;
         margin-bottom: $spacing-3;
+
+        &--disabled {
+            background: $gray-50;
+            border-color: $gray-200;
+
+            .coupons-page__coupon-value {
+                background: $gray-100;
+                border-color: $gray-300;
+            }
+
+            .coupons-page__coupon-amount,
+            .coupons-page__coupon-symbol,
+            .coupons-page__coupon-off,
+            .coupons-page__coupon-title {
+                color: $gray-400;
+            }
+        }
     }
 
     &__coupon-value {
         position: relative;
-        width: 96px;
+        width: 100px;
         @include flex-col;
         align-items: center;
         justify-content: center;
@@ -221,18 +238,25 @@
     }
 
     &__coupon-amount {
-        font-size: 24px;
+        font-size: 28px;
         font-weight: 800;
         color: $primary;
         display: block;
+        line-height: 1;
+    }
+
+    &__coupon-symbol {
+        font-size: 14px;
+        font-weight: 800;
+        color: $primary;
+        margin-right: 2px;
     }
 
     &__coupon-off {
         font-size: 10px;
         font-weight: $font-bold;
-        text-transform: uppercase;
         color: $primary;
-        letter-spacing: 0.05em;
+        margin-top: 4px;
         display: block;
     }
 
@@ -248,13 +272,6 @@
         color: $gray-900;
         line-height: $leading-tight;
         font-size: 15px;
-        display: block;
-    }
-
-    &__coupon-min-spend {
-        margin-top: $spacing-1;
-        font-size: $text-xs;
-        color: $gray-500;
         display: block;
     }
 
@@ -283,6 +300,18 @@
 
         &:active {
             background: $orange-100;
+        }
+
+        &--disabled {
+            background: $gray-200;
+
+            text {
+                color: $gray-500;
+            }
+
+            &:active {
+                background: $gray-200;
+            }
         }
     }
 
