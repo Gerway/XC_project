@@ -35,10 +35,7 @@ export interface IAuditDetail {
   description: string
   /** 当前状态 */
   status: HotelStatus
-  /** 营业执照图片 URL */
-  businessLicenseUrl: string
-  /** 特种行业许可证图片 URL */
-  permitUrl: string
+
   /** 酒店实景图 URL 列表 */
   scenePhotos: string[]
   /** 设施标签列表 */
@@ -196,42 +193,13 @@ const AuditDrawer: React.FC<AuditDrawerProps> = ({
           </Descriptions>
         </div>
 
-        {/* ===== 2. 资质证明 ===== */}
+        {/* ===== 2. 酒店图片 ===== */}
         <div className={styles.sectionCard}>
           <div className={styles.sectionTitle}>
             <span className={styles.titleBar} />
-            资质证明
+            酒店图片
           </div>
           <Image.PreviewGroup>
-            <div className={styles.credentialGrid}>
-              <div className={styles.credentialItem}>
-                <p className={styles.credentialLabel}>营业执照</p>
-                <div className={styles.imageWrapper}>
-                  <Image
-                    src={detail.businessLicenseUrl}
-                    alt="营业执照"
-                    width="100%"
-                    height="100%"
-                    style={{ objectFit: 'cover' }}
-                  />
-                </div>
-              </div>
-              <div className={styles.credentialItem}>
-                <p className={styles.credentialLabel}>特种行业许可证</p>
-                <div className={styles.imageWrapper}>
-                  <Image
-                    src={detail.permitUrl}
-                    alt="特种行业许可证"
-                    width="100%"
-                    height="100%"
-                    style={{ objectFit: 'cover' }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* 实景图 */}
-            <p className={styles.sceneLabel}>酒店实景图</p>
             <div className={styles.sceneGrid}>
               {detail.scenePhotos.map((url, idx) => (
                 <div key={idx} className={styles.sceneImageWrapper}>

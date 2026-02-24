@@ -125,6 +125,14 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     font-size: 20px;
   }
 
+  .coverImage {
+    width: 50px;
+    height: 50px;
+    border-radius: $border-radius;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
   .details {
     min-width: 0;
 
