@@ -11,6 +11,7 @@ import UserRouter from './route/user.route'
 import HotelRouter from './route/hotel.route'
 import CouponRouter from './route/coupon.route'
 import UserCouponRouter from './route/user_coupon.route'
+import OrderRouter from './route/order.route'
 
 // 数据库连接测试函数
 import { checkConnection } from './db'
@@ -31,6 +32,7 @@ app.use('/api/user/', UserRouter)
 app.use('/api/hotel/', HotelRouter)
 app.use('/api/coupons', CouponRouter)
 app.use('/api/user-coupons', UserCouponRouter)
+app.use('/api/order', OrderRouter)
 
 app.listen(8800, async () => {
   console.log('server is running!')

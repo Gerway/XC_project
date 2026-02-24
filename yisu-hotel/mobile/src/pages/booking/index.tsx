@@ -266,6 +266,7 @@ const Booking: React.FC = () => {
     breakfastDates: string[];
     stayDates: string[];
     pkgPrice: number;
+    selectedCoupon: UserCoupon | null;
   }>({
     pendingOrderId: null,
     rawTotal: 0,
@@ -277,7 +278,8 @@ const Booking: React.FC = () => {
     breakfastCounts: {},
     breakfastDates: [],
     stayDates: [],
-    pkgPrice: 0
+    pkgPrice: 0,
+    selectedCoupon: null
   });
 
   useEffect(() => {
@@ -292,9 +294,10 @@ const Booking: React.FC = () => {
       breakfastCounts,
       breakfastDates,
       stayDates,
-      pkgPrice
+      pkgPrice,
+      selectedCoupon
     };
-  }, [pendingOrderId, rawTotal, total, notes, idcards, dailyPrices, roomCount, breakfastCounts, breakfastDates, stayDates, pkgPrice]);
+  }, [pendingOrderId, rawTotal, total, notes, idcards, dailyPrices, roomCount, breakfastCounts, breakfastDates, stayDates, pkgPrice, selectedCoupon]);
 
   useUnload(() => {
     // If not paid and we have an order id, update the order details with user selection
@@ -327,7 +330,8 @@ const Booking: React.FC = () => {
         room_count: v.roomCount,
         special_request: v.notes,
         idcards: JSON.stringify(validIdcards),
-        daily: dailyDetail
+        daily: dailyDetail,
+        user_coupons_ids: v.selectedCoupon ? [v.selectedCoupon.user_coupons_id] : []
       }).catch(e => console.error('Failed to sync order on unload:', e));
     }
   });
@@ -414,7 +418,7 @@ const Booking: React.FC = () => {
           special_request: notes,
           idcards: JSON.stringify(validIdcards),
           daily: dailyDetail,
-          user_coupons_id: selectedCoupon?.user_coupons_id
+          user_coupons_ids: selectedCoupon ? [selectedCoupon.user_coupons_id] : []
         });
         isPaidRef.current = true; // Mark as paid so useUnload doesn't sync again
       } else {
