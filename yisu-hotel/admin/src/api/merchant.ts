@@ -1,5 +1,4 @@
 import request from '../utils/request'
-import type { IHotel } from '@yisu/shared'
 
 export interface SaveHotelBody {
   user_id: string
@@ -69,6 +68,17 @@ export const merchantApi = {
   deleteMerchantHotel(data: { user_id: string; hotel_id: string }) {
     return request({
       url: '/merchant/hotel/delete',
+      method: 'POST',
+      data,
+    })
+  },
+
+  /**
+   * 获取房型特定日期的库存
+   */
+  getInventory(data: { user_id: string; room_id: string; startDate: string; endDate: string }) {
+    return request({
+      url: '/merchant/hotel/inventory/list',
       method: 'POST',
       data,
     })

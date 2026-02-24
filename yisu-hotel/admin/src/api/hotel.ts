@@ -45,3 +45,88 @@ export const hotelApi = {
     })
   },
 }
+
+// ─── 管理员酒店管理 ─────────────────────────────────────────────────────────────
+
+export interface IAdminHotel {
+  hotel_id: string
+  user_id: string
+  name: string
+  address: string
+  city_name: string
+  latitude: number
+  longitude: number
+  star_rating: number
+  tags: string[]
+  description: string
+  hotel_type: number
+  score: number
+  reviews: number
+  status: number
+  remark: string
+  open_time: string | null
+  close_time: string | null
+  merchant_name: string
+  cover_url: string | null
+  created_at: string
+}
+
+export interface AdminHotelListParams {
+  page: number
+  pageSize: number
+  keyword?: string
+  status?: number
+  star_rating?: number
+}
+
+export interface AdminHotelListResponse {
+  code: number
+  message: string
+  data: {
+    list: IAdminHotel[]
+    total: number
+    page: number
+    pageSize: number
+    stats: { total: number; published: number; pending: number }
+  }
+}
+
+export interface UpdateHotelBody {
+  hotel_id: string
+  name: string
+  address: string
+  city_name?: string
+  latitude?: number
+  longitude?: number
+  star_rating?: number
+  tags?: string | string[]
+  description?: string
+  hotel_type?: number
+  open_time?: string | null
+  close_time?: string | null
+  remark?: string
+}
+
+export const adminHotelApi = {
+  getList(data: AdminHotelListParams): Promise<AdminHotelListResponse> {
+    return request({
+      url: '/merchant/hotel/admin-hotel/list',
+      method: 'POST',
+      data,
+    }) as unknown as Promise<AdminHotelListResponse>
+  },
+  updateHotel(data: UpdateHotelBody): Promise<{ code: number; message: string }> {
+    return request({
+      url: '/merchant/hotel/admin-hotel/update',
+      method: 'POST',
+      data,
+    }) as unknown as Promise<{ code: number; message: string }>
+  },
+  deleteHotel(data: { hotel_id: string }): Promise<{ code: number; message: string }> {
+    return request({
+      url: '/merchant/hotel/admin-hotel/delete',
+      method: 'POST',
+      data,
+    }) as unknown as Promise<{ code: number; message: string }>
+  },
+}

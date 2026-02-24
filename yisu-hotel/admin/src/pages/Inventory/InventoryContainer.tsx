@@ -1,163 +1,180 @@
-import React, { useState, useMemo, useCallback } from 'react'
-import { Select, Empty, Modal, Form, Input, InputNumber, Switch, App } from 'antd'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import { Select, Empty, Modal, Form, Input, InputNumber, App, Switch, Row, Col } from 'antd'
 import { ShopOutlined } from '@ant-design/icons'
-import { HotelStatus, type IHotel, type IRoom, type IDayInventory } from '@yisu/shared'
+import { type IHotel } from '@yisu/shared'
 import RoomList from './RoomList'
 import InventoryCalendar from './InventoryCalendar'
 import styles from './Inventory.module.scss'
-
-// ===== Mock Data =====
-
-// Mock hotels (only PUBLISHED hotels can be managed)
-const mockHotels: Pick<IHotel, 'id' | 'name' | 'description' | 'status'>[] = [
-  {
-    id: 'H-2023-001',
-    name: '易宿广场大酒店',
-    description: '豪华型 · 5星级',
-    status: HotelStatus.PUBLISHED,
-  },
-  {
-    id: 'H-2023-012',
-    name: '云端商务酒店',
-    description: '商务型 · 4星级',
-    status: HotelStatus.PUBLISHED,
-  },
-]
-
-// Initial mock rooms per hotel
-const initialRoomsByHotel: Record<string, IRoom[]> = {
-  'H-2023-001': [
-    { id: 'R-102', hotelId: 'H-2023-001', name: '豪华大床房', basePrice: 580, isActive: true },
-    { id: 'R-103', hotelId: 'H-2023-001', name: '标准双床房', basePrice: 380, isActive: true },
-    { id: 'R-105', hotelId: 'H-2023-001', name: '行政套房', basePrice: 1280, isActive: false },
-    { id: 'R-108', hotelId: 'H-2023-001', name: '海景家庭房', basePrice: 880, isActive: true },
-  ],
-  'H-2023-012': [
-    { id: 'R-201', hotelId: 'H-2023-012', name: '商务标准间', basePrice: 420, isActive: true },
-    { id: 'R-202', hotelId: 'H-2023-012', name: '商务套房', basePrice: 760, isActive: true },
-    { id: 'R-203', hotelId: 'H-2023-012', name: '总统套房', basePrice: 2680, isActive: false },
-  ],
-}
-
-// Generate mock inventory
-const generateMockInventory = (roomId: string, basePrice: number): IDayInventory[] => {
-  const data: IDayInventory[] = []
-  for (let day = 1; day <= 31; day++) {
-    const dateStr = `2023-10-${String(day).padStart(2, '0')}`
-    const dayOfWeek = new Date(2023, 9, day).getDay()
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
-
-    const price = isWeekend ? basePrice + 100 : basePrice
-    let stock = 8
-
-    // Simulate varied stock based on room+day
-    const seed = roomId.charCodeAt(roomId.length - 1) + day
-    if (seed % 7 === 0) stock = 10
-    if (seed % 5 === 0) stock = 5
-    if (seed % 11 === 0) stock = 1
-    if (seed % 13 === 0) stock = 0
-    if (seed % 9 === 0) stock = 2
-
-    data.push({ date: dateStr, price, stock })
-  }
-  return data
-}
+import { merchantApi } from '../../api/merchant'
+import { roomApi, type IRoomWithStock } from '../../api/room'
 
 const InventoryContainer: React.FC = () => {
+  const currentUserId = useMemo(() => {
+    const userStr = localStorage.getItem('user')
+    const user = userStr ? JSON.parse(userStr) : null
+    return user?.user_id || user?.id || ''
+  }, [])
+
+  const [hotels, setHotels] = useState<Pick<IHotel, 'hotel_id' | 'name'>[]>([])
   const [selectedHotelId, setSelectedHotelId] = useState<string | undefined>(undefined)
+
+  const [rooms, setRooms] = useState<IRoomWithStock[]>([])
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
-  const [roomsByHotel, setRoomsByHotel] = useState<Record<string, IRoom[]>>(initialRoomsByHotel)
-  const [inventoryCache, setInventoryCache] = useState<Record<string, IDayInventory[]>>({})
 
-  // Edit modal state
-  const [editModalOpen, setEditModalOpen] = useState(false)
-  const [editingRoom, setEditingRoom] = useState<IRoom | null>(null)
-  const [editForm] = Form.useForm()
-  const { message } = App.useApp()
+  // Create room modal state
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [createForm] = Form.useForm()
 
-  // Available rooms for selected hotel
-  const rooms = useMemo(() => {
-    if (!selectedHotelId) return []
-    return roomsByHotel[selectedHotelId] || []
-  }, [selectedHotelId, roomsByHotel])
+  const { message, modal } = App.useApp()
 
-  // Auto-select first room when hotel changes
+  // Fetch hotels on mount
+  useEffect(() => {
+    const fetchHotels = async () => {
+      try {
+        const res = await merchantApi.getMerchantHotels({ user_id: currentUserId })
+        if (res && res.data) {
+          setHotels(res.data || [])
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          message.error(err.message || '获取酒店列表失败')
+        } else {
+          message.error('获取酒店列表失败')
+        }
+      }
+    }
+    fetchHotels()
+  }, [message, currentUserId])
+
+  // Fetch rooms when hotel selected
+  const fetchRooms = useCallback(
+    async (hotelId: string) => {
+      try {
+        const res = await roomApi.getMerchantRoomList({
+          user_id: currentUserId,
+          hotel_id: hotelId,
+        })
+        if (res.code === 200) {
+          const data = res.data || []
+          setRooms(data)
+          if (data.length > 0) {
+            setSelectedRoomId(data[0].room_id)
+          } else {
+            setSelectedRoomId(null)
+          }
+        } else {
+          message.error(res.message || '获取房型列表失败')
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          message.error(err.message || '获取房型列表失败')
+        } else {
+          message.error('获取房型列表失败')
+        }
+      }
+    },
+    [message, currentUserId],
+  )
+
   const handleHotelChange = (hotelId: string) => {
     setSelectedHotelId(hotelId)
-    const hotelRooms = roomsByHotel[hotelId] || []
-    setSelectedRoomId(hotelRooms.length > 0 ? hotelRooms[0].id : null)
-  }
-
-  // Edit room handlers
-  const handleEditRoom = (room: IRoom) => {
-    setEditingRoom(room)
-    editForm.setFieldsValue({
-      name: room.name,
-      basePrice: room.basePrice,
-      isActive: room.isActive,
-    })
-    setEditModalOpen(true)
-  }
-
-  const handleEditSubmit = async () => {
-    try {
-      const values = await editForm.validateFields()
-      if (!editingRoom || !selectedHotelId) return
-
-      setRoomsByHotel((prev) => ({
-        ...prev,
-        [selectedHotelId]: (prev[selectedHotelId] || []).map((r) =>
-          r.id === editingRoom.id
-            ? { ...r, name: values.name, basePrice: values.basePrice, isActive: values.isActive }
-            : r,
-        ),
-      }))
-
-      message.success(`房型「${values.name}」已更新`)
-      setEditModalOpen(false)
-      setEditingRoom(null)
-      editForm.resetFields()
-    } catch {
-      // Form validation errors shown by antd
-    }
+    fetchRooms(hotelId)
   }
 
   const selectedRoom = useMemo(
-    () => rooms.find((r) => r.id === selectedRoomId) || null,
+    () => rooms.find((r) => r.room_id === selectedRoomId) || null,
     [rooms, selectedRoomId],
   )
 
-  // Lazy-initialize inventory cache when room changes
-  React.useEffect(() => {
-    if (selectedRoom && !inventoryCache[selectedRoom.id]) {
-      setInventoryCache((prev) => ({
-        ...prev,
-        [selectedRoom.id]: generateMockInventory(selectedRoom.id, selectedRoom.basePrice),
-      }))
-    }
-  }, [selectedRoom, inventoryCache])
+  // Handlers for room creation/deletion
+  const handleCreateRoom = () => {
+    setCreateModalOpen(true)
+  }
 
-  const inventoryData = useMemo(
-    () => (selectedRoom ? inventoryCache[selectedRoom.id] || [] : []),
-    [selectedRoom, inventoryCache],
-  )
+  const handleDeleteRoom = (room: IRoomWithStock) => {
+    if (!selectedHotelId) return
+    modal.confirm({
+      title: '确认删除房型',
+      content: `确定要删除房型「${room.name}」吗？相关库存数据也将一并清除，此操作不可恢复。`,
+      okText: '确认删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          const res = await roomApi.deleteRoom({
+            user_id: currentUserId,
+            hotel_id: selectedHotelId,
+            room_id: room.room_id,
+          })
+          if (res.code === 200) {
+            message.success('房型删除成功')
+            fetchRooms(selectedHotelId)
+          } else {
+            message.error(res.message || '删除失败')
+          }
+        } catch (err: unknown) {
+          if (err instanceof Error) {
+            message.error(err.message || '删除房型失败')
+          } else {
+            message.error('删除房型失败')
+          }
+        }
+      },
+    })
+  }
+
+  const handleCreateSubmit = async () => {
+    try {
+      const values = await createForm.validateFields()
+      if (!selectedHotelId) return
+
+      const payload = {
+        user_id: currentUserId,
+        hotel_id: selectedHotelId,
+        name: values.name,
+        ori_price: values.ori_price,
+        max_occupancy: values.max_occupancy,
+        room_type: values.room_type,
+        has_breakfast: values.has_breakfast,
+        area: values.area,
+        floor: values.floor,
+        has_window: values.has_window,
+        add_bed: values.add_bed,
+        has_wifi: values.has_wifi,
+        remark: values.remark,
+        room_bed: values.room_bed,
+      }
+
+      const res = await roomApi.createRoom(payload)
+      if (res.code === 200) {
+        message.success(`房型「${values.name}」创建成功`)
+        setCreateModalOpen(false)
+        createForm.resetFields()
+        fetchRooms(selectedHotelId)
+      } else {
+        message.error(res.message || '创建房型失败')
+      }
+    } catch (err: unknown) {
+      // This catch block handles errors from validateFields or roomApi.createRoom
+      if (err instanceof Error) {
+        // If it's a validation error, Ant Design usually shows it on the form.
+        // For other errors (e.g., network), we show a generic message.
+        if (!('errorFields' in err)) {
+          // Check if it's not a Form validation error object
+          message.error(err.message || '操作失败')
+        }
+      } else {
+        message.error('操作失败')
+      }
+    }
+  }
 
   // Handle single-day inventory update
-  const handleUpdateDay = useCallback(
-    (date: string, price: number, stock: number) => {
-      if (!selectedRoom) return
-      const key = selectedRoom.id
-      setInventoryCache((prev) => ({
-        ...prev,
-        [key]: (prev[key] || []).map((d) => (d.date === date ? { ...d, price, stock } : d)),
-      }))
-    },
-    [selectedRoom],
-  )
+  // No explicit day update function from parent. Calendar fetches its own inventory.
 
   const selectedHotel = useMemo(
-    () => mockHotels.find((h) => h.id === selectedHotelId),
-    [selectedHotelId],
+    () => hotels.find((h) => h.hotel_id === selectedHotelId),
+    [selectedHotelId, hotels],
   )
 
   return (
@@ -173,14 +190,11 @@ const InventoryContainer: React.FC = () => {
             onChange={handleHotelChange}
             style={{ width: 280 }}
             size="large"
-            options={mockHotels.map((h) => ({
-              value: h.id,
+            options={hotels.map((h) => ({
+              value: h.hotel_id,
               label: (
                 <span>
                   <strong>{h.name}</strong>
-                  <span style={{ color: '#9ca3af', marginLeft: 8, fontSize: 12 }}>
-                    {h.description}
-                  </span>
                 </span>
               ),
             }))}
@@ -188,8 +202,7 @@ const InventoryContainer: React.FC = () => {
         </div>
         {selectedHotel && (
           <div className={styles.hotelSelectorMeta}>
-            <span className={styles.hotelMetaId}>{selectedHotel.id}</span>
-            <span className={styles.hotelMetaDesc}>{selectedHotel.description}</span>
+            <span className={styles.hotelMetaId}>{selectedHotel.hotel_id}</span>
           </div>
         )}
       </div>
@@ -201,13 +214,10 @@ const InventoryContainer: React.FC = () => {
             rooms={rooms}
             selectedRoomId={selectedRoomId}
             onSelectRoom={setSelectedRoomId}
-            onEditRoom={handleEditRoom}
+            onCreateRoom={handleCreateRoom}
+            onDeleteRoom={handleDeleteRoom}
           />
-          <InventoryCalendar
-            room={selectedRoom}
-            inventoryData={inventoryData}
-            onUpdateDay={handleUpdateDay}
-          />
+          <InventoryCalendar room={selectedRoom} />
         </div>
       ) : (
         <div className={styles.emptyState}>
@@ -227,52 +237,134 @@ const InventoryContainer: React.FC = () => {
 
       <div className={styles.footer}>© 2026 易宿酒店平台。保留所有权利。</div>
 
-      {/* Edit Room Modal */}
+      {/* Create Room Modal */}
       <Modal
-        title={
-          editingRoom ? (
-            <span>
-              编辑房型{' '}
-              <span style={{ color: '#9ca3af', fontSize: 13, fontWeight: 400 }}>
-                ({editingRoom.id})
-              </span>
-            </span>
-          ) : (
-            '编辑房型'
-          )
-        }
-        open={editModalOpen}
-        onOk={handleEditSubmit}
+        title="新增房型"
+        open={createModalOpen}
+        onOk={handleCreateSubmit}
         onCancel={() => {
-          setEditModalOpen(false)
-          setEditingRoom(null)
-          editForm.resetFields()
+          setCreateModalOpen(false)
+          createForm.resetFields()
         }}
-        okText="保存修改"
+        okText="创建房型"
         cancelText="取消"
         forceRender
         className={styles.modal}
       >
-        <Form form={editForm} layout="vertical" requiredMark="optional" style={{ marginTop: 16 }}>
-          <Form.Item
-            label="房型名称"
-            name="name"
-            rules={[
-              { required: true, message: '请输入房型名称' },
-              { max: 30, message: '房型名称不能超过30个字符' },
-            ]}
-          >
-            <Input placeholder="请输入房型名称" maxLength={30} />
-          </Form.Item>
-          <Form.Item
-            label="基础价格 (¥)"
-            name="basePrice"
-            rules={[{ required: true, message: '请输入基础价格' }]}
-          >
-            <InputNumber min={1} style={{ width: '100%' }} placeholder="请输入价格" />
-          </Form.Item>
-          <Form.Item label="上架状态" name="isActive" valuePropName="checked">
-            <Switch checkedChildren="在售" unCheckedChildren="下架" />
+        <Form form={createForm} layout="vertical" style={{ marginTop: 16 }}>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                label="房型名称"
+                name="name"
+                rules={[
+                  { required: true, message: '请输入房型名称' },
+                  { max: 30, message: '房型名称不能超过30个字符' },
+                ]}
+              >
+                <Input placeholder="例: 豪华大床房" maxLength={30} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="房型类型"
+                name="room_type"
+                initialValue={1}
+                rules={[{ required: true, message: '请选择房型类型' }]}
+              >
+                <Select
+                  options={[
+                    { value: 1, label: '大床房' },
+                    { value: 2, label: '双床房' },
+                    { value: 3, label: '单人房' },
+                    { value: 4, label: '多床房' },
+                    { value: 5, label: '套房' },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
+                label="门市价格 (¥)"
+                name="ori_price"
+                rules={[{ required: true, message: '请输入基础门市价格' }]}
+              >
+                <InputNumber min={1} style={{ width: '100%' }} placeholder="例: 599" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label="最大入住人数"
+                name="max_occupancy"
+                initialValue={2}
+                rules={[{ required: true, message: '请输入人数' }]}
+              >
+                <InputNumber min={1} max={10} style={{ width: '100%' }} placeholder="例: 2" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item label="面积 (㎡)" name="area" initialValue={20}>
+                <InputNumber min={1} style={{ width: '100%' }} placeholder="例: 35" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="所在楼层" name="floor">
+                <Input placeholder="例: 10,11,12" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="床型信息" name="room_bed">
+                <Input placeholder="例: 1*1.8m大床" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={6}>
+              <Form.Item
+                label="含早餐"
+                name="has_breakfast"
+                valuePropName="checked"
+                initialValue={false}
+              >
+                <Switch checkedChildren="是" unCheckedChildren="否" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item label="有窗" name="has_window" valuePropName="checked" initialValue={true}>
+                <Switch checkedChildren="是" unCheckedChildren="否" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item label="可加床" name="add_bed" valuePropName="checked" initialValue={false}>
+                <Switch checkedChildren="是" unCheckedChildren="否" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item
+                label="独立WiFi"
+                name="has_wifi"
+                valuePropName="checked"
+                initialValue={true}
+              >
+                <Switch checkedChildren="是" unCheckedChildren="否" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item label="房型备注" name="remark">
+            <Input.TextArea
+              placeholder="例: 无烟处理，带阳台等"
+              rows={2}
+              maxLength={200}
+              showCount
+            />
           </Form.Item>
         </Form>
       </Modal>

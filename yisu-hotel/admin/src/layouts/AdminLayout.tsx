@@ -1,11 +1,11 @@
 import React from 'react'
-import { Layout, Menu, Avatar, Badge, Breadcrumb, Dropdown } from 'antd'
+import { Layout, Menu, Avatar, Breadcrumb, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import {
   SafetyCertificateOutlined,
   TagsOutlined,
   TeamOutlined,
-  BellOutlined,
+  HomeOutlined,
   LogoutOutlined,
   DownOutlined,
 } from '@ant-design/icons'
@@ -17,6 +17,7 @@ const { Header, Sider, Content } = Layout
 /** 面包屑名称映射 */
 const breadcrumbMap: Record<string, string> = {
   '/admin/audit': '酒店审核',
+  '/admin/hotels': '酒店管理',
   '/admin/coupons': '优惠券管理',
   '/admin/users': '用户管理',
 }
@@ -78,6 +79,12 @@ const AdminLayout: React.FC = () => {
       onClick: () => navigate('/admin/audit'),
     },
     {
+      key: 'hotels',
+      icon: <HomeOutlined />,
+      label: '酒店管理',
+      onClick: () => navigate('/admin/hotels'),
+    },
+    {
       key: 'coupons',
       icon: <TagsOutlined />,
       label: '优惠券管理',
@@ -121,11 +128,7 @@ const AdminLayout: React.FC = () => {
           </div>
           <div className={styles.headerRight}>
             {/* 通知 */}
-            <Badge count={1} dot>
-              <button className={styles.notificationBtn}>
-                <BellOutlined />
-              </button>
-            </Badge>
+
             <div className={styles.divider} />
             {/* 用户信息 */}
             <Dropdown menu={userMenu}>

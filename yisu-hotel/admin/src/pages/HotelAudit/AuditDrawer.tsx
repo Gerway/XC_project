@@ -33,13 +33,49 @@ export interface IAuditDetail {
   applyTime: string
   /** 酒店描述 */
   description: string
+  /** 内部备注 */
+  remark?: string
   /** 当前状态 */
   status: HotelStatus
+
+  // 追加新增字段
+  cityName?: string
+  latitude?: number | string
+  longitude?: number | string
+  hotelType?: number
+  starRating?: number
+  openTime?: string
+  closeTime?: string
 
   /** 酒店实景图 URL 列表 */
   scenePhotos: string[]
   /** 设施标签列表 */
   facilities: string[]
+}
+
+// 辅助函数
+const getHotelTypeLabel = (type?: number) => {
+  const map: Record<number, string> = {
+    1: '经济型',
+    2: '舒适型',
+    3: '高档型',
+    4: '豪华型',
+    5: '度假型',
+    6: '民宿',
+  }
+  return type ? map[type] || String(type) : '-'
+}
+
+const getStarRatingLabel = (rating?: number) => {
+  const map: Record<number, string> = {
+    5: '5星级',
+    4: '4星级',
+    3: '3星级',
+    2: '2星级',
+    1: '1星级',
+    0: '精选',
+  }
+  return rating !== undefined && rating !== null ? map[rating] || String(rating) : '-'
 }
 
 export interface AuditDrawerProps {
@@ -178,18 +214,42 @@ const AuditDrawer: React.FC<AuditDrawerProps> = ({
             基本信息
           </div>
           <Descriptions
-            column={1}
+            column={2}
             colon={false}
             className={styles.descriptions}
-            styles={{ label: { width: 80 } }}
+            styles={{ label: { width: 100 } }}
           >
             <Descriptions.Item label="酒店名称">{detail.hotelName}</Descriptions.Item>
-            <Descriptions.Item label="所属商家">
-              {detail.merchantName} (Enterprise ID: {detail.merchantId})
+            <Descriptions.Item label="城市">{detail.cityName || '-'}</Descriptions.Item>
+
+            <Descriptions.Item label="详细地址">{detail.address || '-'}</Descriptions.Item>
+            <Descriptions.Item label="经纬度">
+              {detail.longitude || '-'}, {detail.latitude || '-'}
+            </Descriptions.Item>
+
+            <Descriptions.Item label="酒店类型">
+              {getHotelTypeLabel(detail.hotelType)}
+            </Descriptions.Item>
+            <Descriptions.Item label="星级">
+              {getStarRatingLabel(detail.starRating)}
+            </Descriptions.Item>
+
+            <Descriptions.Item label="营业时间">
+              {detail.openTime && detail.closeTime
+                ? `${detail.openTime} - ${detail.closeTime}`
+                : '-'}
             </Descriptions.Item>
             <Descriptions.Item label="联系电话">{detail.phone}</Descriptions.Item>
-            <Descriptions.Item label="详细地址">{detail.address}</Descriptions.Item>
-            <Descriptions.Item label="申请时间">{detail.applyTime}</Descriptions.Item>
+
+            <Descriptions.Item label="所属商家" span={2}>
+              {detail.merchantName} (Enterprise ID: {detail.merchantId})
+            </Descriptions.Item>
+            <Descriptions.Item label="申请时间" span={2}>
+              {detail.applyTime}
+            </Descriptions.Item>
+            <Descriptions.Item label="内部备注" span={2}>
+              {detail.remark || '（无）'}
+            </Descriptions.Item>
           </Descriptions>
         </div>
 

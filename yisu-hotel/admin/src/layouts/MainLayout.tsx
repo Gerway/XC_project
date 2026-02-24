@@ -1,10 +1,9 @@
 import React, { useState } from 'react'
-import { Layout, Menu, Avatar, Badge, Input, Breadcrumb, Dropdown, theme } from 'antd'
+import { Layout, Menu, Avatar, Input, Breadcrumb, Dropdown, theme } from 'antd'
 import type { MenuProps } from 'antd'
 import {
   AppstoreOutlined,
   FileTextOutlined,
-  NotificationOutlined,
   SearchOutlined,
   LogoutOutlined,
 } from '@ant-design/icons'
@@ -146,11 +145,7 @@ const MainLayout: React.FC = () => {
               className={styles.searchInput}
               variant="borderless"
             />
-            <Badge count={1} dot>
-              <div className={styles.iconButton}>
-                <NotificationOutlined style={{ fontSize: '18px' }} />
-              </div>
-            </Badge>
+
             <div className={styles.userSection}>
               <div className={styles.userInfo}>
                 <div className={styles.userName}>{user.name}</div>

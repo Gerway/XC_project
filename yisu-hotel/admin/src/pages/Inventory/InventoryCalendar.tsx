@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react'
-import { Button, Modal, DatePicker, Checkbox, InputNumber, Form, App } from 'antd'
+import React, { useState, useMemo, useCallback } from 'react'
+import { Button, Modal, DatePicker, Checkbox, InputNumber, Form, App, Select } from 'antd'
 import {
   LeftOutlined,
   RightOutlined,
@@ -7,15 +7,15 @@ import {
   SettingOutlined,
   EditOutlined,
 } from '@ant-design/icons'
-import type { IRoom, IDayInventory } from '@yisu/shared'
+import type { IDayInventory } from '@yisu/shared'
+import { roomApi, type IRoomWithStock } from '../../api/room'
+import { merchantApi } from '../../api/merchant'
 import styles from './Inventory.module.scss'
 
 const { RangePicker } = DatePicker
 
 interface InventoryCalendarProps {
-  room: IRoom | null
-  inventoryData: IDayInventory[]
-  onUpdateDay?: (date: string, price: number, stock: number) => void
+  room: IRoomWithStock | null
 }
 
 interface CalendarCell {
@@ -37,21 +37,60 @@ const WEEKDAY_OPTIONS = [
   { label: '周日', value: 0 },
 ]
 
-const InventoryCalendar: React.FC<InventoryCalendarProps> = ({
-  room,
-  inventoryData,
-  onUpdateDay,
-}) => {
-  const [currentYear, setCurrentYear] = useState(2023)
-  const [currentMonth, setCurrentMonth] = useState(10) // 1-indexed
+const InventoryCalendar: React.FC<InventoryCalendarProps> = ({ room }) => {
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1) // 1-indexed
   const [batchModalOpen, setBatchModalOpen] = useState(false)
   const [form] = Form.useForm()
+
+  const [inventoryData, setInventoryData] = useState<IDayInventory[]>([])
+
+  const currentUserId = useMemo(() => {
+    const userStr = localStorage.getItem('user')
+    const user = userStr ? JSON.parse(userStr) : null
+    return user?.user_id || 'U-TEST-001'
+  }, [])
+
+  const { message } = App.useApp()
+
+  // Fetch data
+  const fetchInventory = useCallback(async () => {
+    if (!room || !currentUserId) {
+      setInventoryData([])
+      return
+    }
+
+    const lastDay = new Date(currentYear, currentMonth, 0)
+    const startDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`
+    const endDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(lastDay.getDate()).padStart(2, '0')}`
+
+    try {
+      const response = await merchantApi.getInventory({
+        user_id: currentUserId,
+        room_id: room.room_id,
+        startDate,
+        endDate,
+      })
+      // Based on typical axios interceptors where code is un-wrapped, OR if backend doesn't return code
+      const dataToSet = (response as { data?: unknown }).data || response || []
+      setInventoryData(Array.isArray(dataToSet) ? (dataToSet as IDayInventory[]) : [])
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        message.error(err.message || '获取库存日历失败')
+      } else {
+        message.error('获取库存日历失败')
+      }
+    }
+  }, [room, currentUserId, currentYear, currentMonth, message])
+
+  React.useEffect(() => {
+    fetchInventory()
+  }, [fetchInventory])
 
   // Day edit modal state
   const [dayEditOpen, setDayEditOpen] = useState(false)
   const [editingDate, setEditingDate] = useState<string | null>(null)
   const [dayForm] = Form.useForm()
-  const { message } = App.useApp()
 
   // Build calendar grid
   const calendarCells = useMemo<CalendarCell[]>(() => {
@@ -77,7 +116,7 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({
     // Current month days
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-      const inv = inventoryData.find((d) => d.date === dateStr)
+      const inv = inventoryData.find((d) => d.date && d.date.startsWith(dateStr))
       cells.push({ day, isCurrentMonth: true, date: dateStr, inventory: inv })
     }
 
@@ -116,11 +155,85 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({
   const handleBatchSubmit = () => {
     form
       .validateFields()
-      .then((values) => {
-        console.log('Batch settings:', values)
-        message.success('批量设置成功（演示）')
-        setBatchModalOpen(false)
-        form.resetFields()
+      .then(async (values) => {
+        if (!room || !currentUserId) return
+        if (!room.hotel_id) {
+          message.error('由于房型数据中缺少 hotel_id，无法执行批量操作。')
+          return
+        }
+
+        const [start, end] = values.dateRange || []
+        if (!start || !end) return
+
+        const start_date = start.format('YYYY-MM-DD')
+        const end_date = end.format('YYYY-MM-DD')
+        const price =
+          values.price !== undefined && values.price !== null ? Number(values.price) : undefined
+        const stock =
+          values.stock !== undefined && values.stock !== null ? Number(values.stock) : undefined
+        const operationType = values.operationType
+
+        let promise = null
+        if (operationType === 'add') {
+          if (price === undefined || stock === undefined) {
+            message.error('新增库存必须填写价格和库存数量')
+            return
+          }
+          promise = roomApi.addRoomInventory({
+            user_id: currentUserId,
+            hotel_id: room.hotel_id,
+            room_id: room.room_id,
+            start_date,
+            end_date,
+            weekdays: values.weekdays,
+            price,
+            stock,
+          })
+        } else if (operationType === 'update') {
+          if (price === undefined && stock === undefined) {
+            message.error('修改库存必须至少填写价格或库存数量之一')
+            return
+          }
+          promise = roomApi.batchUpdateRoomInventory({
+            user_id: currentUserId,
+            hotel_id: room.hotel_id,
+            room_id: room.room_id,
+            start_date,
+            end_date,
+            weekdays: values.weekdays,
+            price,
+            stock,
+          })
+        } else if (operationType === 'clear') {
+          promise = roomApi.deleteRoomInventory({
+            user_id: currentUserId,
+            hotel_id: room.hotel_id,
+            room_id: room.room_id,
+            start_date,
+            end_date,
+            weekdays: values.weekdays,
+          })
+        }
+
+        if (promise) {
+          try {
+            const res = await promise
+            if (res.code === 200) {
+              message.success(res.message || '操作成功')
+              setBatchModalOpen(false)
+              form.resetFields()
+              fetchInventory()
+            } else {
+              message.error(res.message || '操作失败')
+            }
+          } catch (err: unknown) {
+            if (err instanceof Error) {
+              message.error(err.message || '操作失败')
+            } else {
+              message.error('操作失败')
+            }
+          }
+        }
       })
       .catch(() => {
         // validation errors shown by form
@@ -143,14 +256,37 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({
   const handleDayEditSubmit = () => {
     dayForm
       .validateFields()
-      .then((values) => {
-        if (editingDate && onUpdateDay) {
-          onUpdateDay(editingDate, values.price, values.stock)
+      .then(async (values) => {
+        if (!room || !currentUserId || !editingDate) return
+        if (!room.hotel_id) return
+
+        try {
+          const res = await roomApi.batchUpdateRoomInventory({
+            user_id: currentUserId,
+            hotel_id: room.hotel_id,
+            room_id: room.room_id,
+            start_date: editingDate,
+            end_date: editingDate,
+            price: values.price,
+            stock: values.stock,
+          })
+
+          if (res.code === 200) {
+            message.success(`${editingDate} 库存已更新`)
+            setDayEditOpen(false)
+            setEditingDate(null)
+            dayForm.resetFields()
+            fetchInventory()
+          } else {
+            message.error(res.message || '更新失败')
+          }
+        } catch (err: unknown) {
+          if (err instanceof Error) {
+            message.error(err.message || '更新失败')
+          } else {
+            message.error('更新失败')
+          }
         }
-        message.success(`${editingDate} 库存已更新`)
-        setDayEditOpen(false)
-        setEditingDate(null)
-        dayForm.resetFields()
       })
       .catch(() => {})
   }
@@ -178,7 +314,9 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({
           )}
         </div>
         <div className={styles.calendarActions}>
-          <Button icon={<ReloadOutlined />}>刷新</Button>
+          <Button icon={<ReloadOutlined />} onClick={fetchInventory}>
+            刷新
+          </Button>
           <Button type="primary" icon={<SettingOutlined />} onClick={() => setBatchModalOpen(true)}>
             批量设置
           </Button>
@@ -209,7 +347,7 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({
                   {cell.isCurrentMonth && (
                     <EditOutlined
                       className={styles.editIcon}
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent) => {
                         e.stopPropagation()
                         handleDayEdit(cell)
                       }}
@@ -244,7 +382,19 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({
         cancelText="取消"
         width={520}
       >
-        <Form form={form} layout="vertical" className={styles.batchForm}>
+        <Form
+          form={form}
+          layout="vertical"
+          className={styles.batchForm}
+          initialValues={{ operationType: 'update' }}
+        >
+          <Form.Item label="操作类型" name="operationType" rules={[{ required: true }]}>
+            <Select>
+              <Select.Option value="add">新增库存（该日期之前无库存）</Select.Option>
+              <Select.Option value="update">修改库存/价格（适用于已有库存日期）</Select.Option>
+              <Select.Option value="clear">清空库存（将所选库存数量设为 0）</Select.Option>
+            </Select>
+          </Form.Item>
           <Form.Item
             label="日期范围"
             name="dateRange"
@@ -255,11 +405,29 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({
           <Form.Item label="适用星期" name="weekdays">
             <Checkbox.Group options={WEEKDAY_OPTIONS} className={styles.weekdayGroup} />
           </Form.Item>
-          <Form.Item label="设置价格 (¥)" name="price">
-            <InputNumber min={0} style={{ width: '100%' }} placeholder="留空则不修改" />
-          </Form.Item>
-          <Form.Item label="设置库存" name="stock">
-            <InputNumber min={0} style={{ width: '100%' }} placeholder="留空则不修改" />
+          <Form.Item noStyle dependencies={['operationType']}>
+            {() => {
+              const op = form.getFieldValue('operationType')
+              if (op === 'clear') return null
+              return (
+                <>
+                  <Form.Item label="设置价格 (¥)" name="price">
+                    <InputNumber
+                      min={0}
+                      style={{ width: '100%' }}
+                      placeholder={op === 'update' ? '留空则不修改' : '此操作必填'}
+                    />
+                  </Form.Item>
+                  <Form.Item label="设置库存" name="stock">
+                    <InputNumber
+                      min={0}
+                      style={{ width: '100%' }}
+                      placeholder={op === 'update' ? '留空则不修改' : '此操作必填'}
+                    />
+                  </Form.Item>
+                </>
+              )
+            }}
           </Form.Item>
         </Form>
       </Modal>

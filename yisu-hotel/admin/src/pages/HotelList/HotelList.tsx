@@ -13,6 +13,10 @@ import {
   Descriptions,
   Image,
   Popconfirm,
+  InputNumber,
+  TimePicker,
+  Row,
+  Col,
 } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import type { UploadFile, UploadProps } from 'antd/es/upload/interface'
@@ -26,42 +30,44 @@ import {
   EditOutlined,
 } from '@ant-design/icons'
 import { HotelStatus, type IHotel } from '@yisu/shared'
+import dayjs from 'dayjs'
 import styles from './HotelList.module.scss'
 import { merchantApi } from '../../api/merchant'
 
 // Hotel type options
 const hotelTypeOptions = [
-  { label: '豪华型', value: '豪华型' },
-  { label: '度假型', value: '度假型' },
-  { label: '经济型', value: '经济型' },
-  { label: '商务型', value: '商务型' },
-  { label: '民宿', value: '民宿' },
+  { label: '经济型', value: 1 },
+  { label: '舒适型', value: 2 },
+  { label: '高档型', value: 3 },
+  { label: '豪华型', value: 4 },
+  { label: '度假型', value: 5 },
+  { label: '民宿', value: 6 },
 ]
 
 // Star rating options
 const starRatingOptions = [
-  { label: '5星级', value: '5星级' },
-  { label: '4星级', value: '4星级' },
-  { label: '3星级', value: '3星级' },
-  { label: '2星级', value: '2星级' },
-  { label: '1星级', value: '1星级' },
-  { label: '精选', value: '精选' },
+  { label: '5星级', value: 5 },
+  { label: '4星级', value: 4 },
+  { label: '3星级', value: 3 },
+  { label: '2星级', value: 2 },
+  { label: '1星级', value: 1 },
+  { label: '精选', value: 0 },
 ]
 
 // Form values type (shared between Add & Edit)
 interface HotelFormValues {
   name: string
-  type: string
-  starRating: string
+  type: number
+  starRating: number
   address: string
+  city_name: string
+  latitude: number
+  longitude: number
+  tags: string[]
+  openTime: any
+  closeTime: any
   description?: string
-}
-
-// Parse "豪华型 · 5星级" back into { type, starRating }
-const parseDescription = (desc?: string): { type?: string; starRating?: string } => {
-  if (!desc) return {}
-  const parts = desc.split('·').map((s) => s.trim())
-  return { type: parts[0] || undefined, starRating: parts[1] || undefined }
+  remark?: string
 }
 
 // Map hotel ID to icon
@@ -188,15 +194,38 @@ const HotelList: React.FC = () => {
     setIsModalOpen(true)
   }
 
-  const handleOpenEditModal = (hotel: IHotel) => {
+  const handleOpenEditModal = (hotel: any) => {
     setEditingHotel(hotel)
-    const { type, starRating } = parseDescription(hotel.description)
+
+    let openTime = null
+    let closeTime = null
+    if (hotel.open_time) openTime = dayjs(hotel.open_time)
+    if (hotel.close_time) closeTime = dayjs(hotel.close_time)
+
+    let tags = []
+    if (typeof hotel.tags === 'string') {
+      try {
+        tags = JSON.parse(hotel.tags)
+      } catch {
+        tags = []
+      }
+    } else if (Array.isArray(hotel.tags)) {
+      tags = hotel.tags
+    }
+
     form.setFieldsValue({
       name: hotel.name,
-      type,
-      starRating,
+      type: hotel.hotel_type,
+      starRating: hotel.star_rating,
       address: hotel.address || '',
-      description: hotel.remark, // Map db remark to form description textarea
+      city_name: hotel.city_name || '',
+      latitude: hotel.latitude ? Number(hotel.latitude) : undefined,
+      longitude: hotel.longitude ? Number(hotel.longitude) : undefined,
+      tags,
+      openTime,
+      closeTime,
+      description: hotel.description,
+      remark: hotel.remark,
     })
 
     // Convert backend media to UploadFile format
@@ -263,21 +292,37 @@ const HotelList: React.FC = () => {
       const userId = getUserId()
 
       // Step 1: Save hotel basic info
+
+      const openTimeStr = values.openTime
+        ? values.openTime.format('YYYY-MM-DD HH:mm:ss')
+        : undefined
+      const closeTimeStr = values.closeTime
+        ? values.closeTime.format('YYYY-MM-DD HH:mm:ss')
+        : undefined
+
       const res = await merchantApi.saveMerchantHotel({
         user_id: userId,
-        hotel_id: editingHotel?.hotel_id,
+        hotel_id: editingHotel?.hotel_id ? String(editingHotel.hotel_id) : undefined,
         name: values.name,
-        description: `${values.type} · ${values.starRating}`,
         address: values.address,
-        star_rating: parseInt(values.starRating) || 0,
-        remark: values.description,
+        city_name: values.city_name,
+        latitude: values.latitude,
+        longitude: values.longitude,
+        hotel_type: values.type,
+        star_rating: values.starRating,
+        tags: values.tags,
+        open_time: openTimeStr,
+        close_time: closeTimeStr,
+        description: values.description,
+        remark: values.remark,
       })
 
-      if (!res.data || !res.data.hotel_id) {
-        throw new Error(res.message || '保存酒店响应异常')
+      const resData = (res as any).data || res
+      if (!resData || !resData.hotel_id) {
+        throw new Error((res as any).message || '保存酒店响应异常')
       }
 
-      const hotelId = res.data.hotel_id
+      const hotelId = String(resData.hotel_id)
 
       // Step 2: Handle Media Sync
       // Determine what was deleted vs newly uploaded based on fileList state vs initial
@@ -504,7 +549,7 @@ const HotelList: React.FC = () => {
         confirmLoading={confirmLoading}
         okText={isEditMode ? '保存修改' : '确认添加'}
         cancelText="取消"
-        width={560}
+        width={720}
         forceRender
         className={styles.addHotelModal}
       >
@@ -535,48 +580,90 @@ const HotelList: React.FC = () => {
             <Input placeholder="请输入酒店名称" maxLength={50} showCount />
           </Form.Item>
 
-          <div className={styles.formRow}>
-            <Form.Item
-              label="酒店类型"
-              name="type"
-              rules={[{ required: true, message: '请选择酒店类型' }]}
-              className={styles.formRowItem}
-            >
-              <Select placeholder="请选择类型" options={hotelTypeOptions} />
-            </Form.Item>
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
+                label="城市名称"
+                name="city_name"
+                rules={[{ required: true, message: '请输入城市名称' }]}
+              >
+                <Input placeholder="如：重庆" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label="酒店类型"
+                name="type"
+                rules={[{ required: true, message: '请选择酒店类型' }]}
+              >
+                <Select placeholder="请选择" options={hotelTypeOptions} />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                label="星级"
+                name="starRating"
+                rules={[{ required: true, message: '请选择星级' }]}
+              >
+                <Select placeholder="请选择" options={starRatingOptions} />
+              </Form.Item>
+            </Col>
+          </Row>
 
-            <Form.Item
-              label="星级"
-              name="starRating"
-              rules={[{ required: true, message: '请选择星级' }]}
-              className={styles.formRowItem}
-            >
-              <Select placeholder="请选择星级" options={starRatingOptions} />
-            </Form.Item>
-          </div>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                label="酒店地址"
+                name="address"
+                rules={[{ required: true, message: '请输入酒店地址' }]}
+              >
+                <Input placeholder="详细地址，如：解放碑" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item label="经度" name="longitude">
+                <InputNumber style={{ width: '100%' }} placeholder="如: 106.5" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item label="纬度" name="latitude">
+                <InputNumber style={{ width: '100%' }} placeholder="如: 29.5" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="酒店标签" name="tags">
+                <Select mode="tags" placeholder="输入标签后回车" />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item label="营业时间 (optional)" name="openTime">
+                <TimePicker format="HH:mm" style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={6}>
+              <Form.Item label="结业时间 (optional)" name="closeTime">
+                <TimePicker format="HH:mm" style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item
-            label="酒店地址"
-            name="address"
-            rules={[
-              { required: true, message: '请输入酒店地址' },
-              { max: 100, message: '地址不能超过100个字符' },
-            ]}
+            label="详细描述 (用户端展示)"
+            name="description"
+            rules={[{ max: 500, message: '描述不能超过500个字符' }]}
           >
-            <Input placeholder="请输入详细地址，如：北京市朝阳区建国路88号" maxLength={100} />
+            <Input.TextArea placeholder="请输入酒店详细介绍" rows={3} maxLength={500} showCount />
           </Form.Item>
 
           <Form.Item
-            label="详细描述"
-            name="description"
-            rules={[{ max: 200, message: '描述不能超过200个字符' }]}
+            label="商户内部备注"
+            name="remark"
+            rules={[{ max: 200, message: '备注不能超过200个字符' }]}
           >
-            <Input.TextArea
-              placeholder="请输入酒店描述信息（选填）"
-              rows={3}
-              maxLength={200}
-              showCount
-            />
+            <Input.TextArea placeholder="仅商户内部可见" rows={2} maxLength={200} showCount />
           </Form.Item>
 
           <Form.Item label="酒店图片 (由服务器图库提供响应支持)">
@@ -638,26 +725,44 @@ const HotelList: React.FC = () => {
             <Descriptions.Item label="酒店名称" span={2}>
               <strong>{viewingHotel.name}</strong>
             </Descriptions.Item>
-            <Descriptions.Item label="酒店地址" span={2}>
+            <Descriptions.Item label="城市" span={1}>
+              {viewingHotel.city_name || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="酒店地址" span={1}>
               {viewingHotel.address || '-'}
             </Descriptions.Item>
-            <Descriptions.Item label="酒店类型">
-              {parseDescription(viewingHotel.description).type || '-'}
+            <Descriptions.Item label="酒店类型" span={1}>
+              {hotelTypeOptions.find((o) => o.value === viewingHotel.hotel_type)?.label ||
+                viewingHotel.hotel_type ||
+                '-'}
             </Descriptions.Item>
-            <Descriptions.Item label="酒店星级">
-              {parseDescription(viewingHotel.description).starRating || '-'}
+            <Descriptions.Item label="酒店星级" span={1}>
+              {starRatingOptions.find((o) => o.value === viewingHotel.star_rating)?.label ||
+                viewingHotel.star_rating ||
+                '-'}
             </Descriptions.Item>
-            <Descriptions.Item label="审核状态">
+            <Descriptions.Item label="审核状态" span={1}>
               <Tag color={statusConfig[viewingHotel.status]?.color}>
                 {statusConfig[viewingHotel.status]?.text}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="建档日期">
+            <Descriptions.Item label="建档日期" span={1}>
               {viewingHotel.created_at
                 ? new Date(viewingHotel.created_at).toLocaleDateString()
                 : '-'}
             </Descriptions.Item>
-            <Descriptions.Item label="图文介绍" span={2}>
+            <Descriptions.Item label="酒店标签" span={2}>
+              {viewingHotel.tags
+                ? (typeof viewingHotel.tags === 'string'
+                    ? JSON.parse(viewingHotel.tags)
+                    : viewingHotel.tags
+                  ).map((t: string) => <Tag key={t}>{t}</Tag>)
+                : '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="详细描述" span={2}>
+              {viewingHotel.description || '（无）'}
+            </Descriptions.Item>
+            <Descriptions.Item label="内部备注" span={2}>
               {viewingHotel.remark || '（无）'}
             </Descriptions.Item>
             <Descriptions.Item label="酒店图片/图库" span={2}>

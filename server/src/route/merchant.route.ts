@@ -30,4 +30,9 @@ router.post('/order/update-status', merchantCtl.updateOrderStatus)
 // 5. 评价管理
 router.post('/review/list', merchantCtl.getMerchantReviews)
 
+// 6. 管理员：酒店管理
+router.post('/admin-hotel/list', merchantCtl.getAdminHotelList)
+router.post('/admin-hotel/update', merchantCtl.updateHotelAdmin)
+router.post('/admin-hotel/delete', merchantCtl.deleteHotelAdmin)
+
 export default router
