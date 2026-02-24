@@ -40,6 +40,7 @@ export interface CreateRoomBody {
   has_wifi?: boolean
   remark?: string
   room_bed?: string
+  room_photos?: string[]
 }
 
 export interface DeleteRoomBody {
