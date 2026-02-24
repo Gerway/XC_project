@@ -1,14 +1,15 @@
 import React, { useEffect } from 'react'
-import { Modal, Form, Input, InputNumber, Switch } from 'antd'
+import { Form, Input, InputNumber, Switch } from 'antd'
 import { DatePicker } from 'antd'
 import type { Dayjs } from 'dayjs'
 import styles from './CouponManager.module.scss'
 import type { CouponCreateParams } from '../../api/coupon'
+import { FormModal } from '../../components/FormModal'
 
 interface CreateCouponModalProps {
   open: boolean
   onCancel: () => void
-  onSubmit: (coupon: CouponCreateParams) => void
+  onSubmit: (coupon: CouponCreateParams) => Promise<void> | void
 }
 
 // ===== 表单字段类型 =====
@@ -54,10 +55,10 @@ const CreateCouponModal: React.FC<CreateCouponModalProps> = ({ open, onCancel, o
   }
 
   return (
-    <Modal
+    <FormModal
       title="创建新优惠券"
       open={open}
-      onOk={handleOk}
+      onFinish={handleOk}
       onCancel={onCancel}
       okText="创建"
       cancelText="取消"
@@ -164,7 +165,7 @@ const CreateCouponModal: React.FC<CreateCouponModalProps> = ({ open, onCancel, o
           </Form.Item>
         </div>
       </Form>
-    </Modal>
+    </FormModal>
   )
 }
 

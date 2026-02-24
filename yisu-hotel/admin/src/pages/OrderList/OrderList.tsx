@@ -1,22 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import {
-  Table,
-  Button,
-  Form,
-  Select,
-  DatePicker,
-  Input,
-  App,
-  Modal,
-  Space,
-  Tag,
-  Tooltip,
-} from 'antd'
+import { Table, Button, Form, Select, DatePicker, Input, App, Space, Tag, Tooltip } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import { SearchOutlined, EditOutlined } from '@ant-design/icons'
 import dayjs, { Dayjs } from 'dayjs'
 import { orderApi, ORDER_STATUS, type IOrderRecord, type OrderStatusValue } from '../../api/order'
 import styles from './OrderList.module.scss'
+import { StatusTag } from '../../components/StatusTag'
+import { FormModal } from '../../components/FormModal'
 
 const { RangePicker } = DatePicker
 
@@ -96,7 +86,6 @@ const OrderList: React.FC = () => {
   // 编辑弹窗状态
   const [editVisible, setEditVisible] = useState(false)
   const [editTarget, setEditTarget] = useState<IOrderRecord | null>(null)
-  const [editLoading, setEditLoading] = useState(false)
 
   // ── 获取当前登录商户的 user_id ────────────────────────────────────────────
   const getCurrentUserId = (): string => {
@@ -256,7 +245,6 @@ const OrderList: React.FC = () => {
       payload.check_out = values.check_out.format('YYYY-MM-DD HH:mm:ss')
     }
 
-    setEditLoading(true)
     try {
       const res = await orderApi.updateOrder(payload)
       if (res?.code === 200) {
@@ -268,8 +256,6 @@ const OrderList: React.FC = () => {
       }
     } catch {
       message.error('网络错误，更新失败')
-    } finally {
-      setEditLoading(false)
     }
   }
 
@@ -378,7 +364,7 @@ const OrderList: React.FC = () => {
       render: (status: number) => {
         const cfg = STATUS_CONFIG[status as OrderStatusValue]
         if (!cfg) return <Tag>{status}</Tag>
-        return <span className={`${styles.statusBadge} ${cfg.className}`}>{cfg.text}</span>
+        return <StatusTag color={cfg.tagColor} statusText={cfg.text} />
       },
     },
     {
@@ -483,18 +469,17 @@ const OrderList: React.FC = () => {
       </div>
 
       {/* ── 编辑订单弹窗 ── */}
-      <Modal
+      <FormModal
         title={
           <span>
             手工编辑订单 <span className={styles.modalOrderId}>{editTarget?.order_id}</span>
           </span>
         }
         open={editVisible}
-        onOk={handleEditSubmit}
+        onFinish={handleEditSubmit}
         onCancel={() => setEditVisible(false)}
         okText="保存修改"
         cancelText="取消"
-        confirmLoading={editLoading}
         destroyOnClose
         width={480}
       >
@@ -547,7 +532,7 @@ const OrderList: React.FC = () => {
             />
           </Form.Item>
         </Form>
-      </Modal>
+      </FormModal>
     </div>
   )
 }

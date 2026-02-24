@@ -5,8 +5,6 @@ import {
   Input,
   Card,
   Statistic,
-  Select,
-  Form,
   App,
   Modal,
   Popconfirm,
@@ -15,6 +13,8 @@ import {
   Col,
   Tag,
   Image,
+  Form,
+  Select,
 } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import {
@@ -30,13 +30,15 @@ import {
 import dayjs from 'dayjs'
 import { adminHotelApi, type IAdminHotel, type UpdateHotelBody } from '../../api/hotel'
 import styles from './AdminHotelManager.module.scss'
+import { StatusTag } from '../../components/StatusTag'
+import { FormModal } from '../../components/FormModal'
 
 // ─── 状态映射 ──────────────────────────────────────────────────────────────────
 
-const STATUS_MAP: Record<number, { text: string; class: string }> = {
-  0: { text: '待审核', class: 'pending' },
-  1: { text: '已发布', class: 'published' },
-  2: { text: '已驳回', class: 'rejected' },
+const STATUS_MAP: Record<number, { text: string; color: string }> = {
+  0: { text: '待审核', color: 'processing' },
+  1: { text: '已发布', color: 'success' },
+  2: { text: '已驳回', color: 'error' },
 }
 
 const HOTEL_TYPE_MAP: Record<number, string> = {
@@ -91,7 +93,6 @@ const AdminHotelManager: React.FC = () => {
   // Edit modal
   const [editVisible, setEditVisible] = useState(false)
   const [editTarget, setEditTarget] = useState<IAdminHotel | null>(null)
-  const [editLoading, setEditLoading] = useState(false)
 
   // ── Fetch hotels ─────────────────────────────────────────────────────────
   const fetchHotels = useCallback(
@@ -183,7 +184,6 @@ const AdminHotelManager: React.FC = () => {
         latitude: values.latitude,
         longitude: values.longitude,
       }
-      setEditLoading(true)
       const res = await adminHotelApi.updateHotel(payload)
       if (res?.code === 200) {
         message.success('酒店信息已更新')
@@ -194,8 +194,6 @@ const AdminHotelManager: React.FC = () => {
       }
     } catch {
       // validation error or network error
-    } finally {
-      setEditLoading(false)
     }
   }
 
@@ -287,13 +285,8 @@ const AdminHotelManager: React.FC = () => {
       width: 90,
       align: 'center',
       render: (_: unknown, record: IAdminHotel) => {
-        const cfg = STATUS_MAP[record.status] || { text: '未知', class: 'pending' }
-        return (
-          <span className={`${styles.statusBadge} ${styles[cfg.class]}`}>
-            <span className={`${styles.statusDot} ${styles[cfg.class]}`} />
-            {cfg.text}
-          </span>
-        )
+        const cfg = STATUS_MAP[record.status] || { text: '未知', color: 'processing' }
+        return <StatusTag color={cfg.color} statusText={cfg.text} />
       },
     },
     {
@@ -440,18 +433,17 @@ const AdminHotelManager: React.FC = () => {
       </div>
 
       {/* Edit Modal */}
-      <Modal
+      <FormModal
         title={
           <span>
             <EditOutlined /> 编辑酒店 — {editTarget?.name}
           </span>
         }
         open={editVisible}
-        onOk={handleEditSubmit}
+        onFinish={handleEditSubmit}
         onCancel={() => setEditVisible(false)}
         okText="保存修改"
         cancelText="取消"
-        confirmLoading={editLoading}
         destroyOnClose
         width={680}
         className={styles.editModal}
@@ -527,7 +519,7 @@ const AdminHotelManager: React.FC = () => {
             <Input.TextArea rows={2} placeholder="仅管理员可见" />
           </Form.Item>
         </Form>
-      </Modal>
+      </FormModal>
     </div>
   )
 }
