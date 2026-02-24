@@ -170,11 +170,6 @@ const UserManager: React.FC = () => {
     fetchUsers(1, pagination.pageSize || 10, { search: '', role: 'all', status: 'all' })
   }
 
-  // 查看详情 (预留)
-  const handleDetail = (record: IUser) => {
-    message.info(`查看「${record.name}」详情（待实现）`)
-  }
-
   // 封禁
   const handleBan = async (record: IUser, reason: string) => {
     setBanPopOpen(null)
@@ -261,13 +256,10 @@ const UserManager: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 160,
+      width: 100,
       align: 'right',
       render: (_: unknown, record: IUser) => (
         <div>
-          <a className={styles.detailLink} onClick={() => handleDetail(record)}>
-            查看详情
-          </a>
           {record.status === 'active' ? (
             <Popover
               open={banPopOpen === record.uid}
