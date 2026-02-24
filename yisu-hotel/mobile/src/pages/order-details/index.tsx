@@ -159,9 +159,17 @@ const OrderDetails: React.FC = () => {
             Taro.hideLoading();
             Taro.showToast({ title: '支付成功', icon: 'success' });
             setOrder({ ...order, status: OrderStatus.PAID, payed_at: new Date().toISOString() });
-        }).catch(() => {
+        }).catch((e: any) => {
             Taro.hideLoading();
-            Taro.showToast({ title: '支付失败', icon: 'none' });
+            const errMsg = e?.message || '支付失败';
+            setTimeout(() => {
+                Taro.showModal({
+                    title: '支付失败',
+                    content: errMsg,
+                    showCancel: false,
+                    confirmText: '知道了'
+                });
+            }, 300);
         });
     };
 

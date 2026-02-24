@@ -430,10 +430,16 @@ const Booking: React.FC = () => {
       setTimeout(() => {
         Taro.switchTab({ url: '/pages/orders/index' });
       }, 1500);
-    } catch (e) {
+    } catch (e: any) {
       console.error('Pay error', e);
       setIsProcessing(false);
-      Taro.showToast({ title: '支付失败，请重试', icon: 'none' });
+      const errMsg = e?.message || '支付失败，请重试';
+      Taro.showModal({
+        title: '支付失败',
+        content: errMsg,
+        showCancel: false,
+        confirmText: '知道了'
+      });
     }
   };
 

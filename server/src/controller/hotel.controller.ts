@@ -218,7 +218,7 @@ export const getHotelDetails = async (
 
         // Check if hotel is online (status=1)
         if (hotelInfo.status !== undefined && hotelInfo.status !== 1) {
-            res.status(403).json({ message: '该酒店已下线，暂时无法查看', code: -1, offline: true });
+            res.status(410).json({ message: '该酒店已下线，暂时无法查看', code: -1, offline: true });
             return;
         }
 
@@ -635,7 +635,43 @@ export const payOrder = async (
     }
 
     try {
-        // 1. 将 coupon_ids JSON 保存到 orders
+        // ===== 0. 先获取订单的房型和日期信息，校验库存 =====
+        const [orderInfo] = await pool.execute<RowDataPacket[]>(
+            `SELECT room_id, DATE_FORMAT(check_in, '%Y-%m-%d') as ci, DATE_FORMAT(check_out, '%Y-%m-%d') as co FROM orders WHERE order_id = ?`,
+            [order_id]
+        );
+        if (orderInfo.length === 0) {
+            res.status(404).json({ message: '订单不存在' });
+            return;
+        }
+
+        const { room_id: rId, ci, co } = orderInfo[0];
+        const rc = room_count || 1;
+
+        // 0.1 查询日期区间内每天的库存，检查是否都 >= room_count
+        const [stockRows] = await pool.execute<RowDataPacket[]>(
+            `SELECT DATE_FORMAT(date, '%Y-%m-%d') as date_str, stock FROM room_inventory WHERE room_id = ? AND date >= ? AND date < ?`,
+            [rId, ci, co]
+        );
+
+        const insufficientDates: string[] = [];
+        for (const row of stockRows) {
+            if (Number(row.stock) < rc) {
+                insufficientDates.push(`${row.date_str}(剩余${row.stock}间)`);
+            }
+        }
+
+        if (insufficientDates.length > 0) {
+            res.status(400).json({
+                message: `以下日期库存不足，无法完成预订: ${insufficientDates.join('、')}`,
+                code: -1
+            });
+            return;
+        }
+
+        // ===== 库存校验通过，开始执行支付操作 =====
+
+        // 1. 更新订单状态为已支付
         const couponIdsJson = JSON.stringify(user_coupons_ids && user_coupons_ids.length > 0 ? user_coupons_ids : []);
         await pool.execute(
             `UPDATE orders SET status = 1, real_pay = ?, total_price = ?, room_count = ?, special_request = ?, idcards = ?, coupon_ids = ?, payed_at = NOW() WHERE order_id = ?`,
@@ -669,19 +705,11 @@ export const payOrder = async (
             }
         }
 
-        // 4. 扣减库存: 对每一天的 room_inventory 里该房型的 stock 减去 room_count
-        const [orderInfo] = await pool.execute<RowDataPacket[]>(
-            `SELECT room_id, DATE_FORMAT(check_in, '%Y-%m-%d') as ci, DATE_FORMAT(check_out, '%Y-%m-%d') as co FROM orders WHERE order_id = ?`,
-            [order_id]
+        // 4. 扣减库存
+        await pool.execute(
+            `UPDATE room_inventory SET stock = stock - ? WHERE room_id = ? AND date >= ? AND date < ?`,
+            [rc, rId, ci, co]
         );
-        if (orderInfo.length > 0) {
-            const { room_id: rId, ci, co } = orderInfo[0];
-            const rc = room_count || 1;
-            await pool.execute(
-                `UPDATE room_inventory SET stock = GREATEST(stock - ?, 0) WHERE room_id = ? AND date >= ? AND date < ?`,
-                [rc, rId, ci, co]
-            );
-        }
 
         res.status(200).json({ message: '支付成功', data: { order_id } });
     } catch (err) {
