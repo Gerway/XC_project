@@ -5,6 +5,7 @@ import {
   SafetyCertificateOutlined,
   TagsOutlined,
   TeamOutlined,
+  HomeOutlined,
   LogoutOutlined,
   DownOutlined,
 } from '@ant-design/icons'
@@ -16,6 +17,7 @@ const { Header, Sider, Content } = Layout
 /** 面包屑名称映射 */
 const breadcrumbMap: Record<string, string> = {
   '/admin/audit': '酒店审核',
+  '/admin/hotels': '酒店管理',
   '/admin/coupons': '优惠券管理',
   '/admin/users': '用户管理',
 }
@@ -75,6 +77,12 @@ const AdminLayout: React.FC = () => {
       icon: <SafetyCertificateOutlined />,
       label: '酒店审核',
       onClick: () => navigate('/admin/audit'),
+    },
+    {
+      key: 'hotels',
+      icon: <HomeOutlined />,
+      label: '酒店管理',
+      onClick: () => navigate('/admin/hotels'),
     },
     {
       key: 'coupons',

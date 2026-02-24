@@ -1012,3 +1012,197 @@ export const getMerchantReviews = async (
     res.status(500).json({ message: '获取评价失败' })
   }
 }
+
+// =========================================
+// 7. 管理员：酒店管理 (Admin Hotel Management)
+// =========================================
+
+interface AdminHotelListBody {
+  page?: number
+  pageSize?: number
+  keyword?: string
+  status?: number // 0 待审核, 1 已发布, 2 已驳回
+  star_rating?: number
+}
+
+// ===================== 管理员：获取全部酒店列表 =====================
+export const getAdminHotelList = async (
+  req: Request<Record<string, unknown>, unknown, AdminHotelListBody>,
+  res: Response,
+): Promise<void> => {
+  const { page = 1, pageSize = 10, keyword, status, star_rating } = req.body
+
+  try {
+    // --- 统计数据 ---
+    const [statsRows] = await pool.execute<RowDataPacket[]>(`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as published,
+        SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as pending
+      FROM hotel
+    `)
+    const stats = statsRows[0] || { total: 0, published: 0, pending: 0 }
+
+    // --- 列表查询 ---
+    const whereClauses: string[] = []
+    const params: unknown[] = []
+
+    if (keyword) {
+      whereClauses.push(`(h.name LIKE ? OR h.address LIKE ? OR h.hotel_id LIKE ?)`)
+      const kw = `%${keyword}%`
+      params.push(kw, kw, kw)
+    }
+    if (status !== undefined && status !== null) {
+      whereClauses.push(`h.status = ?`)
+      params.push(status)
+    }
+    if (star_rating !== undefined && star_rating !== null) {
+      whereClauses.push(`h.star_rating = ?`)
+      params.push(star_rating)
+    }
+
+    const whereStr = whereClauses.length > 0 ? 'WHERE ' + whereClauses.join(' AND ') : ''
+
+    // count
+    const [countRows] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) as total FROM hotel h ${whereStr}`,
+      params,
+    )
+    const total = countRows[0]?.total || 0
+
+    // data
+    const offset = (page - 1) * pageSize
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT h.*, u.username as merchant_name,
+              (SELECT url FROM hotel_media hm WHERE hm.hotel_id = h.hotel_id AND hm.media_type = 1 ORDER BY hm.sort_order ASC LIMIT 1) as cover_url
+       FROM hotel h
+       LEFT JOIN users u ON h.user_id = u.user_id
+       ${whereStr}
+       ORDER BY h.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [...params, pageSize, offset],
+    )
+
+    // parse tags
+    for (const row of rows) {
+      if (typeof row.tags === 'string') {
+        try {
+          row.tags = JSON.parse(row.tags)
+        } catch {
+          /* keep string */
+        }
+      }
+    }
+
+    res.status(200).json({
+      code: 200,
+      message: '获取酒店列表成功',
+      data: {
+        list: rows,
+        total,
+        page,
+        pageSize,
+        stats: {
+          total: Number(stats.total),
+          published: Number(stats.published),
+          pending: Number(stats.pending),
+        },
+      },
+    })
+  } catch (err) {
+    console.error('getAdminHotelList error:', err)
+    res.status(500).json({ code: 500, message: '获取酒店列表失败' })
+  }
+}
+
+// ===================== 管理员：删除任意酒店 =====================
+export const deleteHotelAdmin = async (
+  req: Request<Record<string, unknown>, unknown, { hotel_id: string }>,
+  res: Response,
+): Promise<void> => {
+  const { hotel_id } = req.body
+  if (!hotel_id) {
+    res.status(400).json({ code: 400, message: '缺少 hotel_id' })
+    return
+  }
+
+  try {
+    // 删除关联媒体
+    await pool.execute(`DELETE FROM hotel_media WHERE hotel_id = ?`, [hotel_id])
+    // 删除关联房型媒体和房型
+    const [roomRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT room_id FROM room WHERE hotel_id = ?`,
+      [hotel_id],
+    )
+    for (const r of roomRows) {
+      await pool.execute(`DELETE FROM room_media WHERE room_id = ?`, [r.room_id])
+      await pool.execute(`DELETE FROM room_inventory WHERE room_id = ?`, [r.room_id])
+    }
+    await pool.execute(`DELETE FROM room WHERE hotel_id = ?`, [hotel_id])
+    // 删除酒店本身
+    await pool.execute(`DELETE FROM hotel WHERE hotel_id = ?`, [hotel_id])
+
+    res.status(200).json({ code: 200, message: '酒店删除成功' })
+  } catch (err) {
+    console.error('deleteHotelAdmin error:', err)
+    res.status(500).json({ code: 500, message: '删除酒店失败' })
+  }
+}
+
+// ===================== 管理员：编辑任意酒店 =====================
+export const updateHotelAdmin = async (
+  req: Request<Record<string, unknown>, unknown, SaveHotelBody & { hotel_id: string }>,
+  res: Response,
+): Promise<void> => {
+  const {
+    hotel_id,
+    name,
+    address,
+    city_name,
+    latitude,
+    longitude,
+    star_rating,
+    tags,
+    description,
+    hotel_type,
+    open_time,
+    close_time,
+    remark,
+  } = req.body
+
+  if (!hotel_id) {
+    res.status(400).json({ code: 400, message: '缺少 hotel_id' })
+    return
+  }
+
+  try {
+    const tagsStr = Array.isArray(tags) ? JSON.stringify(tags) : tags || '[]'
+
+    await pool.execute(
+      `UPDATE hotel SET name = ?, address = ?, city_name = ?, latitude = ?, longitude = ?,
+       star_rating = ?, tags = ?, description = ?, hotel_type = ?,
+       open_time = ?, close_time = ?, remark = ?
+       WHERE hotel_id = ?`,
+      [
+        name,
+        address,
+        city_name || '',
+        latitude || 0,
+        longitude || 0,
+        star_rating || 0,
+        tagsStr,
+        description || '',
+        hotel_type || 0,
+        open_time || null,
+        close_time || null,
+        remark || '',
+        hotel_id,
+      ],
+    )
+
+    res.status(200).json({ code: 200, message: '酒店信息更新成功' })
+  } catch (err) {
+    console.error('updateHotelAdmin error:', err)
+    res.status(500).json({ code: 500, message: '更新酒店信息失败' })
+  }
+}
