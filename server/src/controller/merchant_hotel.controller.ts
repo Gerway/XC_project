@@ -267,8 +267,8 @@ export const saveMerchantHotel = async (
       const new_hotel_id = `H_${Date.now()}_${crypto.randomUUID().substring(0, 6)}`
       await pool.execute(
         `INSERT INTO hotel 
-         (hotel_id, user_id, name, address, city_name, latitude, longitude, star_rating, tags, description, hotel_type, created_at, status, open_time, close_time, remark)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, ?, ?, ?)`,
+         (hotel_id, user_id, name, address, city_name, latitude, longitude, star_rating, tags, description, hotel_type, created_at, status, open_time, close_time, remark, score)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, ?, ?, ?, 5.0)`,
         [
           new_hotel_id,
           user_id,
@@ -556,7 +556,7 @@ export const getRoomList = async (
       if (typeof r.floor === 'string') {
         try {
           r.floor = JSON.parse(r.floor)
-        } catch { }
+        } catch {}
       }
     }
 

@@ -16,7 +16,7 @@ const InventoryContainer: React.FC = () => {
     return user?.user_id || user?.id || ''
   }, [])
 
-  const [hotels, setHotels] = useState<Pick<IHotel, 'hotel_id' | 'name'>[]>([])
+  const [hotels, setHotels] = useState<Pick<IHotel, 'hotel_id' | 'name' | 'hotel_type'>[]>([])
   const [selectedHotelId, setSelectedHotelId] = useState<string | undefined>(undefined)
 
   const [rooms, setRooms] = useState<IRoomWithStock[]>([])
@@ -143,7 +143,7 @@ const InventoryContainer: React.FC = () => {
         name: values.name,
         ori_price: values.ori_price,
         max_occupancy: values.max_occupancy,
-        room_type: values.room_type,
+        room_type: selectedHotel?.hotel_type || 1,
         has_breakfast: values.has_breakfast,
         area: values.area,
         floor: values.floor,
@@ -286,11 +286,9 @@ const InventoryContainer: React.FC = () => {
               >
                 <Select
                   options={[
-                    { value: 1, label: '大床房' },
-                    { value: 2, label: '双床房' },
-                    { value: 3, label: '单人房' },
-                    { value: 4, label: '多床房' },
-                    { value: 5, label: '套房' },
+                    { value: 1, label: '酒店房' },
+                    { value: 2, label: '时租房' },
+                    { value: 3, label: '民宿' },
                   ]}
                 />
               </Form.Item>
