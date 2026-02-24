@@ -204,7 +204,7 @@ export const getHotelDetails = async (
         // 1. Fetch Basic Hotel Info
         const [hotelRows] = await pool.execute<RowDataPacket[]>(
             `SELECT hotel_id, name, address, city_name, latitude, longitude, 
-                    star_rating, tags, description, hotel_type, score, reviews, open_time 
+                    star_rating, tags, description, hotel_type, score, reviews, open_time, status 
              FROM hotel WHERE hotel_id = ?`,
             [hotel_id]
         );
@@ -215,6 +215,13 @@ export const getHotelDetails = async (
         }
 
         const hotelInfo = hotelRows[0];
+
+        // Check if hotel is online (status=1)
+        if (hotelInfo.status !== undefined && hotelInfo.status !== 1) {
+            res.status(403).json({ message: '该酒店已下线，暂时无法查看', code: -1, offline: true });
+            return;
+        }
+
         const city_name = hotelInfo.city_name;
         const score = hotelInfo.score || 0;
 
@@ -662,6 +669,20 @@ export const payOrder = async (
             }
         }
 
+        // 4. 扣减库存: 对每一天的 room_inventory 里该房型的 stock 减去 room_count
+        const [orderInfo] = await pool.execute<RowDataPacket[]>(
+            `SELECT room_id, DATE_FORMAT(check_in, '%Y-%m-%d') as ci, DATE_FORMAT(check_out, '%Y-%m-%d') as co FROM orders WHERE order_id = ?`,
+            [order_id]
+        );
+        if (orderInfo.length > 0) {
+            const { room_id: rId, ci, co } = orderInfo[0];
+            const rc = room_count || 1;
+            await pool.execute(
+                `UPDATE room_inventory SET stock = GREATEST(stock - ?, 0) WHERE room_id = ? AND date >= ? AND date < ?`,
+                [rc, rId, ci, co]
+            );
+        }
+
         res.status(200).json({ message: '支付成功', data: { order_id } });
     } catch (err) {
         console.error('payOrder error:', err);
@@ -877,8 +898,23 @@ export const cancelOrder = async (
             [order_id]
         );
 
-        // 3. 如果是待支付状态且有优惠券，将优惠券状态还原为未使用
-        if (orderStatus === 0 && couponIds.length > 0) {
+        // 4. 如果是已支付(1)或已入住(2)状态的取消，恢复库存
+        if ((orderStatus === 1 || orderStatus === 2)) {
+            const [oInfo] = await pool.execute<RowDataPacket[]>(
+                `SELECT room_id, room_count, DATE_FORMAT(check_in, '%Y-%m-%d') as ci, DATE_FORMAT(check_out, '%Y-%m-%d') as co FROM orders WHERE order_id = ?`,
+                [order_id]
+            );
+            if (oInfo.length > 0) {
+                const { room_id: rId, room_count: rc, ci, co } = oInfo[0];
+                await pool.execute(
+                    `UPDATE room_inventory SET stock = stock + ? WHERE room_id = ? AND date >= ? AND date < ?`,
+                    [rc || 1, rId, ci, co]
+                );
+            }
+        }
+
+        // 5. 如果是已支付状态且有优惠券，将优惠券状态还原为未使用
+        if ((orderStatus === 1 || orderStatus === 2) && couponIds.length > 0) {
             for (const ucId of couponIds) {
                 await pool.execute(
                     `UPDATE user_coupons SET status = 0 WHERE user_coupons_id = ?`,
@@ -959,6 +995,26 @@ export const getOrderDetail = async (
             }));
         }
 
+        // 4. 如果是已完成订单(status=3)，查询该订单的评价
+        let review: any = null;
+        if (orderRow.status === 3) {
+            const [reviewRows] = await pool.execute<RowDataPacket[]>(
+                `SELECT review_id, score, content, images, tags, created_at FROM reviews WHERE order_id = ?`,
+                [order_id]
+            );
+            if (reviewRows.length > 0) {
+                const rv = reviewRows[0];
+                review = {
+                    review_id: rv.review_id,
+                    score: rv.score,
+                    content: rv.content,
+                    images: typeof rv.images === 'string' ? JSON.parse(rv.images || '[]') : (rv.images || []),
+                    tags: typeof rv.tags === 'string' ? JSON.parse(rv.tags || '[]') : (rv.tags || []),
+                    created_at: rv.created_at
+                };
+            }
+        }
+
         res.status(200).json({
             message: '查询成功',
             data: {
@@ -992,7 +1048,8 @@ export const getOrderDetail = async (
                     date: d.date_str,
                     price: Number(d.price) || 0,
                     breakfast_count: d.breakfast_count || 0
-                }))
+                })),
+                review
             }
         });
     } catch (err) {

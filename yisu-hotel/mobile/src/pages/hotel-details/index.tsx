@@ -79,8 +79,19 @@ const HotelDetailsPage: React.FC = () => {
         if (res.data) {
           setHotelDetails(res.data);
         }
-      } catch (e) {
-        console.error('Failed to fetch hotel details', e);
+      } catch (e: any) {
+        // Check if hotel is offline
+        if (e?.data?.offline || e?.statusCode === 403) {
+          Taro.showModal({
+            title: '提示',
+            content: '该酒店已下线，暂时无法查看',
+            showCancel: false,
+            confirmText: '返回',
+            success: () => Taro.navigateBack()
+          });
+        } else {
+          console.error('Failed to fetch hotel details', e);
+        }
       } finally {
         setLoading(false);
       }
