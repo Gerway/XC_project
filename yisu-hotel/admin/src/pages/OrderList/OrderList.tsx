@@ -285,13 +285,50 @@ const OrderList: React.FC = () => {
     {
       title: '酒店 / 房型',
       key: 'hotel',
-      width: 160,
+      width: 200,
       render: (_: unknown, record: IOrderRecord) => (
         <div className={styles.hotelInfo}>
           <p className={styles.hotelName}>{record.hotel_name}</p>
-          <p className={styles.roomType}>{record.room_name}</p>
+          <p className={styles.roomType}>
+            {record.room_name}{' '}
+            <span style={{ color: '#6b7280' }}>x {record.room_count || 1} 间</span>
+          </p>
+          {record.special_request && (
+            <Tooltip title={record.special_request}>
+              <Tag color="purple" style={{ marginTop: 4 }}>
+                有特殊要求
+              </Tag>
+            </Tooltip>
+          )}
         </div>
       ),
+    },
+    {
+      title: '住客信息',
+      key: 'guest_info',
+      width: 150,
+      render: (_: unknown, record: IOrderRecord) => {
+        let guests: string[] = []
+        if (Array.isArray(record.idcards)) {
+          guests = record.idcards
+        } else if (typeof record.idcards === 'string') {
+          try {
+            guests = JSON.parse(record.idcards)
+          } catch {
+            guests = []
+          }
+        }
+        if (!guests.length) return <span style={{ color: '#9ca3af' }}>未填写</span>
+        return (
+          <Space size={[0, 4]} wrap>
+            {guests.map((name, i) => (
+              <Tag key={i} color="blue">
+                {name}
+              </Tag>
+            ))}
+          </Space>
+        )
+      },
     },
     {
       title: '入住 / 退房时间',
@@ -309,20 +346,28 @@ const OrderList: React.FC = () => {
             <p className={styles.dateRange}>
               {checkIn} / {checkOut}
             </p>
-            {nights > 0 && <p className={styles.nights}>{nights} 晚</p>}
+            {nights > 0 && <p className={styles.nights}>{record.nights || nights} 晚</p>}
           </div>
         )
       },
     },
     {
       title: '金额',
-      dataIndex: 'total_price',
-      key: 'total_price',
-      width: 120,
-      render: (amount: string | number) => (
-        <span className={styles.amount}>
-          ¥{Number(amount).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
-        </span>
+      key: 'price',
+      width: 140,
+      render: (_: unknown, record: IOrderRecord) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ color: '#9ca3af', fontSize: 13 }}>
+            总价: ¥
+            {Number(record.total_price).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+          </span>
+          <span className={styles.amount} style={{ fontWeight: 'bold', color: '#f5222d' }}>
+            实付: ¥
+            {Number(record.real_pay || record.total_price).toLocaleString('zh-CN', {
+              minimumFractionDigits: 2,
+            })}
+          </span>
+        </div>
       ),
     },
     {

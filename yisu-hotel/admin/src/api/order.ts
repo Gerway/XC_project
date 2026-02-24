@@ -52,7 +52,12 @@ export interface IOrderRecord {
   status: number
   check_in: string
   check_out: string
+  nights?: number
+  room_count?: number
+  idcards?: string | string[]
+  special_request?: string
   total_price: string | number
+  real_pay?: string | number
   created_at: string
   hotel_name: string
   room_name: string
