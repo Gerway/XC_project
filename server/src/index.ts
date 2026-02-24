@@ -14,6 +14,7 @@ import UserCouponRouter from './route/user_coupon.route'
 import MerchantRouter from './route/merchant.route'
 import UploadRouter from './route/upload.route'
 import OrderRouter from './route/order.route'
+import RoomRouter from './route/room.route'
 
 // 数据库连接测试函数
 import { checkConnection } from './db'
@@ -38,6 +39,7 @@ app.use('/api/user-coupons', UserCouponRouter)
 app.use('/api/merchant/hotel', MerchantRouter)
 app.use('/api/upload', UploadRouter)
 app.use('/api/order', OrderRouter)
+app.use('/api/room', RoomRouter)
 // 配置静态文件服务，允许通过 /static 访问上传的图片等
 app.use('/static', express.static(path.join(__dirname, '../static')))
 
