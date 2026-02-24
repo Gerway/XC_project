@@ -12,6 +12,7 @@ import {
 import { UserRole } from '@yisu/shared'
 import { userApi } from '../../api/user'
 import styles from './UserManager.module.scss'
+import { StatusTag } from '../../components/StatusTag'
 
 // ===== 用户状态 =====
 type UserStatus = 'active' | 'banned'
@@ -247,10 +248,10 @@ const UserManager: React.FC = () => {
       width: 110,
       align: 'center',
       render: (_: unknown, record: IUser) => (
-        <span className={`${styles.statusBadge} ${styles[record.status]}`}>
-          <span className={`${styles.statusDot} ${styles[record.status]}`} />
-          {record.status === 'active' ? '正常' : '已封禁'}
-        </span>
+        <StatusTag
+          color={record.status === 'active' ? 'success' : 'error'}
+          statusText={record.status === 'active' ? '正常' : '已封禁'}
+        />
       ),
     },
     {

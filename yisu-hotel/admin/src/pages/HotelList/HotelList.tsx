@@ -33,6 +33,7 @@ import { HotelStatus, type IHotel } from '@yisu/shared'
 import dayjs from 'dayjs'
 import styles from './HotelList.module.scss'
 import { merchantApi } from '../../api/merchant'
+import { StatusTag } from '../../components/StatusTag'
 
 // Hotel type options
 const hotelTypeOptions = [
@@ -460,12 +461,7 @@ const HotelList: React.FC = () => {
       width: 120,
       render: (status: HotelStatus) => {
         const config = statusConfig[status]
-        return (
-          <Tag color={config.color} style={{ borderRadius: 12, padding: '0 10px' }}>
-            <span style={{ marginRight: 4 }}>•</span>
-            {config.text}
-          </Tag>
-        )
+        return <StatusTag color={config.color} statusText={config.text} />
       },
     },
     {
@@ -516,13 +512,11 @@ const HotelList: React.FC = () => {
     <div className={styles.editModalTitle}>
       <EditOutlined className={styles.editTitleIcon} />
       <span>编辑酒店详情</span>
-      <Tag
+      <StatusTag
         color={statusConfig[editingHotel.status].color}
-        style={{ borderRadius: 12, padding: '0 10px', marginLeft: 12 }}
-      >
-        <span style={{ marginRight: 4 }}>•</span>
-        {statusConfig[editingHotel.status].text}
-      </Tag>
+        statusText={statusConfig[editingHotel.status].text}
+        style={{ marginLeft: 12 }}
+      />
     </div>
   ) : (
     '添加新酒店'
@@ -755,9 +749,11 @@ const HotelList: React.FC = () => {
                 '-'}
             </Descriptions.Item>
             <Descriptions.Item label="审核状态" span={1}>
-              <Tag color={statusConfig[viewingHotel.status]?.color}>
-                {statusConfig[viewingHotel.status]?.text}
-              </Tag>
+              <StatusTag
+                color={statusConfig[viewingHotel.status]?.color}
+                statusText={statusConfig[viewingHotel.status]?.text}
+                showDot={false}
+              />
             </Descriptions.Item>
             <Descriptions.Item label="建档日期" span={1}>
               {viewingHotel.created_at
