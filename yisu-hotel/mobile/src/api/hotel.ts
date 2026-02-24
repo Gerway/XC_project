@@ -49,6 +49,13 @@ export interface RoomDetails {
     ori_price: number;
     avg_price: number;
     image_url?: string;
+    max_occupancy?: number;
+    floor?: number[];
+    add_bed?: number;
+    has_wifi?: number;
+    remark?: string;
+    room_type?: number;
+    images?: string[];
 }
 
 export interface Review {

@@ -237,10 +237,11 @@ export const getHotelDetails = async (
             [hotel_id]
         );
 
-        // 4. Fetch Rooms (simplified info)
+        // 4. Fetch Rooms (full info including all fields)
         let roomSql = `
             SELECT 
                 r.room_id, r.name, r.area, r.has_breakfast, r.has_window, r.room_bed, r.ori_price,
+                r.max_occupancy, r.floor, r.add_bed, r.has_wifi, r.remark, r.room_type,
                 ROUND(AVG(ri.price), 2) as avg_price,
                 (SELECT url FROM room_media rm WHERE rm.room_id = r.room_id ORDER BY rm.sort_order ASC LIMIT 1) as image_url
             FROM room r
@@ -267,6 +268,28 @@ export const getHotelDetails = async (
         }
 
         const [roomRows] = await pool.execute<RowDataPacket[]>(roomSql, roomParams);
+
+        // 4.1 Fetch all room_media images for returned rooms
+        const roomIds = roomRows.map(r => r.room_id);
+        let roomImagesMap: Record<string, string[]> = {};
+        if (roomIds.length > 0) {
+            const imgPlaceholders = roomIds.map(() => '?').join(',');
+            const [imgRows] = await pool.execute<RowDataPacket[]>(
+                `SELECT room_id, url FROM room_media WHERE room_id IN (${imgPlaceholders}) ORDER BY sort_order ASC`,
+                roomIds
+            );
+            imgRows.forEach(row => {
+                if (!roomImagesMap[row.room_id]) roomImagesMap[row.room_id] = [];
+                roomImagesMap[row.room_id].push(row.url);
+            });
+        }
+
+        // Attach images array and parse floor JSON for each room
+        const enrichedRooms = roomRows.map(r => ({
+            ...r,
+            floor: typeof r.floor === 'string' ? JSON.parse(r.floor) : (r.floor || []),
+            images: roomImagesMap[r.room_id] || (r.image_url ? [r.image_url] : [])
+        }));
 
         // 5. Fetch Top 2 Reviews & Aggregate Tags from reviews.tags field
         const [allReviews] = await pool.execute<RowDataPacket[]>(
@@ -314,7 +337,7 @@ export const getHotelDetails = async (
                     total_rank: totalRank
                 },
                 media: mediaRows,
-                rooms: roomRows,
+                rooms: enrichedRooms,
                 reviews_count: allReviews.length,
                 reviews: topReviews,
                 review_keywords: sortedKeywords
