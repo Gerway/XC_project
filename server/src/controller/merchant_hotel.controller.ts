@@ -797,16 +797,9 @@ export const getInventory = async (
   }
 
   try {
-    const [hotelRows] = await pool.execute<RowDataPacket[]>(
-      `SELECT hotel_id FROM hotel WHERE user_id = ?`,
-      [user_id],
-    )
-    if (hotelRows.length === 0) return
-    const hotel_id = hotelRows[0].hotel_id
-
     const [roomRows] = await pool.execute<RowDataPacket[]>(
-      `SELECT * FROM room WHERE room_id = ? AND hotel_id = ?`,
-      [room_id, hotel_id],
+      `SELECT * FROM room WHERE room_id = ? AND hotel_id IN (SELECT hotel_id FROM hotel WHERE user_id = ?)`,
+      [room_id, user_id],
     )
     if (roomRows.length === 0) {
       res.status(403).json({ message: '房间不属于该商户' })

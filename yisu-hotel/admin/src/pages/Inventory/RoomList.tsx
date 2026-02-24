@@ -1,62 +1,69 @@
 import React from 'react'
-import { Input } from 'antd'
-import { SearchOutlined, EditOutlined } from '@ant-design/icons'
-import type { IRoom } from '@yisu/shared'
+import { Button } from 'antd'
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import type { IRoomWithStock } from '../../api/room'
 import styles from './Inventory.module.scss'
 
 interface RoomListProps {
-  rooms: IRoom[]
+  rooms: IRoomWithStock[]
   selectedRoomId: string | null
   onSelectRoom: (roomId: string) => void
-  onEditRoom: (room: IRoom) => void
+  onCreateRoom: () => void
+  onDeleteRoom: (room: IRoomWithStock) => void
 }
 
-const RoomList: React.FC<RoomListProps> = ({ rooms, selectedRoomId, onSelectRoom, onEditRoom }) => {
+const RoomList: React.FC<RoomListProps> = ({
+  rooms,
+  selectedRoomId,
+  onSelectRoom,
+  onCreateRoom,
+  onDeleteRoom,
+}) => {
   return (
     <div className={styles.roomListPanel}>
       <div className={styles.roomListHeader}>
         <h2>房型列表</h2>
-        <div className={styles.searchRow}>
-          <Input
-            prefix={<SearchOutlined style={{ color: '#9ca3af' }} />}
-            placeholder="搜索房型..."
-            className={styles.roomSearchInput}
-          />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={onCreateRoom}
+            style={{ flexShrink: 0 }}
+          >
+            全新房型
+          </Button>
         </div>
       </div>
-
       <div className={styles.roomCards}>
         {rooms.map((room) => {
-          const isActive = room.id === selectedRoomId
+          const isActive = room.room_id === selectedRoomId
           return (
             <div
-              key={room.id}
+              key={room.room_id}
               className={`${styles.roomCard} ${isActive ? styles.active : ''}`}
-              onClick={() => onSelectRoom(room.id)}
+              onClick={() => onSelectRoom(room.room_id)}
             >
               <div className={styles.roomCardContent}>
                 <div>
                   <p className={`${styles.roomName} ${isActive ? styles.activeText : ''}`}>
                     {room.name}
                   </p>
-                  <p className={styles.roomPrice}>基础价: ¥{room.basePrice}</p>
-                  <p className={styles.roomId}>ID: {room.id}</p>
+                  <p className={styles.roomPrice}>门市价: ¥{room.ori_price || 0}</p>
+                  <p className={styles.roomId}>ID: {room.room_id}</p>
                 </div>
                 <button
                   type="button"
                   className={styles.editBtn}
                   onClick={(e) => {
                     e.stopPropagation()
-                    onEditRoom(room)
+                    onDeleteRoom(room)
                   }}
+                  title="删除该房型"
                 >
-                  <EditOutlined style={{ fontSize: 14 }} />
+                  <DeleteOutlined style={{ fontSize: 14, color: '#ff4d4f' }} />
                 </button>
               </div>
-              <span
-                className={`${styles.statusDot} ${room.isActive ? styles.online : styles.offline}`}
-                title={room.isActive ? '在售' : '下架'}
-              />
+              <span className={`${styles.statusDot} ${styles.online}`} title="已创建" />
             </div>
           )
         })}
