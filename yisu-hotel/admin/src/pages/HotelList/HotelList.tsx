@@ -639,12 +639,12 @@ const HotelList: React.FC = () => {
               </Form.Item>
             </Col>
             <Col span={6}>
-              <Form.Item label="营业时间 (optional)" name="openTime">
+              <Form.Item label="营业时间" name="openTime">
                 <TimePicker format="HH:mm" style={{ width: '100%' }} />
               </Form.Item>
             </Col>
             <Col span={6}>
-              <Form.Item label="结业时间 (optional)" name="closeTime">
+              <Form.Item label="结业时间" name="closeTime">
                 <TimePicker format="HH:mm" style={{ width: '100%' }} />
               </Form.Item>
             </Col>
@@ -666,7 +666,7 @@ const HotelList: React.FC = () => {
             <Input.TextArea placeholder="仅商户内部可见" rows={2} maxLength={200} showCount />
           </Form.Item>
 
-          <Form.Item label="酒店图片 (由服务器图库提供响应支持)">
+          <Form.Item label="酒店图片">
             <Upload
               listType="picture-card"
               fileList={fileList}
