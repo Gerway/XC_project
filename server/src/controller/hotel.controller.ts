@@ -268,31 +268,41 @@ export const getHotelDetails = async (
 
         const [roomRows] = await pool.execute<RowDataPacket[]>(roomSql, roomParams);
 
-        // 5. Fetch Top 2 Reviews & Compute Keyword Frequencies
+        // 5. Fetch Top 2 Reviews & Aggregate Tags from reviews.tags field
         const [allReviews] = await pool.execute<RowDataPacket[]>(
-            `SELECT content, score, created_at, images FROM reviews WHERE hotel_id = ? ORDER BY created_at DESC`,
+            `SELECT r.content, r.score, r.created_at, r.images, r.tags,
+                    u.username
+             FROM reviews r
+             LEFT JOIN users u ON r.user_id = u.user_id
+             WHERE r.hotel_id = ? ORDER BY r.created_at DESC`,
             [hotel_id]
         );
 
-        const targetKeywords = ['干净', '卫生', '服务', '设施', '环境', '优美', '安静', '隔音', '宽敞', '性价比', '绝景', '绝佳', '便利', '位置', '方便', '舒适', '不错', '好评', '完美', '棒'];
+        // 从 reviews.tags 字段聚合关键词频率
         const keywordCounts: Record<string, number> = {};
-
         allReviews.forEach(row => {
-            const content = row.content || "";
-            targetKeywords.forEach(kw => {
-                if (content.includes(kw)) {
-                    keywordCounts[kw] = (keywordCounts[kw] || 0) + 1;
-                }
-            });
+            try {
+                const tags = typeof row.tags === 'string' ? JSON.parse(row.tags) : (row.tags || []);
+                tags.forEach((tag: string) => {
+                    if (tag) keywordCounts[tag] = (keywordCounts[tag] || 0) + 1;
+                });
+            } catch { }
         });
 
         const sortedKeywords = Object.entries(keywordCounts)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, 4)
+            .slice(0, 6)
             .map(entry => entry[0]);
 
         // Just surface the first two reviews for the snippet
-        const topReviews = allReviews.slice(0, 2);
+        const topReviews = allReviews.slice(0, 2).map(r => ({
+            content: r.content,
+            score: r.score,
+            created_at: r.created_at,
+            images: r.images,
+            tags: typeof r.tags === 'string' ? JSON.parse(r.tags || '[]') : (r.tags || []),
+            username: r.username || '匿名用户'
+        }));
 
         res.status(200).json({
             message: "查询成功",
@@ -314,6 +324,151 @@ export const getHotelDetails = async (
     } catch (err) {
         console.error("查询酒店详情报错:", err);
         res.status(500).json({ message: "内部错误，酒店详情获取失败！" });
+    }
+};
+
+// 提交用户评价
+export const addReview = async (
+    req: Request<{}, {}, { order_id: string; hotel_id: string; user_id: string; score: number; content: string; tags: string[]; images?: string[] }>,
+    res: Response
+): Promise<void> => {
+    const { order_id, hotel_id, user_id, score, content, tags, images } = req.body;
+
+    if (!order_id || !hotel_id || !user_id || !score || !content) {
+        res.status(400).json({ message: '缺少必要参数 (order_id, hotel_id, user_id, score, content)' });
+        return;
+    }
+
+    if (score < 1 || score > 5) {
+        res.status(400).json({ message: '评分必须在 1~5 之间' });
+        return;
+    }
+
+    try {
+        // 检查该订单是否已评价过
+        const [existing] = await pool.execute<RowDataPacket[]>(
+            `SELECT review_id FROM reviews WHERE order_id = ?`,
+            [order_id]
+        );
+        if (existing.length > 0) {
+            res.status(409).json({ message: '该订单已评价过，不可重复评价' });
+            return;
+        }
+
+        const review_id = `RVW_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+        const tagsJson = JSON.stringify(tags || []);
+        const imagesJson = JSON.stringify(images || []);
+
+        await pool.execute(
+            `INSERT INTO reviews (review_id, order_id, hotel_id, user_id, score, content, tags, images, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+            [review_id, order_id, hotel_id, user_id, score, content, tagsJson, imagesJson]
+        );
+
+        // 更新 hotel 表的评分和评价数 (简单重算)
+        await pool.execute(
+            `UPDATE hotel SET
+                reviews = (SELECT COUNT(*) FROM reviews WHERE hotel_id = ?),
+                score   = (SELECT ROUND(AVG(score), 1) FROM reviews WHERE hotel_id = ?)
+             WHERE hotel_id = ?`,
+            [hotel_id, hotel_id, hotel_id]
+        );
+
+        res.status(200).json({ message: '评价提交成功', data: { review_id } });
+    } catch (err) {
+        console.error('addReview error:', err);
+        res.status(500).json({ message: '评价提交失败' });
+    }
+};
+
+// 获取某酒店的所有评价列表
+export const getHotelReviews = async (
+    req: Request<{}, {}, { hotel_id: string }>,
+    res: Response
+): Promise<void> => {
+    const { hotel_id } = req.body;
+
+    if (!hotel_id) {
+        res.status(400).json({ message: '缺少 hotel_id' });
+        return;
+    }
+
+    try {
+        // 获取酒店基本评分信息
+        const [hotelRows] = await pool.execute<RowDataPacket[]>(
+            `SELECT score, reviews FROM hotel WHERE hotel_id = ?`,
+            [hotel_id]
+        );
+        const hotelScore = hotelRows.length > 0 ? hotelRows[0].score : 0;
+        const hotelReviewsCount = hotelRows.length > 0 ? hotelRows[0].reviews : 0;
+
+        // 获取所有评价, JOIN users 获取用户名
+        const [reviewRows] = await pool.execute<RowDataPacket[]>(
+            `SELECT r.review_id, r.content, r.score, r.created_at, r.images, r.tags,
+                    u.username, u.avatar
+             FROM reviews r
+             LEFT JOIN users u ON r.user_id = u.user_id
+             WHERE r.hotel_id = ?
+             ORDER BY r.created_at DESC`,
+            [hotel_id]
+        );
+
+        // 聚合 tags 统计
+        const tagCounts: Record<string, number> = {};
+        reviewRows.forEach(row => {
+            try {
+                const tags = typeof row.tags === 'string' ? JSON.parse(row.tags) : (row.tags || []);
+                tags.forEach((tag: string) => {
+                    if (tag) tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                });
+            } catch { }
+        });
+
+        const sortedTags = Object.entries(tagCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 8)
+            .map(([label, count]) => ({ label, count }));
+
+        // 格式化评论
+        const formattedReviews = reviewRows.map(r => ({
+            review_id: r.review_id,
+            content: r.content,
+            score: r.score,
+            created_at: r.created_at,
+            images: r.images,
+            tags: typeof r.tags === 'string' ? JSON.parse(r.tags || '[]') : (r.tags || []),
+            username: r.username || '匿名用户',
+            avatar: r.avatar || ''
+        }));
+
+        // 统计 Tab 数量
+        const excellentCount = reviewRows.filter(r => r.score >= 4.5).length;
+        const goodCount = reviewRows.filter(r => r.score >= 3 && r.score < 4.5).length;
+        const hasImageCount = reviewRows.filter(r => {
+            try {
+                const imgs = typeof r.images === 'string' ? JSON.parse(r.images) : (r.images || []);
+                return imgs.length > 0;
+            } catch { return false; }
+        }).length;
+
+        res.status(200).json({
+            message: '查询成功',
+            data: {
+                hotel_score: hotelScore,
+                reviews_count: hotelReviewsCount,
+                tabs: {
+                    all: reviewRows.length,
+                    has_image: hasImageCount,
+                    excellent: excellentCount,
+                    good: goodCount
+                },
+                tag_stats: sortedTags,
+                reviews: formattedReviews
+            }
+        });
+    } catch (err) {
+        console.error('getHotelReviews error:', err);
+        res.status(500).json({ message: '获取评价列表失败' });
     }
 };
 
@@ -435,13 +590,14 @@ interface PayOrderBody {
     special_request?: string;
     idcards: string;
     daily: DailyDetail[];
+    user_coupons_id?: string;
 }
 
 export const payOrder = async (
     req: Request<{}, {}, PayOrderBody>,
     res: Response
 ): Promise<void> => {
-    const { order_id, real_pay, total_price, room_count, special_request, idcards, daily } = req.body;
+    const { order_id, real_pay, total_price, room_count, special_request, idcards, daily, user_coupons_id } = req.body;
 
     if (!order_id) {
         res.status(400).json({ message: '缺少 order_id' });
@@ -469,6 +625,14 @@ export const payOrder = async (
                     [`OD_${order_id}_${i + 1}`, order_id, `${cleanDate} 00:00:00`, d.price, d.breakfast_count]
                 );
             }
+        }
+
+        // 修改已选中的优惠券状态为已使用
+        if (user_coupons_id) {
+            await pool.execute(
+                `UPDATE user_coupons SET status = 1 WHERE user_coupons_id = ? AND status = 0`,
+                [user_coupons_id]
+            );
         }
 
         res.status(200).json({ message: '支付成功', data: { order_id } });

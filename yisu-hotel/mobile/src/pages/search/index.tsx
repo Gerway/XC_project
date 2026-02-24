@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, Image, ScrollView, Input } from '@tarojs/components';
+import { View, Text, Image, ScrollView, Input, Map } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { hotelApi, SearchHotelsParams, Hotel } from '../../api/hotel';
 import './index.scss';
@@ -21,11 +21,11 @@ const HOTEL_TYPE_MAP: Record<number, { text: string, type: string }> = {
 const getHotelMeta = (id: string | number) => {
   const hash = id.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const quotes = [
-    "Enjoy private cinema near the pedestrian street",
-    "Smart facilities with high cost performance",
-    "Quiet courtyard with garden view",
-    "Excellent service and great location",
-    "Perfect for family trips with kids"
+    "步行街不远，势必私享影院",
+    "设施新风，性价比超高",
+    "静谥庭院，花园景观",
+    "服务一流，地段极佳",
+    "适合家庭亲子游"
   ];
   const badges = [
     { text: 'Comfort' },
@@ -65,15 +65,17 @@ const Search: React.FC = () => {
 
   const [searchState, setSearchState] = useState<SearchHotelsParams>(defaultState);
   const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [isMapView, setIsMapView] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState<any | null>(null);
 
   const fetchHotels = async (params: SearchHotelsParams) => {
-    Taro.showLoading({ title: 'Searching...' });
+    Taro.showLoading({ title: '搜索中...' });
     try {
       const res = await hotelApi.searchHotels(params);
       setHotels(res.data || []);
     } catch (err) {
       console.error(err);
-      Taro.showToast({ title: 'Failed to search', icon: 'none' });
+      Taro.showToast({ title: '搜索失败，请稍候重试', icon: 'none' });
     } finally {
       Taro.hideLoading();
     }
@@ -111,11 +113,11 @@ const Search: React.FC = () => {
   const [sortOption, setSortOption] = useState<string>('recommended');
 
   const sortOptions = [
-    { label: 'Recommended Sort', value: 'recommended' },
-    { label: 'Distance Sort', value: 'distance' },
-    { label: 'Best Rating', value: 'score' },
-    { label: 'Lowest Price', value: 'price_asc' },
-    { label: 'Highest Price', value: 'price_desc' },
+    { label: '推荐排序', value: 'recommended' },
+    { label: '距离由近到远', value: 'distance' },
+    { label: '评分最高', value: 'score' },
+    { label: '价格最低', value: 'price_asc' },
+    { label: '价格最高', value: 'price_desc' },
   ];
 
   const dateRangeDisplay = useMemo(() => {
@@ -172,136 +174,237 @@ const Search: React.FC = () => {
 
   const getSortLabel = () => {
     const option = sortOptions.find(o => o.value === sortOption);
-    return option ? option.label.split(' ')[0] : 'Sort';
+    return option ? option.label : '排序';
   };
 
-  return (
-    <View className="search-page">
-      <View className="search-page__header">
-        <View className="search-page__top-bar">
-          <View
-            onClick={() => Taro.switchTab({ url: '/pages/home/index' })}
-            className="search-page__back-btn"
-          >
-            <Text className="search-page__back-icon">‹</Text>
+  // Map center: average of hotel coords, or default to Chongqing center
+  const mapCenter = useMemo(() => {
+    const valid = sortedHotels.filter(h => h.latitude && h.longitude);
+    if (valid.length === 0) return { latitude: 29.5630, longitude: 106.5516 };
+    const lat = valid.reduce((s, h) => s + Number(h.latitude), 0) / valid.length;
+    const lng = valid.reduce((s, h) => s + Number(h.longitude), 0) / valid.length;
+    return { latitude: lat, longitude: lng };
+  }, [sortedHotels]);
+
+  const mapMarkers = useMemo(() => {
+    return sortedHotels
+      .filter(h => h.latitude && h.longitude)
+      .map((h, i) => ({
+        id: i,
+        latitude: Number(h.latitude),
+        longitude: Number(h.longitude),
+        width: 60,
+        height: 30,
+        callout: {
+          content: `¥${h.min_price}`,
+          color: '#ffffff',
+          bgColor: selectedHotel?.hotel_id === h.hotel_id ? '#10b981' : '#FF6B35',
+          padding: 6,
+          borderRadius: 14,
+          display: 'ALWAYS',
+          fontSize: 12,
+          borderWidth: 0,
+          borderColor: 'transparent',
+          textAlign: 'center'
+        }
+      }));
+  }, [sortedHotels, selectedHotel]);
+
+  const handleMarkerTap = (e: any) => {
+    const markerId = e.detail?.markerId;
+    if (markerId !== undefined) {
+      const hotel = sortedHotels.filter(h => h.latitude && h.longitude)[markerId];
+      setSelectedHotel(hotel || null);
+    }
+  };
+
+  return (<View className="search-page">
+    <View className="search-page__header">
+      <View className="search-page__top-bar">
+        {/* <View
+          onClick={() => Taro.switchTab({ url: '/pages/home/index' })}
+          className="search-page__back-btn"
+        >
+          <Text className="search-page__back-icon">‹</Text>
+        </View> */}
+
+        <View className="search-page__search-pill">
+          <View className="search-page__search-info">
+            <Text className="search-page__search-location">{searchState.city_name || 'All'}</Text>
+            <Text className="search-page__search-dates">{dateRangeDisplay}</Text>
           </View>
 
-          <View className="search-page__search-pill">
-            <View className="search-page__search-info">
-              <Text className="search-page__search-location">{searchState.city_name || 'All'}</Text>
-              <Text className="search-page__search-dates">{dateRangeDisplay}</Text>
-            </View>
+          <Input
+            className="search-page__search-input"
+            placeholder="地名 / 酒店 / 关键词"
+            value={keyword}
+            onInput={(e) => setKeyword(e.detail.value)}
+            onConfirm={() => {
+              // If the user types a new keyword and hits enter, manually re-trigger API
+              const updated = { ...searchState, keyword };
+              setSearchState(updated);
+              fetchHotels(updated);
+            }}
+          />
 
-            <Input
-              className="search-page__search-input"
-              placeholder="Location / Hotel / Keyword"
-              value={keyword}
-              onInput={(e) => setKeyword(e.detail.value)}
-              onConfirm={() => {
-                // If the user types a new keyword and hits enter, manually re-trigger API
-                const updated = { ...searchState, keyword };
-                setSearchState(updated);
-                fetchHotels(updated);
-              }}
+          {keyword && (
+            <View onClick={() => {
+              setKeyword('');
+              const updated = { ...searchState, keyword: '' };
+              setSearchState(updated);
+              fetchHotels(updated);
+            }} className="search-page__search-clear-btn">
+              <Text className="search-page__search-clear-icon">✕</Text>
+            </View>
+          )}
+        </View>
+
+        <View className="search-page__map-btn" onClick={() => { setIsMapView(v => !v); setSelectedHotel(null); }}>
+          <View className="search-page__map-icon-wrapper">
+            <Image
+              src={isMapView
+                ? 'https://api.iconify.design/lucide:list.svg?color=%23FF6B35'
+                : 'https://api.iconify.design/lucide:map.svg?color=%23FF6B35'}
+              style={{ width: 20, height: 20 }}
             />
-
-            {keyword && (
-              <View onClick={() => {
-                setKeyword('');
-                const updated = { ...searchState, keyword: '' };
-                setSearchState(updated);
-                fetchHotels(updated);
-              }} className="search-page__search-clear-btn">
-                <Text className="search-page__search-clear-icon">✕</Text>
-              </View>
-            )}
           </View>
-
-          <View className="search-page__map-btn">
-            <View className="search-page__map-icon-wrapper">
-              <Text className="search-page__map-icon">🗺</Text>
-            </View>
-            <Text className="search-page__map-label">Map</Text>
-          </View>
+          <Text className="search-page__map-label">{isMapView ? '列表' : '地图'}</Text>
         </View>
-
-        {/* Filter Bar */}
-        <View className="search-page__filter-bar">
-          <View className="search-page__filter-bar-inner">
-            <View
-              onClick={() => toggleDropdown('sort')}
-              className="search-page__sort-btn"
-            >
-              <Text>{sortOption === 'recommended' ? 'Sort' : getSortLabel()}</Text>
-              <Text className={`search-page__sort-arrow ${activeDropdown === 'sort' ? 'search-page__sort-arrow--open' : ''}`}>▼</Text>
-            </View>
-
-            {['Price/Star', 'Location', 'More'].map(label => (
-              <View
-                key={label}
-                onClick={() => toggleDropdown(label)}
-                className={`search-page__filter-btn ${activeDropdown === label ? 'search-page__filter-btn--active' : ''}`}
-              >
-                <Text>{label}</Text>
-                <Text className={`search-page__filter-arrow ${activeDropdown === label ? 'search-page__filter-arrow--open' : ''}`}>▼</Text>
-              </View>
-            ))}
-          </View>
-
-          {activeDropdown === 'sort' && (
-            <View className="search-page__dropdown">
-              <View className="search-page__dropdown-list">
-                {sortOptions.map(opt => (
-                  <View
-                    key={opt.value}
-                    onClick={() => { setSortOption(opt.value); setActiveDropdown(null); }}
-                    className={`search-page__dropdown-option ${sortOption === opt.value ? 'search-page__dropdown-option--active' : ''}`}
-                  >
-                    <Text>{opt.label}</Text>
-                    {sortOption === opt.value && <Text className="search-page__dropdown-check-icon">✓</Text>}
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {activeDropdown && activeDropdown !== 'sort' && (
-            <View className="search-page__dropdown search-page__dropdown-placeholder">
-              <Text className="search-page__dropdown-placeholder-text">Filter for {activeDropdown} coming soon...</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Quick Filter Chips */}
-        <ScrollView scrollX className="search-page__chips-scroll" showScrollbar={false}>
-          <View className="search-page__chips">
-            <View className="search-page__chip search-page__chip--special">
-              <Text>Newcomer Special</Text>
-            </View>
-            <View className="search-page__chip"><Text>Hotel Packages</Text></View>
-            <View className="search-page__chip"><Text>4.7+ Rating</Text></View>
-            <View className="search-page__chip"><Text>Free Cancellation</Text></View>
-            <View className="search-page__chip"><Text>Instant Confirm</Text></View>
-            <View className="search-page__chip"><Text>Pay at Hotel</Text></View>
-          </View>
-        </ScrollView>
       </View>
 
-      {activeDropdown && (
-        <View
-          className="search-page__backdrop"
-          onClick={() => setActiveDropdown(null)}
-        ></View>
-      )}
+      {/* Filter Bar */}
+      <View className="search-page__filter-bar">
+        <View className="search-page__filter-bar-inner">
+          <View
+            onClick={() => toggleDropdown('sort')}
+            className="search-page__sort-btn"
+          >
+            <Text>{sortOption === 'recommended' ? '排序' : getSortLabel()}</Text>
+            <Text className={`search-page__sort-arrow ${activeDropdown === 'sort' ? 'search-page__sort-arrow--open' : ''}`}>▼</Text>
+          </View>
 
+          {['星级/价格', '位置区域', '更多筛选'].map(label => (
+            <View
+              key={label}
+              onClick={() => toggleDropdown(label)}
+              className={`search-page__filter-btn ${activeDropdown === label ? 'search-page__filter-btn--active' : ''}`}
+            >
+              <Text>{label}</Text>
+              <Text className={`search-page__filter-arrow ${activeDropdown === label ? 'search-page__filter-arrow--open' : ''}`}>▼</Text>
+            </View>
+          ))}
+        </View>
+
+        {activeDropdown === 'sort' && (
+          <View className="search-page__dropdown">
+            <View className="search-page__dropdown-list">
+              {sortOptions.map(opt => (
+                <View
+                  key={opt.value}
+                  onClick={() => { setSortOption(opt.value); setActiveDropdown(null); }}
+                  className={`search-page__dropdown-option ${sortOption === opt.value ? 'search-page__dropdown-option--active' : ''}`}
+                >
+                  <Text>{opt.label}</Text>
+                  {sortOption === opt.value && <Text className="search-page__dropdown-check-icon">✓</Text>}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {activeDropdown && activeDropdown !== 'sort' && (
+          <View className="search-page__dropdown search-page__dropdown-placeholder">
+            <Text className="search-page__dropdown-placeholder-text">Filter for {activeDropdown} coming soon...</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Quick Filter Chips */}
+      <ScrollView scrollX className="search-page__chips-scroll" showScrollbar={false}>
+        <View className="search-page__chips">
+          <View className="search-page__chip search-page__chip--special">
+            <Text>新人特惠</Text>
+          </View>
+          <View className="search-page__chip"><Text>酒店套餐</Text></View>
+          <View className="search-page__chip"><Text>4.7分以上</Text></View>
+          <View className="search-page__chip"><Text>免费取消</Text></View>
+          <View className="search-page__chip"><Text>即刻确认</Text></View>
+          <View className="search-page__chip"><Text>到店付款</Text></View>
+        </View>
+      </ScrollView>
+    </View>
+
+    {activeDropdown && (
+      <View
+        className="search-page__backdrop"
+        onClick={() => setActiveDropdown(null)}
+      ></View>
+    )}
+
+    {isMapView ? (
+      <View className="search-page__map-container">
+        <Map
+          style={{ width: '100%', height: 'calc(100vh - 150px)' }}
+          longitude={mapCenter.longitude}
+          latitude={mapCenter.latitude}
+          scale={13}
+          markers={mapMarkers as any}
+          onMarkerTap={handleMarkerTap}
+          showLocation
+          onError={(e) => console.error('Map error', e)}
+        />
+        {/* Count badge */}
+        <View className="search-page__map-count-badge">
+          <Text className="search-page__map-count-text">当前共 {sortedHotels.length} 家酒店</Text>
+        </View>
+        {/* Return to list FAB */}
+        <View className="search-page__map-list-fab" onClick={() => { setIsMapView(false); setSelectedHotel(null); }}>
+          <Image src="https://api.iconify.design/lucide:list.svg?color=%23FF6B35" style={{ width: 16, height: 16 }} />
+          <Text className="search-page__map-list-fab-text">回列表</Text>
+        </View>
+        {/* Selected hotel popup */}
+        {selectedHotel && (
+          <View className="search-page__map-popup">
+            <View className="search-page__map-popup-card" onClick={() => {
+              let url = `/pages/hotel-details/index?id=${selectedHotel.hotel_id}`;
+              if (searchState.check_in && searchState.check_out) {
+                url += `&check_in=${searchState.check_in}&check_out=${searchState.check_out}`;
+              }
+              Taro.navigateTo({ url });
+            }}>
+              <Image
+                src={selectedHotel.image_url || 'https://images.unsplash.com/photo-1551882547-ff40c0d5bf8f?auto=format&fit=crop&w=400&q=80'}
+                className="search-page__map-popup-img"
+                mode="aspectFill"
+              />
+              <View className="search-page__map-popup-info">
+                <Text className="search-page__map-popup-name">{selectedHotel.name}</Text>
+                <View className="search-page__map-popup-rating">
+                  <View className="search-page__hotel-score-badge"><Text>{selectedHotel.score || '4.0'}</Text></View>
+                  <Text className="search-page__map-popup-reviews">{selectedHotel.remark?.substring(0, 16) || '舒适体验，品质之选'}...</Text>
+                </View>
+                <Text className="search-page__map-popup-addr">{selectedHotel.address}</Text>
+                <View className="search-page__map-popup-price-row">
+                  <Text className="search-page__map-popup-price">¥{selectedHotel.min_price}<Text className="search-page__hotel-price-suffix">起/晚</Text></Text>
+                  <View className="search-page__map-popup-arrow"><Text>›</Text></View>
+                </View>
+              </View>
+            </View>
+            <View className="search-page__map-popup-close" onClick={() => setSelectedHotel(null)}>
+              <Text>✕</Text>
+            </View>
+          </View>
+        )}
+      </View>
+    ) : (
       <ScrollView scrollY className="search-page__main">
         {sortedHotels.length === 0 ? (
           <View className="search-page__empty">
             <Text className="search-page__empty-icon">🔍</Text>
-            <Text className="search-page__empty-title">No hotels found</Text>
-            <Text className="search-page__empty-text">Try adjusting your search or filters</Text>
+            <Text className="search-page__empty-title">未找到符合条件的酒店</Text>
+            <Text className="search-page__empty-text">试试调整搜索条件或清除筛选</Text>
             <View onClick={() => setKeyword('')} className="search-page__empty-clear-btn">
-              <Text>Clear Keyword</Text>
+              <Text>清除关键词</Text>
             </View>
           </View>
         ) : (
@@ -325,7 +428,7 @@ const Search: React.FC = () => {
                 <View className="search-page__hotel-image-col">
                   <View className="search-page__hotel-image-wrapper">
                     <Image src={hotel.image_url || 'https://images.unsplash.com/photo-1551882547-ff40c0d5bf8f?auto=format&fit=crop&w=400&q=80'} className="search-page__hotel-image" mode="aspectFill" />
-                    <Text className="search-page__hotel-brand-tag">YiSu Hotel</Text>
+                    <Text className="search-page__hotel-brand-tag">易宿酒店</Text>
                     <View className="search-page__hotel-play-btn">
                       <Text className="search-page__hotel-play-icon">▶</Text>
                     </View>
@@ -414,11 +517,13 @@ const Search: React.FC = () => {
               </View>
             );
           })
-        )}
+        )
+        }
         {/* TabBar bottom spacer */}
         <View style={{ height: '60px' }}></View>
-      </ScrollView >
-    </View >
+      </ScrollView>
+    )}
+  </View >
   );
 };
 

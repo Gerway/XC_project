@@ -68,8 +68,7 @@
     }
 
     &__member-card {
-        // Orange/Gold Gradient
-        background: linear-gradient(135deg, #FFEFD5 0%, #FFE4B5 100%);
+        // Dynamic gradient provided via inline styling
         border-radius: $rounded-2xl;
         padding: $spacing-4 $spacing-5;
         @include flex-between;
@@ -178,8 +177,8 @@
     }
 
     &__icon-img {
-        font-size: 24px;
-        // color: $slate-700; 
+        width: 24px;
+        height: 24px;
     }
 
     &__icon-label {
@@ -203,8 +202,8 @@
     }
 
     &__grid-icon {
-        font-size: 24px;
-        color: $slate-400; // Neutral icons
+        width: 24px;
+        height: 24px;
     }
 
     &__grid-label {

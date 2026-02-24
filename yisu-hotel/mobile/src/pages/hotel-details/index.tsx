@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Image, ScrollView, Swiper, SwiperItem } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
-import { MOCK_USER } from '../../constants';
 import { Order, OrderStatus } from '../../../types/types';
 import { hotelApi, HotelDetails, RoomDetails } from '../../api/hotel';
 import DatePicker from '../../components/DatePicker/DatePicker';
@@ -18,6 +17,7 @@ const HotelDetailsPage: React.FC = () => {
   const [expandedRooms, setExpandedRooms] = useState<Record<string, boolean>>({});
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   // Try to read dates from storage (set by search page)
   const [dates, setDates] = useState<{ start: Date; end: Date }>(() => {
@@ -84,6 +84,20 @@ const HotelDetailsPage: React.FC = () => {
       }
     };
     fetchDetails();
+
+    // 记录浏览历史 & 检查收藏状态
+    try {
+      const userInfoStr = Taro.getStorageSync('userInfo');
+      const userId = userInfoStr ? JSON.parse(userInfoStr).user_id : null;
+      if (userId) {
+        hotelApi.addViewHistory({ user_id: userId, hotel_id: id }).catch(() => { });
+        hotelApi.checkFavorite({ user_id: userId, target_id: id, type: 1 }).then(res => {
+          if (res?.data?.is_favorite !== undefined) {
+            setIsFavorite(res.data.is_favorite);
+          }
+        }).catch(() => { });
+      }
+    } catch { }
   }, [id, dates]);
 
   if (loading) {
@@ -104,8 +118,8 @@ const HotelDetailsPage: React.FC = () => {
 
   const handleBook = (room: RoomDetails, pkgPrice: number, pkgName: string, pkgBreakfast: string, pkgCancellation: string, pkgDesc: string) => {
     // Check login status first
-    const userInfo = Taro.getStorageSync('userInfo');
-    if (!userInfo) {
+    const userInfoStr = Taro.getStorageSync('userInfo');
+    if (!userInfoStr) {
       Taro.showModal({
         title: '需要登录',
         content: '登录后预定更多酒店',
@@ -120,13 +134,20 @@ const HotelDetailsPage: React.FC = () => {
       return;
     }
 
+    let userInfo;
+    try {
+      userInfo = typeof userInfoStr === 'string' ? JSON.parse(userInfoStr) : userInfoStr;
+    } catch (e) {
+      userInfo = userInfoStr;
+    }
+
     // 1. Create PENDING order immediately
     const orderNights = Math.max(1, Math.round((dates.end.getTime() - dates.start.getTime()) / (1000 * 60 * 60 * 24)));
     const totalPrice = pkgPrice * orderNights;
 
     const newOrder: Order = {
       order_id: `o_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-      user_id: MOCK_USER.user_id,
+      user_id: userInfo.user_id,
       hotel_id: hotelDetails.hotel_id,
       hotel_name: hotelDetails.name,
       hotel_image: hotelDetails.media?.[0]?.url || '',
@@ -135,6 +156,8 @@ const HotelDetailsPage: React.FC = () => {
       check_in: dates.start.toISOString().split('T')[0],
       check_out: dates.end.toISOString().split('T')[0],
       nights: orderNights,
+      room_count: 1,
+      canCancel: pkgCancellation.includes('不可取消') ? 0 : 1,
       total_price: totalPrice,
       real_pay: totalPrice, // Initial price, might change with coupons/breakfast
       status: OrderStatus.PENDING,
@@ -291,8 +314,23 @@ const HotelDetailsPage: React.FC = () => {
             <Text className="hotel-details__nav-btn-icon">‹</Text>
           </View>
           <View className="hotel-details__nav-actions">
-            <View className="hotel-details__nav-btn">
-              <Image src="https://api.iconify.design/lucide:heart.svg?color=white" style={{ width: 20, height: 20 }} />
+            <View className="hotel-details__nav-btn" onClick={() => {
+              try {
+                const userInfoStr = Taro.getStorageSync('userInfo');
+                const userId = userInfoStr ? JSON.parse(userInfoStr).user_id : null;
+                if (!userId) {
+                  Taro.showToast({ title: '请先登录', icon: 'none' });
+                  return;
+                }
+                hotelApi.toggleFavorite({ user_id: userId, target_id: id, type: 1 }).then(res => {
+                  if (res?.data?.is_favorite !== undefined) {
+                    setIsFavorite(res.data.is_favorite);
+                    Taro.showToast({ title: res.data.is_favorite ? '已收藏' : '已取消收藏', icon: 'none' });
+                  }
+                }).catch(() => { });
+              } catch { }
+            }}>
+              <Image src={isFavorite ? 'https://api.iconify.design/lucide:heart.svg?color=%23ff4d4f' : 'https://api.iconify.design/lucide:heart.svg?color=white'} style={{ width: 20, height: 20 }} />
             </View>
             <View className="hotel-details__nav-btn">
               <Image src="https://api.iconify.design/lucide:share.svg?color=white" style={{ width: 20, height: 20 }} />
@@ -653,7 +691,7 @@ const HotelDetailsPage: React.FC = () => {
                   </View>
                   <View>
                     <View className="hotel-details__reviewer-name-row">
-                      <Text className="hotel-details__reviewer-name">匿名用户</Text>
+                      <Text className="hotel-details__reviewer-name">{review.username || '匿名用户'}</Text>
                     </View>
                     <Text className="hotel-details__reviewer-stay">{review.created_at?.slice(0, 10)} 发表</Text>
                   </View>
@@ -663,6 +701,9 @@ const HotelDetailsPage: React.FC = () => {
                   <View className="hotel-details__review-score">
                     <Text>{review.score}</Text>
                   </View>
+                  {review.tags && review.tags.length > 0 && review.tags.map((tag: string) => (
+                    <Text key={tag} style={{ fontSize: '11px', color: '#ff7d00', background: '#fff7e6', padding: '2px 8px', borderRadius: '4px', marginLeft: '6px' }}>{tag}</Text>
+                  ))}
                 </View>
 
                 <Text className="hotel-details__review-text">{review.content}</Text>
