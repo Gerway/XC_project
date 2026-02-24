@@ -125,7 +125,7 @@ const Login: React.FC = () => {
             >
               <Form.Item
                 name="username"
-                label="账号"
+                label="用户名/邮箱/手机号"
                 rules={[{ required: true, message: '请输入账号' }]}
               >
                 <Input
