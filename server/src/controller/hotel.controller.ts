@@ -31,8 +31,6 @@ export const searchHotels = async (
         page = 1,
         page_size = 5
     } = req.body;
-    console.log('page:' + page);
-    console.log('page_size:' + page_size);
 
     try {
         // 1. 计算入住多少晚 (nights)
@@ -737,7 +735,23 @@ export const payOrder = async (
             [rc, rId, ci, co]
         );
 
-        res.status(200).json({ message: '支付成功', data: { order_id } });
+        // 5. 累积积分：每消费 1 元积 1 分（取 real_pay 向下取整）
+        const earnedPoints = Math.floor(real_pay || 0);
+        if (earnedPoints > 0) {
+            // 获取订单的 user_id
+            const [userRow] = await pool.execute<RowDataPacket[]>(
+                `SELECT user_id FROM orders WHERE order_id = ?`,
+                [order_id]
+            );
+            if (userRow.length > 0) {
+                await pool.execute(
+                    `UPDATE users SET points = points + ? WHERE user_id = ?`,
+                    [earnedPoints, userRow[0].user_id]
+                );
+            }
+        }
+
+        res.status(200).json({ message: '支付成功', data: { order_id, earned_points: earnedPoints } });
     } catch (err) {
         console.error('payOrder error:', err);
         res.status(500).json({ message: '支付处理失败' });
