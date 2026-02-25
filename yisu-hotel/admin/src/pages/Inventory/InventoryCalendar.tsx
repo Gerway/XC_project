@@ -7,7 +7,7 @@ import {
   SettingOutlined,
   EditOutlined,
 } from '@ant-design/icons'
-import type { IDayInventory } from '@yisu/shared'
+import type { IDayInventory } from '@/shared'
 import { roomApi, type IRoomWithStock } from '../../api/room'
 import { merchantApi } from '../../api/merchant'
 import styles from './Inventory.module.scss'

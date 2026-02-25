@@ -9,7 +9,7 @@ import {
   StopOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons'
-import { UserRole } from '@yisu/shared'
+import { UserRole } from '@/shared'
 import { userApi } from '../../api/user'
 import styles from './UserManager.module.scss'
 import { StatusTag } from '../../components/StatusTag'
