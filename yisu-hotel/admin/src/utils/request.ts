@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const request = axios.create({
-  baseURL: '/api',
+  baseURL: 'https://yisuhotel.onrender.com/api',
   timeout: 10000,
   withCredentials: true, // 跨域请求时是否需要使用凭证
 })
