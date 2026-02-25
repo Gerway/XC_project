@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Table,
   Button,
@@ -144,22 +144,25 @@ const AdminHotelManager: React.FC = () => {
   }
 
   // ── Edit ──────────────────────────────────────────────────────────────────
-  const handleOpenEdit = (record: IAdminHotel) => {
-    setEditTarget(record)
-    editForm.setFieldsValue({
-      name: record.name,
-      address: record.address,
-      city_name: record.city_name,
-      star_rating: record.star_rating,
-      hotel_type: record.hotel_type,
-      tags: Array.isArray(record.tags) ? record.tags.join(', ') : record.tags,
-      description: record.description,
-      remark: record.remark,
-      latitude: record.latitude,
-      longitude: record.longitude,
-    })
-    setEditVisible(true)
-  }
+  const handleOpenEdit = useCallback(
+    (record: IAdminHotel) => {
+      setEditTarget(record)
+      editForm.setFieldsValue({
+        name: record.name,
+        address: record.address,
+        city_name: record.city_name,
+        star_rating: record.star_rating,
+        hotel_type: record.hotel_type,
+        tags: Array.isArray(record.tags) ? record.tags.join(', ') : record.tags,
+        description: record.description,
+        remark: record.remark,
+        latitude: record.latitude,
+        longitude: record.longitude,
+      })
+      setEditVisible(true)
+    },
+    [editForm],
+  )
 
   const handleEditSubmit = async () => {
     if (!editTarget) return
@@ -197,133 +200,139 @@ const AdminHotelManager: React.FC = () => {
   }
 
   // ── Delete ────────────────────────────────────────────────────────────────
-  const handleDelete = async (record: IAdminHotel) => {
-    try {
-      const res = await adminHotelApi.deleteHotel({ hotel_id: record.hotel_id })
-      if (res?.code === 200) {
-        message.success(`已删除酒店「${record.name}」`)
-        fetchHotels(pagination.current as number, pagination.pageSize as number)
-      } else {
-        message.error(res?.message || '删除失败')
+  const handleDelete = useCallback(
+    async (record: IAdminHotel) => {
+      try {
+        const res = await adminHotelApi.deleteHotel({ hotel_id: record.hotel_id })
+        if (res?.code === 200) {
+          message.success(`已删除酒店「${record.name}」`)
+          fetchHotels(pagination.current as number, pagination.pageSize as number)
+        } else {
+          message.error(res?.message || '删除失败')
+        }
+      } catch {
+        message.error('网络错误，删除失败')
       }
-    } catch {
-      message.error('网络错误，删除失败')
-    }
-  }
+    },
+    [message, fetchHotels, pagination],
+  )
 
   // ── Columns ───────────────────────────────────────────────────────────────
-  const columns: ColumnsType<IAdminHotel> = [
-    {
-      title: '酒店',
-      key: 'hotel',
-      width: 260,
-      render: (_: unknown, record: IAdminHotel) => (
-        <div className={styles.hotelCell}>
-          {record.cover_url ? (
-            <Image
-              src={record.cover_url}
-              width={48}
-              height={36}
-              className={styles.hotelCover}
-              preview={false}
-              fallback="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjU2IiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjVmNWY1Ii8+PC9zdmc+"
-            />
-          ) : (
-            <div
-              className={styles.hotelCover}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              <HomeOutlined style={{ fontSize: 16, color: '#d1d5db' }} />
+  const columns = useMemo<ColumnsType<IAdminHotel>>(
+    () => [
+      {
+        title: '酒店',
+        key: 'hotel',
+        width: 260,
+        render: (_: unknown, record: IAdminHotel) => (
+          <div className={styles.hotelCell}>
+            {record.cover_url ? (
+              <Image
+                src={record.cover_url}
+                width={48}
+                height={36}
+                className={styles.hotelCover}
+                preview={false}
+                fallback="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjU2IiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjVmNWY1Ii8+PC9zdmc+"
+              />
+            ) : (
+              <div
+                className={styles.hotelCover}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <HomeOutlined style={{ fontSize: 16, color: '#d1d5db' }} />
+              </div>
+            )}
+            <div className={styles.hotelMeta}>
+              <span className={styles.hotelName}>{record.name}</span>
+              <span className={styles.merchantName}>
+                {record.merchant_name || '未知商家'} · {record.city_name || '-'}
+              </span>
             </div>
-          )}
-          <div className={styles.hotelMeta}>
-            <span className={styles.hotelName}>{record.name}</span>
-            <span className={styles.merchantName}>
-              {record.merchant_name || '未知商家'} · {record.city_name || '-'}
-            </span>
           </div>
-        </div>
-      ),
-    },
-    {
-      title: '星级',
-      key: 'star',
-      width: 70,
-      align: 'center',
-      render: (_: unknown, record: IAdminHotel) => (
-        <span className={styles.starBadge}>
-          <StarFilled style={{ fontSize: 10 }} />
-          {record.star_rating || '-'}
-        </span>
-      ),
-    },
-    {
-      title: '类型',
-      key: 'type',
-      width: 90,
-      render: (_: unknown, record: IAdminHotel) => (
-        <Tag>{HOTEL_TYPE_MAP[record.hotel_type] || '未分类'}</Tag>
-      ),
-    },
-    {
-      title: '评分',
-      key: 'score',
-      width: 80,
-      render: (_: unknown, record: IAdminHotel) => (
-        <div className={styles.scoreCell}>
-          <span className={styles.scoreValue}>
-            {record.score != null ? Number(record.score).toFixed(1) : '-'}
-          </span>
-          <span className={styles.reviewCount}>{record.reviews || 0} 条</span>
-        </div>
-      ),
-    },
-    {
-      title: '状态',
-      key: 'status',
-      width: 90,
-      align: 'center',
-      render: (_: unknown, record: IAdminHotel) => {
-        const cfg = STATUS_MAP[record.status] || { text: '未知', color: 'processing' }
-        return <StatusTag color={cfg.color} statusText={cfg.text} />
+        ),
       },
-    },
-    {
-      title: '创建时间',
-      key: 'created_at',
-      width: 100,
-      render: (_: unknown, record: IAdminHotel) => (
-        <span className={styles.dateText}>
-          {record.created_at ? dayjs(record.created_at).format('YYYY-MM-DD') : '-'}
-        </span>
-      ),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 130,
-      align: 'right',
-      render: (_: unknown, record: IAdminHotel) => (
-        <div className={styles.actionCell}>
-          <a className={styles.editLink} onClick={() => handleOpenEdit(record)}>
-            <EditOutlined /> 编辑
-          </a>
-          <Popconfirm
-            title="确认删除此酒店？"
-            description="删除后将同时清除该酒店的所有房型、库存和媒体数据。"
-            onConfirm={() => handleDelete(record)}
-            okText="确认删除"
-            cancelText="取消"
-            okButtonProps={{ danger: true }}
-          >
-            <a className={styles.deleteLink}>
-              <DeleteOutlined /> 删除
+      {
+        title: '星级',
+        key: 'star',
+        width: 70,
+        align: 'center',
+        render: (_: unknown, record: IAdminHotel) => (
+          <span className={styles.starBadge}>
+            <StarFilled style={{ fontSize: 10 }} />
+            {record.star_rating || '-'}
+          </span>
+        ),
+      },
+      {
+        title: '类型',
+        key: 'type',
+        width: 90,
+        render: (_: unknown, record: IAdminHotel) => (
+          <Tag>{HOTEL_TYPE_MAP[record.hotel_type] || '未分类'}</Tag>
+        ),
+      },
+      {
+        title: '评分',
+        key: 'score',
+        width: 80,
+        render: (_: unknown, record: IAdminHotel) => (
+          <div className={styles.scoreCell}>
+            <span className={styles.scoreValue}>
+              {record.score != null ? Number(record.score).toFixed(1) : '-'}
+            </span>
+            <span className={styles.reviewCount}>{record.reviews || 0} 条</span>
+          </div>
+        ),
+      },
+      {
+        title: '状态',
+        key: 'status',
+        width: 90,
+        align: 'center',
+        render: (_: unknown, record: IAdminHotel) => {
+          const cfg = STATUS_MAP[record.status] || { text: '未知', color: 'processing' }
+          return <StatusTag color={cfg.color} statusText={cfg.text} />
+        },
+      },
+      {
+        title: '创建时间',
+        key: 'created_at',
+        width: 100,
+        render: (_: unknown, record: IAdminHotel) => (
+          <span className={styles.dateText}>
+            {record.created_at ? dayjs(record.created_at).format('YYYY-MM-DD') : '-'}
+          </span>
+        ),
+      },
+      {
+        title: '操作',
+        key: 'action',
+        width: 130,
+        align: 'right',
+        render: (_: unknown, record: IAdminHotel) => (
+          <div className={styles.actionCell}>
+            <a className={styles.editLink} onClick={() => handleOpenEdit(record)}>
+              <EditOutlined /> 编辑
             </a>
-          </Popconfirm>
-        </div>
-      ),
-    },
-  ]
+            <Popconfirm
+              title="确认删除此酒店？"
+              description="删除后将同时清除该酒店的所有房型、库存和媒体数据。"
+              onConfirm={() => handleDelete(record)}
+              okText="确认删除"
+              cancelText="取消"
+              okButtonProps={{ danger: true }}
+            >
+              <a className={styles.deleteLink}>
+                <DeleteOutlined /> 删除
+              </a>
+            </Popconfirm>
+          </div>
+        ),
+      },
+    ],
+    [handleOpenEdit, handleDelete],
+  )
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Table, Button, Input, Card, Statistic, Select, Avatar, Popover, Form, App } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import {
@@ -107,7 +107,7 @@ const UserManager: React.FC = () => {
   })
   const { message } = App.useApp()
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const res = (await userApi.getUserStats()) as unknown as {
         totalUsers: number
@@ -122,30 +122,33 @@ const UserManager: React.FC = () => {
     } catch (error) {
       console.error('获取统计数据失败', error)
     }
-  }
+  }, [])
 
-  const fetchUsers = async (
-    page = 1,
-    pageSize = 10,
-    overrides?: { search?: string; role?: string; status?: string },
-  ) => {
-    setLoading(true)
-    try {
-      const res = (await userApi.getUserList({
-        page,
-        pageSize,
-        search: overrides?.search ?? searchText,
-        role: overrides?.role ?? roleFilter,
-        status: overrides?.status ?? statusFilter,
-      })) as unknown as { data: IUser[]; total: number }
-      setData(res.data || [])
-      setPagination((prev) => ({ ...prev, current: page, pageSize, total: res.total || 0 }))
-    } catch (error) {
-      message.error((error as Error).message || '获取用户列表失败')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const fetchUsers = useCallback(
+    async (
+      page = 1,
+      pageSize = 10,
+      overrides?: { search?: string; role?: string; status?: string },
+    ) => {
+      setLoading(true)
+      try {
+        const res = (await userApi.getUserList({
+          page,
+          pageSize,
+          search: overrides?.search ?? searchText,
+          role: overrides?.role ?? roleFilter,
+          status: overrides?.status ?? statusFilter,
+        })) as unknown as { data: IUser[]; total: number }
+        setData(res.data || [])
+        setPagination((prev) => ({ ...prev, current: page, pageSize, total: res.total || 0 }))
+      } catch (error) {
+        message.error((error as Error).message || '获取用户列表失败')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [searchText, roleFilter, statusFilter, message],
+  )
 
   useEffect(() => {
     fetchStats()
@@ -172,121 +175,130 @@ const UserManager: React.FC = () => {
   }
 
   // 封禁
-  const handleBan = async (record: IUser, reason: string) => {
-    setBanPopOpen(null)
-    try {
-      await userApi.updateUserStatus(record.uid, 'banned')
-      message.success(`已封禁用户「${record.name}」${reason ? `，原因：${reason}` : ''}`)
-      fetchStats()
-      fetchUsers(pagination.current, pagination.pageSize)
-    } catch (error) {
-      message.error((error as Error).message || '封禁失败')
-    }
-  }
+  const handleBan = useCallback(
+    async (record: IUser, reason: string) => {
+      setBanPopOpen(null)
+      try {
+        await userApi.updateUserStatus(record.uid, 'banned')
+        message.success(`已封禁用户「${record.name}」${reason ? `，原因：${reason}` : ''}`)
+        fetchStats()
+        fetchUsers(pagination.current, pagination.pageSize)
+      } catch (error) {
+        message.error((error as Error).message || '封禁失败')
+      }
+    },
+    [message, pagination, fetchStats, fetchUsers],
+  )
 
   // 解封
-  const handleUnban = async (record: IUser) => {
-    try {
-      await userApi.updateUserStatus(record.uid, 'active')
-      message.success(`已解封用户「${record.name}」`)
-      fetchStats()
-      fetchUsers(pagination.current, pagination.pageSize)
-    } catch (error) {
-      message.error((error as Error).message || '解封失败')
-    }
-  }
+  const handleUnban = useCallback(
+    async (record: IUser) => {
+      try {
+        await userApi.updateUserStatus(record.uid, 'active')
+        message.success(`已解封用户「${record.name}」`)
+        fetchStats()
+        fetchUsers(pagination.current, pagination.pageSize)
+      } catch (error) {
+        message.error((error as Error).message || '解封失败')
+      }
+    },
+    [message, pagination, fetchStats, fetchUsers],
+  )
 
   // ===== 列定义 =====
-  const columns: ColumnsType<IUser> = [
-    {
-      title: '用户ID',
-      dataIndex: 'uid',
-      key: 'uid',
-      width: 100,
-      render: (uid: string) => <span className={styles.userId}>{uid}</span>,
-    },
-    {
-      title: '用户',
-      key: 'user',
-      render: (_: unknown, record: IUser) => (
-        <div className={styles.userCell}>
-          <Avatar src={record.avatar} size={36} className={styles.userAvatar} />
-          <div className={styles.userMeta}>
-            <span className={styles.userName}>{record.name}</span>
-            <span className={styles.userContact}>{record.contact}</span>
+  const columns = useMemo<ColumnsType<IUser>>(
+    () => [
+      {
+        title: '用户ID',
+        dataIndex: 'uid',
+        key: 'uid',
+        width: 100,
+        render: (uid: string) => <span className={styles.userId}>{uid}</span>,
+      },
+      {
+        title: '用户',
+        key: 'user',
+        render: (_: unknown, record: IUser) => (
+          <div className={styles.userCell}>
+            <Avatar src={record.avatar} size={36} className={styles.userAvatar} />
+            <div className={styles.userMeta}>
+              <span className={styles.userName}>{record.name}</span>
+              <span className={styles.userContact}>{record.contact}</span>
+            </div>
           </div>
-        </div>
-      ),
-    },
-    {
-      title: '角色',
-      key: 'role',
-      width: 110,
-      render: (_: unknown, record: IUser) => (
-        <span className={`${styles.roleTag} ${styles[roleStyleMap[record.role]]}`}>
-          {roleLabel[record.role]}
-        </span>
-      ),
-    },
-    {
-      title: '注册日期',
-      dataIndex: 'registerDate',
-      key: 'registerDate',
-      width: 130,
-      render: (d: string) => <span className={styles.dateText}>{d}</span>,
-    },
-    {
-      title: '上次登录',
-      dataIndex: 'lastLogin',
-      key: 'lastLogin',
-      width: 170,
-      render: (d: string) => <span className={styles.dateText}>{d}</span>,
-    },
-    {
-      title: '状态',
-      key: 'status',
-      width: 110,
-      align: 'center',
-      render: (_: unknown, record: IUser) => (
-        <StatusTag
-          color={record.status === 'active' ? 'success' : 'error'}
-          statusText={record.status === 'active' ? '正常' : '已封禁'}
-        />
-      ),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 100,
-      align: 'right',
-      render: (_: unknown, record: IUser) => (
-        <div>
-          {record.status === 'active' ? (
-            <Popover
-              open={banPopOpen === record.uid}
-              onOpenChange={(v) => setBanPopOpen(v ? record.uid : null)}
-              trigger="click"
-              placement="bottomRight"
-              overlayClassName={styles.banPopover}
-              content={
-                <BanPopContent
-                  userName={record.name}
-                  onConfirm={(reason) => handleBan(record, reason)}
-                  onCancel={() => setBanPopOpen(null)}
-                />
-              }
-            >
-              <a className={styles.banLink}>封禁</a>
-            </Popover>
-          ) : (
-            <a className={styles.unbanLink} onClick={() => handleUnban(record)}>
-              解封
-            </a>
-          )}
-        </div>
-      ),
-    },
-  ]
+        ),
+      },
+      {
+        title: '角色',
+        key: 'role',
+        width: 110,
+        render: (_: unknown, record: IUser) => (
+          <span className={`${styles.roleTag} ${styles[roleStyleMap[record.role]]}`}>
+            {roleLabel[record.role]}
+          </span>
+        ),
+      },
+      {
+        title: '注册日期',
+        dataIndex: 'registerDate',
+        key: 'registerDate',
+        width: 130,
+        render: (d: string) => <span className={styles.dateText}>{d}</span>,
+      },
+      {
+        title: '上次登录',
+        dataIndex: 'lastLogin',
+        key: 'lastLogin',
+        width: 170,
+        render: (d: string) => <span className={styles.dateText}>{d}</span>,
+      },
+      {
+        title: '状态',
+        key: 'status',
+        width: 110,
+        align: 'center',
+        render: (_: unknown, record: IUser) => (
+          <StatusTag
+            color={record.status === 'active' ? 'success' : 'error'}
+            statusText={record.status === 'active' ? '正常' : '已封禁'}
+          />
+        ),
+      },
+      {
+        title: '操作',
+        key: 'action',
+        width: 100,
+        align: 'right',
+        render: (_: unknown, record: IUser) => (
+          <div>
+            {record.status === 'active' ? (
+              <Popover
+                open={banPopOpen === record.uid}
+                onOpenChange={(v) => setBanPopOpen(v ? record.uid : null)}
+                trigger="click"
+                placement="bottomRight"
+                overlayClassName={styles.banPopover}
+                content={
+                  <BanPopContent
+                    userName={record.name}
+                    onConfirm={(reason) => handleBan(record, reason)}
+                    onCancel={() => setBanPopOpen(null)}
+                  />
+                }
+              >
+                <a className={styles.banLink}>封禁</a>
+              </Popover>
+            ) : (
+              <a className={styles.unbanLink} onClick={() => handleUnban(record)}>
+                解封
+              </a>
+            )}
+          </div>
+        ),
+      },
+    ],
+    [handleBan, handleUnban, banPopOpen, setBanPopOpen],
+  )
 
   return (
     <div className={styles.container}>

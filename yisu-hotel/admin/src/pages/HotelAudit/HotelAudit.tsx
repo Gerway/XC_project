@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Table, Button, Card, Statistic, App } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import { FieldTimeOutlined, ShopOutlined, EnvironmentOutlined } from '@ant-design/icons'
@@ -124,10 +124,10 @@ const HotelAudit: React.FC = () => {
   }
 
   // 审核按钮 — 打开 Drawer
-  const handleAudit = (record: IAuditRecord) => {
+  const handleAudit = useCallback((record: IAuditRecord) => {
     setCurrentDetail(toAuditDetail(record))
     setDrawerOpen(true)
-  }
+  }, [])
 
   // 通过回调
   const handleApprove = async (hotelId: string, remark: string) => {
@@ -156,81 +156,84 @@ const HotelAudit: React.FC = () => {
   }
 
   // ===== 表格列配置 =====
-  const columns: ColumnsType<IAuditRecord> = [
-    {
-      title: '提交时间',
-      key: 'submitTime',
-      width: 160,
-      render: (_: unknown, record: IAuditRecord) => {
-        const dt = record.created_at ? new Date(record.created_at) : null
-        return (
-          <div className={styles.timeCell}>
-            <span className={styles.date}>{dt ? dt.toLocaleDateString('zh-CN') : '-'}</span>
-            <span className={styles.time}>
-              {dt ? dt.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : ''}
+  const columns = useMemo<ColumnsType<IAuditRecord>>(
+    () => [
+      {
+        title: '提交时间',
+        key: 'submitTime',
+        width: 160,
+        render: (_: unknown, record: IAuditRecord) => {
+          const dt = record.created_at ? new Date(record.created_at) : null
+          return (
+            <div className={styles.timeCell}>
+              <span className={styles.date}>{dt ? dt.toLocaleDateString('zh-CN') : '-'}</span>
+              <span className={styles.time}>
+                {dt ? dt.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : ''}
+              </span>
+            </div>
+          )
+        },
+      },
+      {
+        title: '商家名称',
+        dataIndex: 'merchant_name',
+        key: 'merchantName',
+        width: 180,
+        render: (name: string) => (
+          <div className={styles.merchantCell}>
+            <div className={styles.merchantIcon}>
+              <ShopOutlined />
+            </div>
+            <span className={styles.merchantName}>{name || '未知商家'}</span>
+          </div>
+        ),
+      },
+      {
+        title: '酒店名称',
+        dataIndex: 'name',
+        key: 'name',
+        width: 220,
+        render: (name: string) => <span className={styles.hotelName}>{name}</span>,
+      },
+      {
+        title: '位置',
+        dataIndex: 'address',
+        key: 'address',
+        ellipsis: true,
+        render: (loc: string) => (
+          <div className={styles.locationCell}>
+            <EnvironmentOutlined className={styles.locationIcon} />
+            <span className={styles.locationText} title={loc}>
+              {loc || '-'}
             </span>
           </div>
-        )
+        ),
       },
-    },
-    {
-      title: '商家名称',
-      dataIndex: 'merchant_name',
-      key: 'merchantName',
-      width: 180,
-      render: (name: string) => (
-        <div className={styles.merchantCell}>
-          <div className={styles.merchantIcon}>
-            <ShopOutlined />
-          </div>
-          <span className={styles.merchantName}>{name || '未知商家'}</span>
-        </div>
-      ),
-    },
-    {
-      title: '酒店名称',
-      dataIndex: 'name',
-      key: 'name',
-      width: 220,
-      render: (name: string) => <span className={styles.hotelName}>{name}</span>,
-    },
-    {
-      title: '位置',
-      dataIndex: 'address',
-      key: 'address',
-      ellipsis: true,
-      render: (loc: string) => (
-        <div className={styles.locationCell}>
-          <EnvironmentOutlined className={styles.locationIcon} />
-          <span className={styles.locationText} title={loc}>
-            {loc || '-'}
-          </span>
-        </div>
-      ),
-    },
-    {
-      title: '当前状态',
-      key: 'status',
-      width: 120,
-      render: () => <span className={styles.statusPending}>待审核</span>,
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 100,
-      align: 'right',
-      render: (_: unknown, record: IAuditRecord) => (
-        <Button
-          type="primary"
-          size="small"
-          className={styles.auditBtn}
-          onClick={() => handleAudit(record)}
-        >
-          审核
-        </Button>
-      ),
-    },
-  ]
+      {
+        title: '当前状态',
+        key: 'status',
+        width: 120,
+        render: () => <span className={styles.statusPending}>待审核</span>,
+      },
+      {
+        title: '操作',
+        key: 'action',
+        width: 100,
+        align: 'right',
+        render: (_: unknown, record: IAuditRecord) => (
+          <Button
+            type="primary"
+            size="small"
+            className={styles.auditBtn}
+            onClick={() => handleAudit(record)}
+          >
+            审核
+          </Button>
+        ),
+      },
+    ],
+    [handleAudit],
+  )
 
   return (
     <div className={styles.container}>
