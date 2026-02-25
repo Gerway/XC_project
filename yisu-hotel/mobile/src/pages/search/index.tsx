@@ -1,11 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { View, Text, Image, ScrollView, Input, Map } from '@tarojs/components';
-import Taro, { useDidShow } from '@tarojs/taro';
+import Taro, { useDidShow, useReachBottom } from '@tarojs/taro';
 import { hotelApi, SearchHotelsParams, Hotel } from '../../api/hotel';
 import DatePicker from '../../components/DatePicker/DatePicker';
 import CityPicker from '../../components/CityPicker/CityPicker';
 import SearchFilterModal, { MoreFilterResult } from '../../components/SearchFilterModal/SearchFilterModal';
+import HotelCardSkeleton from '../../components/HotelCardSkeleton/HotelCardSkeleton';
 import './index.scss';
+
+const PAGE_SIZE = 5;
 
 const BADGE_CLASS_MAP: Record<string, string> = {
   'Economy': '',
@@ -51,6 +54,19 @@ const Search: React.FC = () => {
   const [selectedHotel, setSelectedHotel] = useState<any | null>(null);
   const [keyword, setKeyword] = useState('');
 
+  // Custom nav bar metrics — align with WeChat capsule button
+  const systemInfo = Taro.getSystemInfoSync();
+  const statusBarH = systemInfo.statusBarHeight || 20;
+  let menuBtnRight = 100;
+  let menuBtnTop = statusBarH;
+  let menuBtnH = 32;
+  try {
+    const mb = Taro.getMenuButtonBoundingClientRect();
+    menuBtnRight = systemInfo.screenWidth - mb.left + 6;
+    menuBtnTop = mb.top;
+    menuBtnH = mb.height;
+  } catch { /* fallback */ }
+
   // Pickers
   const [isCityPickerOpen, setIsCityPickerOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -84,18 +100,54 @@ const Search: React.FC = () => {
     { label: '价格最高', value: 'price_desc' },
   ];
 
-  const fetchHotels = async (params: SearchHotelsParams) => {
-    Taro.showLoading({ title: '搜索中...' });
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [total, setTotal] = useState(0);
+  const loadingRef = useRef(false);
+
+  const fetchHotels = useCallback(async (params: SearchHotelsParams, pageNum = 1, append = false) => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    if (pageNum === 1) { setIsFirstLoad(true); setHasMore(true); }
+    else setIsLoadingMore(true);
+
     try {
-      const res = await hotelApi.searchHotels(params);
-      setHotels(res.data || []);
+      const res = await hotelApi.searchHotels({ ...params, page: pageNum, page_size: PAGE_SIZE });
+      const newData = res.data || [];
+      if (append) setHotels(prev => [...prev, ...newData]);
+      else setHotels(newData);
+
+      const pag = res.pagination;
+      if (pag) {
+        setTotal(pag.total);
+        setHasMore(pageNum < pag.total_pages);
+      } else {
+        setTotal(newData.length);
+        setHasMore(false);
+      }
+      setPage(pageNum);
     } catch (err) {
       console.error(err);
       Taro.showToast({ title: '搜索失败', icon: 'none' });
     } finally {
-      Taro.hideLoading();
+      setIsFirstLoad(false);
+      setIsLoadingMore(false);
+      loadingRef.current = false;
     }
-  };
+  }, []);
+
+  const handleLoadMore = useCallback(() => {
+    if (!hasMore || loadingRef.current) return;
+    fetchHotels(searchState, page + 1, true);
+  }, [hasMore, page, searchState, fetchHotels]);
+
+  // Use page-level onReachBottom for reliable infinite scroll
+  useReachBottom(() => {
+    handleLoadMore();
+  });
 
   useDidShow(() => {
     try {
@@ -290,8 +342,12 @@ const Search: React.FC = () => {
 
   return (
     <View className="search-page">
-      <View className="search-page__header">
-        <View className="search-page__top-bar">
+      <View className="search-page__header" style={{ paddingTop: `${menuBtnTop}px` }}>
+        <View className="search-page__top-bar" style={{ paddingRight: `${menuBtnRight}px`, height: `${menuBtnH + 5}px` }}>
+          {/* Back button */}
+          <View className="search-page__back-btn" onClick={() => Taro.navigateBack({ fail: () => Taro.switchTab({ url: '/pages/home/index' }) })}>
+            <Text className="search-page__back-icon">‹</Text>
+          </View>
           <View className="search-page__search-pill">
             <View className="search-page__search-city" onClick={() => setIsCityPickerOpen(true)}>
               <Text className="search-page__search-location">{searchState.city_name || 'All'}</Text>
@@ -316,7 +372,6 @@ const Search: React.FC = () => {
             <View className="search-page__map-icon-wrapper">
               <Image src={isMapView ? 'https://api.iconify.design/lucide:list.svg?color=%23FF6B35' : 'https://api.iconify.design/lucide:map.svg?color=%23FF6B35'} style={{ width: 20, height: 20 }} />
             </View>
-            <Text className="search-page__map-label">{isMapView ? '列表' : '地图'}</Text>
           </View>
         </View>
 
@@ -470,82 +525,99 @@ const Search: React.FC = () => {
           )}
         </View>
       ) : (
-        <ScrollView scrollY className="search-page__main">
-          {sortedHotels.length === 0 ? (
+        <View className="search-page__main">
+          {isFirstLoad ? (
+            <HotelCardSkeleton count={PAGE_SIZE} />
+          ) : sortedHotels.length === 0 ? (
             <View className="search-page__empty">
               <Text className="search-page__empty-icon">🔍</Text>
               <Text className="search-page__empty-title">未找到符合条件的酒店</Text>
               <Text className="search-page__empty-text">试试调整搜索条件或清除筛选</Text>
               <View onClick={() => setKeyword('')} className="search-page__empty-clear-btn"><Text>清除关键词</Text></View>
             </View>
-          ) : sortedHotels.map(hotel => {
-            const originalPrice = hotel.original_price || hotel.min_price;
-            const savings = originalPrice > hotel.min_price ? Math.floor(originalPrice - hotel.min_price) : 0;
-            const reviewCount = hotel.real_reviews_count !== undefined ? hotel.real_reviews_count : (hotel.reviews || 0);
-            let distText = '';
-            if (userLocation && hotel.latitude && hotel.longitude) {
-              const d = calcDistance(userLocation.lat, userLocation.lng, Number(hotel.latitude), Number(hotel.longitude));
-              distText = d < 1 ? `${Math.round(d * 1000)}m` : `${d.toFixed(1)}km`;
-            }
-            return (
-              <View key={hotel.hotel_id} className="search-page__hotel-card" onClick={() => {
-                let url = `/pages/hotel-details/index?id=${hotel.hotel_id}`;
-                if (searchState.check_in && searchState.check_out) url += `&check_in=${searchState.check_in}&check_out=${searchState.check_out}`;
-                Taro.navigateTo({ url });
-              }}>
-                <View className="search-page__hotel-image-col">
-                  <View className="search-page__hotel-image-wrapper">
-                    <Image src={hotel.image_url || 'https://images.unsplash.com/photo-1551882547-ff40c0d5bf8f?auto=format&fit=crop&w=400&q=80'} className="search-page__hotel-image" mode="aspectFill" />
-                    <Text className="search-page__hotel-brand-tag">易宿酒店</Text>
-                    <View className="search-page__hotel-play-btn"><Text className="search-page__hotel-play-icon">▶</Text></View>
-                  </View>
-                </View>
-                <View className="search-page__hotel-content">
-                  <View className="search-page__hotel-content-top">
-                    <View className="search-page__hotel-name-row"><Text className="search-page__hotel-name">{hotel.name}</Text></View>
-                    <View className="search-page__hotel-badges">
-                      {hotel.hotel_type && HOTEL_TYPE_MAP[hotel.hotel_type] && (
-                        <Text className={`search-page__hotel-badge ${BADGE_CLASS_MAP[HOTEL_TYPE_MAP[hotel.hotel_type].text] || ''}`}>{HOTEL_TYPE_MAP[hotel.hotel_type].type}</Text>
-                      )}
-                      {hotel.star_rating > 3 && (
-                        <View className="search-page__hotel-preferred-badge">
-                          <Text className="search-page__hotel-preferred-icon">⭐</Text>
-                          <Text>{hotel.star_rating} 星级</Text>
-                        </View>
-                      )}
+          ) : (
+            <>
+              <View className="search-page__result-count">
+                <Text>共找到 {total} 家酒店</Text>
+              </View>
+              {sortedHotels.map(hotel => {
+                const originalPrice = hotel.original_price || hotel.min_price;
+                const savings = originalPrice > hotel.min_price ? Math.floor(originalPrice - hotel.min_price) : 0;
+                const reviewCount = hotel.real_reviews_count !== undefined ? hotel.real_reviews_count : (hotel.reviews || 0);
+                let distText = '';
+                if (userLocation && hotel.latitude && hotel.longitude) {
+                  const d = calcDistance(userLocation.lat, userLocation.lng, Number(hotel.latitude), Number(hotel.longitude));
+                  distText = d < 1 ? `${Math.round(d * 1000)}m` : `${d.toFixed(1)}km`;
+                }
+                return (
+                  <View key={hotel.hotel_id} className="search-page__hotel-card" onClick={() => {
+                    let url = `/pages/hotel-details/index?id=${hotel.hotel_id}`;
+                    if (searchState.check_in && searchState.check_out) url += `&check_in=${searchState.check_in}&check_out=${searchState.check_out}`;
+                    Taro.navigateTo({ url });
+                  }}>
+                    <View className="search-page__hotel-image-col">
+                      <View className="search-page__hotel-image-wrapper">
+                        <Image src={hotel.image_url || 'https://images.unsplash.com/photo-1551882547-ff40c0d5bf8f?auto=format&fit=crop&w=400&q=80'} className="search-page__hotel-image" mode="aspectFill" />
+                        <Text className="search-page__hotel-brand-tag">易宿酒店</Text>
+                        <View className="search-page__hotel-play-btn"><Text className="search-page__hotel-play-icon">▶</Text></View>
+                      </View>
                     </View>
-                  </View>
-                  <View className="search-page__hotel-rating-row">
-                    <View className="search-page__hotel-score-badge"><Text>{hotel.score || '4.0'}</Text></View>
-                    <Text className="search-page__hotel-score-label">{(hotel.score || 4.0) >= 4.5 ? '极好' : '好'}</Text>
-                    <View className="search-page__hotel-divider-v" />
-                    <Text className="search-page__hotel-reviews">{reviewCount} 条点评</Text>
-                  </View>
-                  <View><Text className="search-page__hotel-quote">{(hotel.remark || '舒适体验，品质之选').substring(0, 10)}{(hotel.remark || '').length > 10 ? '...' : ''}</Text></View>
-                  <Text className="search-page__hotel-distance">{hotel.city_name} · {hotel.address}{distText ? ` · 距您${distText}` : ''}</Text>
-                  <View className="search-page__hotel-features">
-                    {(hotel.parsedTags && hotel.parsedTags.length > 0) ? hotel.parsedTags.slice(0, 3).map((tag: string, i: number) => (
-                      <View key={i} className={`search-page__hotel-feature-tag ${tag === '升级房型' ? 'search-page__hotel-feature-tag--blue' : 'search-page__hotel-feature-tag--gray'}`}><Text>{tag}</Text></View>
-                    )) : (<><View className="search-page__hotel-feature-tag search-page__hotel-feature-tag--blue"><Text>优享</Text></View>
-                      <View className="search-page__hotel-feature-tag search-page__hotel-feature-tag--gray"><Text>免费停车</Text></View></>)}
-                  </View>
-                  <View className="search-page__hotel-price-row">
-                    <Text className="search-page__hotel-stock">{hotel.left_stock !== undefined ? (hotel.left_stock <= 3 ? `仅剩 ${hotel.left_stock} 间` : '房源充足') : '有房'}</Text>
-                    <View className="search-page__hotel-price-col">
-                      {savings > 0 && (<View className="search-page__hotel-original-price-row"><Text className="search-page__hotel-original-price">¥{originalPrice}</Text><Text className="search-page__hotel-save-badge">省 ¥{savings}</Text></View>)}
-                      <View className="search-page__hotel-current-price">
-                        <Text className="search-page__hotel-currency">¥</Text>
-                        <Text className="search-page__hotel-price-value">{hotel.min_price || 0}</Text>
-                        <Text className="search-page__hotel-price-suffix">起/晚</Text>
+                    <View className="search-page__hotel-content">
+                      <View className="search-page__hotel-content-top">
+                        <View className="search-page__hotel-name-row"><Text className="search-page__hotel-name">{hotel.name}</Text></View>
+                        <View className="search-page__hotel-badges">
+                          {hotel.hotel_type && HOTEL_TYPE_MAP[hotel.hotel_type] && (
+                            <Text className={`search-page__hotel-badge ${BADGE_CLASS_MAP[HOTEL_TYPE_MAP[hotel.hotel_type].text] || ''}`}>{HOTEL_TYPE_MAP[hotel.hotel_type].type}</Text>
+                          )}
+                          {hotel.star_rating > 3 && (
+                            <View className="search-page__hotel-preferred-badge">
+                              <Text className="search-page__hotel-preferred-icon">⭐</Text>
+                              <Text>{hotel.star_rating} 星级</Text>
+                            </View>
+                          )}
+                        </View>
+                      </View>
+                      <View className="search-page__hotel-rating-row">
+                        <View className="search-page__hotel-score-badge"><Text>{hotel.score || '4.0'}</Text></View>
+                        <Text className="search-page__hotel-score-label">{(hotel.score || 4.0) >= 4.5 ? '极好' : '好'}</Text>
+                        <View className="search-page__hotel-divider-v" />
+                        <Text className="search-page__hotel-reviews">{reviewCount} 条点评</Text>
+                      </View>
+                      <View><Text className="search-page__hotel-quote">{(hotel.remark || '舒适体验，品质之选').substring(0, 10)}{(hotel.remark || '').length > 10 ? '...' : ''}</Text></View>
+                      <Text className="search-page__hotel-distance">{hotel.city_name} · {hotel.address}{distText ? ` · 距您${distText}` : ''}</Text>
+                      <View className="search-page__hotel-features">
+                        {(hotel.parsedTags && hotel.parsedTags.length > 0) ? hotel.parsedTags.slice(0, 3).map((tag: string, i: number) => (
+                          <View key={i} className={`search-page__hotel-feature-tag ${tag === '升级房型' ? 'search-page__hotel-feature-tag--blue' : 'search-page__hotel-feature-tag--gray'}`}><Text>{tag}</Text></View>
+                        )) : (<><View className="search-page__hotel-feature-tag search-page__hotel-feature-tag--blue"><Text>优享</Text></View>
+                          <View className="search-page__hotel-feature-tag search-page__hotel-feature-tag--gray"><Text>免费停车</Text></View></>)}
+                      </View>
+                      <View className="search-page__hotel-price-row">
+                        <Text className="search-page__hotel-stock">{hotel.left_stock !== undefined ? (hotel.left_stock <= 3 ? `仅剩 ${hotel.left_stock} 间` : '房源充足') : '有房'}</Text>
+                        <View className="search-page__hotel-price-col">
+                          {savings > 0 && (<View className="search-page__hotel-original-price-row"><Text className="search-page__hotel-original-price">¥{originalPrice}</Text><Text className="search-page__hotel-save-badge">省 ¥{savings}</Text></View>)}
+                          <View className="search-page__hotel-current-price">
+                            <Text className="search-page__hotel-currency">¥</Text>
+                            <Text className="search-page__hotel-price-value">{hotel.min_price || 0}</Text>
+                            <Text className="search-page__hotel-price-suffix">起/晚</Text>
+                          </View>
+                        </View>
                       </View>
                     </View>
                   </View>
+                );
+              })}
+              {/* Load more / No more */}
+              {isLoadingMore ? (
+                <HotelCardSkeleton count={2} />
+              ) : !hasMore ? (
+                <View className="search-page__load-more">
+                  <Text className="search-page__load-more-text">—— 已经到底了 ——</Text>
                 </View>
-              </View>
-            );
-          })}
+              ) : null}
+            </>
+          )}
           <View style={{ height: '60px' }} />
-        </ScrollView>
+        </View>
       )}
 
       {/* Pickers & Modals */}

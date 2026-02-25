@@ -31,6 +31,15 @@ export interface SearchHotelsParams {
     max_price?: number;
     star_rating?: number[]; // [4, 5]
     room_type?: number;
+    page?: number;
+    page_size?: number;
+}
+
+export interface PaginationInfo {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
 }
 
 export interface HotelDetailsBody {
@@ -90,7 +99,7 @@ export const hotelApi = {
      * 搜索酒店列表
      */
     searchHotels(data: SearchHotelsParams) {
-        return request<{ message: string; data: Hotel[] }>({
+        return request<{ message: string; data: Hotel[]; pagination: PaginationInfo }>({
             url: '/hotel/search',
             method: 'POST',
             data

@@ -11,6 +11,8 @@ interface SearchRequestBody {
     max_price?: number;
     star_rating?: number[]; // [4, 5]
     room_type?: number;
+    page?: number;       // 默认 1
+    page_size?: number;  // 默认 5
 }
 
 export const searchHotels = async (
@@ -25,8 +27,12 @@ export const searchHotels = async (
         min_price,
         max_price,
         star_rating,
-        room_type
+        room_type,
+        page = 1,
+        page_size = 5
     } = req.body;
+    console.log('page:' + page);
+    console.log('page_size:' + page_size);
 
     try {
         // 1. 计算入住多少晚 (nights)
@@ -142,6 +148,19 @@ export const searchHotels = async (
         // 因为上面是 GROUP BY h.hotel_id, r.room_id，这意味着如果一个酒店有3个合格的房型，会返回3条一样的酒店数据（由于分组不同）。
         // 为保证前端列表中酒店不重复，我们可以外套一层查询，对酒店去重，找出真正的 min_price。
 
+        // 6. 分页：先查总数，再查当前页数据
+        const countSql = `
+            SELECT COUNT(*) as total FROM (
+                SELECT hotel_id
+                FROM (${sql}) AS available_rooms
+                GROUP BY hotel_id
+            ) AS counted
+        `;
+        const [countRows] = await pool.execute<RowDataPacket[]>(countSql, params);
+        const total = countRows[0]?.total || 0;
+        const total_pages = Math.ceil(total / page_size);
+        const offset = (page - 1) * page_size;
+
         const finalSql = `
             SELECT 
                 hotel_id, name, address, city_name, latitude, longitude, 
@@ -168,13 +187,20 @@ export const searchHotels = async (
             FROM (${sql}) AS available_rooms
             GROUP BY hotel_id
             ORDER BY score DESC
+            LIMIT ${page_size} OFFSET ${offset}
         `;
 
         const [rows] = await pool.execute<RowDataPacket[]>(finalSql, params);
 
         res.status(200).json({
             message: "查询成功",
-            data: rows
+            data: rows,
+            pagination: {
+                page,
+                page_size,
+                total,
+                total_pages
+            }
         });
 
     } catch (err) {
