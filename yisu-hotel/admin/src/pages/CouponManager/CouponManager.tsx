@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Table, Button, Input, Card, Statistic, Progress, App } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import {
@@ -105,121 +105,126 @@ const CouponManager: React.FC = () => {
   }
 
   // 删除 (预留)
-  const handleDelete = (record: ICoupon) => {
-    modal.confirm({
-      title: '确认删除',
-      content: `确定要删除优惠券「${record.title}」吗？此操作不可恢复。`,
-      okText: '删除',
-      okType: 'danger',
-      cancelText: '取消',
-      onOk: async () => {
-        try {
-          await deleteCouponApi(record.coupon_id)
-          message.success(`已删除「${record.title}」`)
-          fetchCoupons() // 重新获取列表
-        } catch {
-          message.error('删除优惠券失败')
-        }
-      },
-    })
-  }
+  const handleDelete = useCallback(
+    (record: ICoupon) => {
+      modal.confirm({
+        title: '确认删除',
+        content: `确定要删除优惠券「${record.title}」吗？此操作不可恢复。`,
+        okText: '删除',
+        okType: 'danger',
+        cancelText: '取消',
+        onOk: async () => {
+          try {
+            await deleteCouponApi(record.coupon_id)
+            message.success(`已删除「${record.title}」`)
+            fetchCoupons() // 重新获取列表
+          } catch {
+            message.error('删除优惠券失败')
+          }
+        },
+      })
+    },
+    [modal, message, fetchCoupons],
+  )
 
   // ===== 计算用量 =====
-  const getUsageInfo = (record: ICoupon) => {
+  const getUsageInfo = useCallback((record: ICoupon) => {
     const totalText = record.total_count === -1 ? '无限制' : record.total_count.toLocaleString()
     const usedText = record.issued_count.toLocaleString()
     const percent =
       record.total_count === -1 ? 60 : Math.round((record.issued_count / record.total_count) * 100)
     const percentText = record.total_count === -1 ? '-' : `${percent}%`
     return { totalText, usedText, percent, percentText }
-  }
+  }, [])
 
-  // 进度条颜色
-  const getProgressColor = (record: ICoupon) => {
+  const getProgressColor = useCallback((record: ICoupon) => {
     if (record.total_count === -1) return '#1890ff'
     const ratio = record.issued_count / record.total_count
     if (ratio >= 0.9) return '#f97316'
     return '#1890ff'
-  }
+  }, [])
 
   // ===== 列定义 =====
-  const columns: ColumnsType<ICoupon> = [
-    {
-      title: '优惠券名称',
-      key: 'title',
-      render: (_: unknown, record: ICoupon) => (
-        <div className={styles.couponNameCell}>
-          <div className={`${styles.couponIcon} ${styles.blue}`}>
-            <TagOutlined />
-          </div>
-          <div className={styles.couponNameText}>
-            <span className={styles.name}>{record.title}</span>
-            <span className={styles.id}>ID: {record.coupon_id}</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: '折扣规则',
-      key: 'discountRule',
-      width: 140,
-      render: (_: unknown, record: ICoupon) => (
-        <span className={`${styles.discountTag} ${styles.blue}`}>
-          满{record.min_spend}减{record.discount_amount}
-        </span>
-      ),
-    },
-    {
-      title: '有效期',
-      key: 'validity',
-      render: (_: unknown, record: ICoupon) => (
-        <div className={styles.dateCell}>
-          <span className={styles.startDate}>{record.start_time || '-'}</span>
-          <span className={styles.endDate}>
-            {record.end_time ? `至 ${record.end_time}` : '长期有效'}
-          </span>
-        </div>
-      ),
-    },
-    {
-      title: '总量 / 已使用',
-      key: 'usage',
-      width: 180,
-      render: (_: unknown, record: ICoupon) => {
-        const { totalText, usedText, percent, percentText } = getUsageInfo(record)
-        return (
-          <div className={styles.usageCell}>
-            <div className={styles.usageHeader}>
-              <span className={styles.usageText}>
-                {usedText} / {totalText}
-              </span>
-              <span className={styles.usagePercent}>{percentText}</span>
+  const columns = useMemo<ColumnsType<ICoupon>>(
+    () => [
+      {
+        title: '优惠券名称',
+        key: 'title',
+        render: (_: unknown, record: ICoupon) => (
+          <div className={styles.couponNameCell}>
+            <div className={`${styles.couponIcon} ${styles.blue}`}>
+              <TagOutlined />
             </div>
-            <Progress
-              percent={percent}
-              showInfo={false}
-              size="small"
-              strokeColor={getProgressColor(record)}
-              className={styles.progressBar}
-            />
+            <div className={styles.couponNameText}>
+              <span className={styles.name}>{record.title}</span>
+              <span className={styles.id}>ID: {record.coupon_id}</span>
+            </div>
           </div>
-        )
+        ),
       },
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 130,
-      align: 'right',
-      render: (_: unknown, record: ICoupon) => (
-        <div className={styles.actionCell}>
-          <a className={styles.deleteLink} onClick={() => handleDelete(record)}>
-            删除
-          </a>
-        </div>
-      ),
-    },
-  ]
+      {
+        title: '折扣规则',
+        key: 'discountRule',
+        width: 140,
+        render: (_: unknown, record: ICoupon) => (
+          <span className={`${styles.discountTag} ${styles.blue}`}>
+            满{record.min_spend}减{record.discount_amount}
+          </span>
+        ),
+      },
+      {
+        title: '有效期',
+        key: 'validity',
+        render: (_: unknown, record: ICoupon) => (
+          <div className={styles.dateCell}>
+            <span className={styles.startDate}>{record.start_time || '-'}</span>
+            <span className={styles.endDate}>
+              {record.end_time ? `至 ${record.end_time}` : '长期有效'}
+            </span>
+          </div>
+        ),
+      },
+      {
+        title: '总量 / 已使用',
+        key: 'usage',
+        width: 180,
+        render: (_: unknown, record: ICoupon) => {
+          const { totalText, usedText, percent, percentText } = getUsageInfo(record)
+          return (
+            <div className={styles.usageCell}>
+              <div className={styles.usageHeader}>
+                <span className={styles.usageText}>
+                  {usedText} / {totalText}
+                </span>
+                <span className={styles.usagePercent}>{percentText}</span>
+              </div>
+              <Progress
+                percent={percent}
+                showInfo={false}
+                size="small"
+                strokeColor={getProgressColor(record)}
+                className={styles.progressBar}
+              />
+            </div>
+          )
+        },
+      },
+      {
+        title: '操作',
+        key: 'action',
+        width: 130,
+        align: 'right',
+        render: (_: unknown, record: ICoupon) => (
+          <div className={styles.actionCell}>
+            <a className={styles.deleteLink} onClick={() => handleDelete(record)}>
+              删除
+            </a>
+          </div>
+        ),
+      },
+    ],
+    [getUsageInfo, getProgressColor, handleDelete],
+  )
 
   return (
     <div className={styles.container}>

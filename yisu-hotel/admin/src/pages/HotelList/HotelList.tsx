@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Table,
   Tag,
@@ -166,19 +166,22 @@ const HotelList: React.FC = () => {
     // TODO: Fetch data from API with new pagination params
   }
 
-  const handleViewReason = (reason: string) => {
-    modal.error({
-      title: '驳回原因',
-      content: reason,
-      okText: '我知道了',
-    })
-  }
+  const handleViewReason = useCallback(
+    (reason: string) => {
+      modal.error({
+        title: '驳回原因',
+        content: reason,
+        okText: '我知道了',
+      })
+    },
+    [modal],
+  )
 
   // --- Modal handlers (Add + Edit + Detail) ---
-  const handleOpenDetailModal = (hotel: IHotel) => {
+  const handleOpenDetailModal = useCallback((hotel: IHotel) => {
     setViewingHotel(hotel)
     setIsDetailModalOpen(true)
-  }
+  }, [])
 
   const handleCloseDetailModal = () => {
     setIsDetailModalOpen(false)
@@ -393,119 +396,125 @@ const HotelList: React.FC = () => {
       setConfirmLoading(false)
     }
   }
-  const handleDeleteHotel = async (hotel: IHotel) => {
-    try {
-      setLoading(true)
-      await merchantApi.deleteMerchantHotel({
-        user_id: getUserId(),
-        hotel_id: String(hotel.hotel_id),
-      })
-      message.success(`酒店"${hotel.name}"删除成功`)
-      fetchHotels()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      console.error(err)
-      message.error(err.message || '删除失败')
-      setLoading(false)
-    }
-  }
-
-  const columns: ColumnsType<IHotel> = [
-    {
-      title: '酒店ID',
-      dataIndex: 'hotel_id',
-      key: 'hotel_id',
-      width: 140,
-      render: (id: string) => <span className={styles.hotelId}>{id}</span>,
-    },
-    {
-      title: '酒店名称',
-      dataIndex: 'name',
-      key: 'name',
-      width: 280,
-      render: (_: string, record: IHotel) => {
-        // Find first image
+  const handleDeleteHotel = useCallback(
+    async (hotel: IHotel) => {
+      try {
+        setLoading(true)
+        await merchantApi.deleteMerchantHotel({
+          user_id: getUserId(),
+          hotel_id: String(hotel.hotel_id),
+        })
+        message.success(`酒店"${hotel.name}"删除成功`)
+        fetchHotels()
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const img = record.media?.find((m: any) => m.media_type === 1)
+      } catch (err: any) {
+        console.error(err)
+        message.error(err.message || '删除失败')
+        setLoading(false)
+      }
+    },
+    [message, fetchHotels],
+  )
 
-        return (
-          <div className={styles.hotelInfo}>
-            {img && img.url ? (
-              <img src={img.url} alt="hotel" className={styles.coverImage} />
-            ) : (
-              <div className={styles.iconWrapper}>{getHotelIcon(String(record.hotel_id))}</div>
-            )}
-            <div className={styles.details}>
-              <p className={styles.name}>{record.name}</p>
-              {record.description && <p className={styles.desc}>{record.description}</p>}
+  const columns = useMemo<ColumnsType<IHotel>>(
+    () => [
+      {
+        title: '酒店ID',
+        dataIndex: 'hotel_id',
+        key: 'hotel_id',
+        width: 140,
+        render: (id: string) => <span className={styles.hotelId}>{id}</span>,
+      },
+      {
+        title: '酒店名称',
+        dataIndex: 'name',
+        key: 'name',
+        width: 280,
+        render: (_: string, record: IHotel) => {
+          // Find first image
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const img = record.media?.find((m: any) => m.media_type === 1)
+
+          return (
+            <div className={styles.hotelInfo}>
+              {img && img.url ? (
+                <img src={img.url} alt="hotel" className={styles.coverImage} />
+              ) : (
+                <div className={styles.iconWrapper}>{getHotelIcon(String(record.hotel_id))}</div>
+              )}
+              <div className={styles.details}>
+                <p className={styles.name}>{record.name}</p>
+                {record.description && <p className={styles.desc}>{record.description}</p>}
+              </div>
             </div>
-          </div>
-        )
+          )
+        },
       },
-    },
-    {
-      title: '地址',
-      dataIndex: 'address',
-      key: 'address',
-      ellipsis: true,
-      render: (address: string) => (
-        <Tooltip title={address}>
-          <span className={styles.address}>{address}</span>
-        </Tooltip>
-      ),
-    },
-    {
-      title: '审核状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 120,
-      render: (status: HotelStatus) => {
-        const config = statusConfig[status]
-        return <StatusTag color={config.color} statusText={config.text} />
+      {
+        title: '地址',
+        dataIndex: 'address',
+        key: 'address',
+        ellipsis: true,
+        render: (address: string) => (
+          <Tooltip title={address}>
+            <span className={styles.address}>{address}</span>
+          </Tooltip>
+        ),
       },
-    },
-    {
-      title: '操作',
-      key: 'action',
-      align: 'right',
-      width: 220,
-      render: (_: unknown, record: IHotel) => {
-        const isRejected = record.status === HotelStatus.REJECTED
+      {
+        title: '审核状态',
+        dataIndex: 'status',
+        key: 'status',
+        width: 120,
+        render: (status: HotelStatus) => {
+          const config = statusConfig[status]
+          return <StatusTag color={config.color} statusText={config.text} />
+        },
+      },
+      {
+        title: '操作',
+        key: 'action',
+        align: 'right',
+        width: 220,
+        render: (_: unknown, record: IHotel) => {
+          const isRejected = record.status === HotelStatus.REJECTED
 
-        return (
-          <div className={styles.actions}>
-            <button
-              type="button"
-              className={styles.actionBtn}
-              onClick={() => handleOpenDetailModal(record)}
-            >
-              详情
-            </button>
-            {isRejected && record.rejectionReason && (
+          return (
+            <div className={styles.actions}>
               <button
                 type="button"
-                className={`${styles.actionBtn} ${styles.danger}`}
-                onClick={() => handleViewReason(record.rejectionReason!)}
+                className={styles.actionBtn}
+                onClick={() => handleOpenDetailModal(record)}
               >
-                查看原因
+                详情
               </button>
-            )}
-            <Popconfirm
-              title="确定要删除该酒店吗？"
-              description="删除后将无法恢复（包括已关联的客房或图片）。"
-              onConfirm={() => handleDeleteHotel(record)}
-              okText="确定删除"
-              cancelText="取消"
-            >
-              <button type="button" className={`${styles.actionBtn} ${styles.danger}`}>
-                删除
-              </button>
-            </Popconfirm>
-          </div>
-        )
+              {isRejected && record.rejectionReason && (
+                <button
+                  type="button"
+                  className={`${styles.actionBtn} ${styles.danger}`}
+                  onClick={() => handleViewReason(record.rejectionReason!)}
+                >
+                  查看原因
+                </button>
+              )}
+              <Popconfirm
+                title="确定要删除该酒店吗？"
+                description="删除后将无法恢复（包括已关联的客房或图片）。"
+                onConfirm={() => handleDeleteHotel(record)}
+                okText="确定删除"
+                cancelText="取消"
+              >
+                <button type="button" className={`${styles.actionBtn} ${styles.danger}`}>
+                  删除
+                </button>
+              </Popconfirm>
+            </div>
+          )
+        },
       },
-    },
-  ]
+    ],
+    [handleViewReason, handleOpenDetailModal, handleDeleteHotel],
+  )
 
   // --- Modal title with status badge for Edit mode ---
   const modalTitle = isEditMode ? (

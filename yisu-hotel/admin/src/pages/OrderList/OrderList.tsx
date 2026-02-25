@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Table, Button, Form, Select, DatePicker, Input, App, Space, Tag, Tooltip } from 'antd'
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table'
 import { SearchOutlined, EditOutlined } from '@ant-design/icons'
@@ -176,51 +176,60 @@ const OrderList: React.FC = () => {
   }
 
   // ── 快捷操作：办理入住 ──────────────────────────────────────────────────────
-  const handleQuickCheckIn = async (record: IOrderRecord) => {
-    try {
-      const res = await orderApi.updateOrder({
-        order_id: record.order_id,
-        status: ORDER_STATUS.CHECKED_IN,
-      })
-      if (res?.code === 200) {
-        message.success('已成功办理入住')
-        fetchOrders(pagination.current as number, pagination.pageSize as number)
-      } else {
-        message.error(res?.message || '操作失败')
+  const handleQuickCheckIn = useCallback(
+    async (record: IOrderRecord) => {
+      try {
+        const res = await orderApi.updateOrder({
+          order_id: record.order_id,
+          status: ORDER_STATUS.CHECKED_IN,
+        })
+        if (res?.code === 200) {
+          message.success('已成功办理入住')
+          fetchOrders(pagination.current as number, pagination.pageSize as number)
+        } else {
+          message.error(res?.message || '操作失败')
+        }
+      } catch {
+        message.error('网络错误，操作失败')
       }
-    } catch {
-      message.error('网络错误，操作失败')
-    }
-  }
+    },
+    [message, fetchOrders, pagination],
+  )
 
   // ── 快捷操作：标记完成 ──────────────────────────────────────────────────────
-  const handleQuickComplete = async (record: IOrderRecord) => {
-    try {
-      const res = await orderApi.updateOrder({
-        order_id: record.order_id,
-        status: ORDER_STATUS.COMPLETED,
-      })
-      if (res?.code === 200) {
-        message.success('订单已标记为完成')
-        fetchOrders(pagination.current as number, pagination.pageSize as number)
-      } else {
-        message.error(res?.message || '操作失败')
+  const handleQuickComplete = useCallback(
+    async (record: IOrderRecord) => {
+      try {
+        const res = await orderApi.updateOrder({
+          order_id: record.order_id,
+          status: ORDER_STATUS.COMPLETED,
+        })
+        if (res?.code === 200) {
+          message.success('订单已标记为完成')
+          fetchOrders(pagination.current as number, pagination.pageSize as number)
+        } else {
+          message.error(res?.message || '操作失败')
+        }
+      } catch {
+        message.error('网络错误，操作失败')
       }
-    } catch {
-      message.error('网络错误，操作失败')
-    }
-  }
+    },
+    [message, fetchOrders, pagination],
+  )
 
   // ── 打开编辑弹窗 ───────────────────────────────────────────────────────────
-  const handleOpenEdit = (record: IOrderRecord) => {
-    setEditTarget(record)
-    editForm.setFieldsValue({
-      status: record.status as OrderStatusValue,
-      check_in: record.check_in ? dayjs(record.check_in) : null,
-      check_out: record.check_out ? dayjs(record.check_out) : null,
-    })
-    setEditVisible(true)
-  }
+  const handleOpenEdit = useCallback(
+    (record: IOrderRecord) => {
+      setEditTarget(record)
+      editForm.setFieldsValue({
+        status: record.status as OrderStatusValue,
+        check_in: record.check_in ? dayjs(record.check_in) : null,
+        check_out: record.check_out ? dayjs(record.check_out) : null,
+      })
+      setEditVisible(true)
+    },
+    [editForm],
+  )
 
   // ── 提交编辑 ───────────────────────────────────────────────────────────────
   const handleEditSubmit = async () => {
@@ -260,154 +269,157 @@ const OrderList: React.FC = () => {
   }
 
   // ── 表格列定义 ─────────────────────────────────────────────────────────────
-  const columns: ColumnsType<IOrderRecord> = [
-    {
-      title: '订单号',
-      dataIndex: 'order_id',
-      key: 'order_id',
-      width: 200,
-      render: (id: string) => <span className={styles.orderId}>{id}</span>,
-    },
-    {
-      title: '酒店 / 房型',
-      key: 'hotel',
-      width: 200,
-      render: (_: unknown, record: IOrderRecord) => (
-        <div className={styles.hotelInfo}>
-          <p className={styles.hotelName}>{record.hotel_name}</p>
-          <p className={styles.roomType}>
-            {record.room_name}{' '}
-            <span style={{ color: '#6b7280' }}>x {record.room_count || 1} 间</span>
-          </p>
-          {record.special_request && (
-            <Tooltip title={record.special_request}>
-              <Tag color="purple" style={{ marginTop: 4 }}>
-                有特殊要求
-              </Tag>
-            </Tooltip>
-          )}
-        </div>
-      ),
-    },
-    {
-      title: '住客信息',
-      key: 'guest_info',
-      width: 150,
-      render: (_: unknown, record: IOrderRecord) => {
-        let guests: string[] = []
-        if (Array.isArray(record.idcards)) {
-          guests = record.idcards
-        } else if (typeof record.idcards === 'string') {
-          try {
-            guests = JSON.parse(record.idcards)
-          } catch {
-            guests = []
-          }
-        }
-        if (!guests.length) return <span style={{ color: '#9ca3af' }}>未填写</span>
-        return (
-          <Space size={[0, 4]} wrap>
-            {guests.map((name, i) => (
-              <Tag key={i} color="blue">
-                {name}
-              </Tag>
-            ))}
-          </Space>
-        )
+  const columns = useMemo<ColumnsType<IOrderRecord>>(
+    () => [
+      {
+        title: '订单号',
+        dataIndex: 'order_id',
+        key: 'order_id',
+        width: 200,
+        render: (id: string) => <span className={styles.orderId}>{id}</span>,
       },
-    },
-    {
-      title: '入住 / 退房时间',
-      key: 'dates',
-      width: 240,
-      render: (_: unknown, record: IOrderRecord) => {
-        const checkIn = record.check_in ? dayjs(record.check_in).format('YYYY-MM-DD') : '-'
-        const checkOut = record.check_out ? dayjs(record.check_out).format('YYYY-MM-DD') : '-'
-        const nights =
-          record.check_in && record.check_out
-            ? dayjs(record.check_out).diff(dayjs(record.check_in), 'day')
-            : 0
-        return (
-          <div className={styles.dateInfo}>
-            <p className={styles.dateRange}>
-              {checkIn} / {checkOut}
+      {
+        title: '酒店 / 房型',
+        key: 'hotel',
+        width: 200,
+        render: (_: unknown, record: IOrderRecord) => (
+          <div className={styles.hotelInfo}>
+            <p className={styles.hotelName}>{record.hotel_name}</p>
+            <p className={styles.roomType}>
+              {record.room_name}{' '}
+              <span style={{ color: '#6b7280' }}>x {record.room_count || 1} 间</span>
             </p>
-            {nights > 0 && <p className={styles.nights}>{record.nights || nights} 晚</p>}
+            {record.special_request && (
+              <Tooltip title={record.special_request}>
+                <Tag color="purple" style={{ marginTop: 4 }}>
+                  有特殊要求
+                </Tag>
+              </Tooltip>
+            )}
           </div>
-        )
+        ),
       },
-    },
-    {
-      title: '金额',
-      key: 'price',
-      width: 140,
-      render: (_: unknown, record: IOrderRecord) => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ color: '#9ca3af', fontSize: 13 }}>
-            总价: ¥
-            {Number(record.total_price).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
-          </span>
-          <span className={styles.amount} style={{ fontWeight: 'bold', color: '#f5222d' }}>
-            实付: ¥
-            {Number(record.real_pay || record.total_price).toLocaleString('zh-CN', {
-              minimumFractionDigits: 2,
-            })}
-          </span>
-        </div>
-      ),
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      render: (status: number) => {
-        const cfg = STATUS_CONFIG[status as OrderStatusValue]
-        if (!cfg) return <Tag>{status}</Tag>
-        return <StatusTag color={cfg.tagColor} statusText={cfg.text} />
+      {
+        title: '住客信息',
+        key: 'guest_info',
+        width: 150,
+        render: (_: unknown, record: IOrderRecord) => {
+          let guests: string[] = []
+          if (Array.isArray(record.idcards)) {
+            guests = record.idcards
+          } else if (typeof record.idcards === 'string') {
+            try {
+              guests = JSON.parse(record.idcards)
+            } catch {
+              guests = []
+            }
+          }
+          if (!guests.length) return <span style={{ color: '#9ca3af' }}>未填写</span>
+          return (
+            <Space size={[0, 4]} wrap>
+              {guests.map((name, i) => (
+                <Tag key={i} color="blue">
+                  {name}
+                </Tag>
+              ))}
+            </Space>
+          )
+        },
       },
-    },
-    {
-      title: '操作',
-      key: 'action',
-      align: 'right',
-      width: 160,
-      render: (_: unknown, record: IOrderRecord) => (
-        <Space size={6}>
-          {/* 快捷状态操作按钮 */}
-          {record.status === ORDER_STATUS.PAID && (
-            <Button
-              type="primary"
-              size="small"
-              className={styles.actionCheckIn}
-              onClick={() => handleQuickCheckIn(record)}
-            >
-              办理入住
-            </Button>
-          )}
-          {record.status === ORDER_STATUS.CHECKED_IN && (
-            <Button
-              size="small"
-              className={styles.actionComplete}
-              onClick={() => handleQuickComplete(record)}
-            >
-              标记完成
-            </Button>
-          )}
+      {
+        title: '入住 / 退房时间',
+        key: 'dates',
+        width: 240,
+        render: (_: unknown, record: IOrderRecord) => {
+          const checkIn = record.check_in ? dayjs(record.check_in).format('YYYY-MM-DD') : '-'
+          const checkOut = record.check_out ? dayjs(record.check_out).format('YYYY-MM-DD') : '-'
+          const nights =
+            record.check_in && record.check_out
+              ? dayjs(record.check_out).diff(dayjs(record.check_in), 'day')
+              : 0
+          return (
+            <div className={styles.dateInfo}>
+              <p className={styles.dateRange}>
+                {checkIn} / {checkOut}
+              </p>
+              {nights > 0 && <p className={styles.nights}>{record.nights || nights} 晚</p>}
+            </div>
+          )
+        },
+      },
+      {
+        title: '金额',
+        key: 'price',
+        width: 140,
+        render: (_: unknown, record: IOrderRecord) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ color: '#9ca3af', fontSize: 13 }}>
+              总价: ¥
+              {Number(record.total_price).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+            </span>
+            <span className={styles.amount} style={{ fontWeight: 'bold', color: '#f5222d' }}>
+              实付: ¥
+              {Number(record.real_pay || record.total_price).toLocaleString('zh-CN', {
+                minimumFractionDigits: 2,
+              })}
+            </span>
+          </div>
+        ),
+      },
+      {
+        title: '状态',
+        dataIndex: 'status',
+        key: 'status',
+        width: 100,
+        render: (status: number) => {
+          const cfg = STATUS_CONFIG[status as OrderStatusValue]
+          if (!cfg) return <Tag>{status}</Tag>
+          return <StatusTag color={cfg.tagColor} statusText={cfg.text} />
+        },
+      },
+      {
+        title: '操作',
+        key: 'action',
+        align: 'right',
+        width: 160,
+        render: (_: unknown, record: IOrderRecord) => (
+          <Space size={6}>
+            {/* 快捷状态操作按钮 */}
+            {record.status === ORDER_STATUS.PAID && (
+              <Button
+                type="primary"
+                size="small"
+                className={styles.actionCheckIn}
+                onClick={() => handleQuickCheckIn(record)}
+              >
+                办理入住
+              </Button>
+            )}
+            {record.status === ORDER_STATUS.CHECKED_IN && (
+              <Button
+                size="small"
+                className={styles.actionComplete}
+                onClick={() => handleQuickComplete(record)}
+              >
+                标记完成
+              </Button>
+            )}
 
-          {/* 通用编辑按钮 */}
-          <Tooltip title="手工编辑订单">
-            <Button
-              size="small"
-              icon={<EditOutlined />}
-              className={styles.actionEdit}
-              onClick={() => handleOpenEdit(record)}
-            />
-          </Tooltip>
-        </Space>
-      ),
-    },
-  ]
+            {/* 通用编辑按钮 */}
+            <Tooltip title="手工编辑订单">
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                className={styles.actionEdit}
+                onClick={() => handleOpenEdit(record)}
+              />
+            </Tooltip>
+          </Space>
+        ),
+      },
+    ],
+    [handleQuickCheckIn, handleQuickComplete, handleOpenEdit],
+  )
 
   // ── 渲染 ───────────────────────────────────────────────────────────────────
   return (
