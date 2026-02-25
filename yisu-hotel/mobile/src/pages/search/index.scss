@@ -60,13 +60,60 @@ $spacing-3-5: 14px;
         border-radius: $rounded-full;
         display: flex;
         align-items: center;
-        padding: 0 $spacing-4;
-        gap: $spacing-3;
+        padding: 0 $spacing-2;
+        gap: 0;
         box-shadow: $shadow-sm;
         position: relative;
         z-index: $z-20;
     }
 
+    &__search-city {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 0 $spacing-3;
+        flex-shrink: 0;
+        min-width: 52px;
+    }
+
+    &__search-location {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $primary;
+        max-width: 52px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__search-location-arrow {
+        font-size: 8px;
+        color: $primary;
+        flex-shrink: 0;
+    }
+
+    &__pill-divider {
+        width: 1px;
+        height: 18px;
+        background: $gray-200;
+        flex-shrink: 0;
+    }
+
+    &__search-dates-btn {
+        display: flex;
+        align-items: center;
+        padding: 0 $spacing-3;
+        flex-shrink: 0;
+    }
+
+    &__search-dates {
+        font-size: 11px;
+        color: $gray-600;
+        font-weight: $font-medium;
+        white-space: nowrap;
+    }
+
+    // keep old search-info for any legacy refs
     &__search-info {
         @include flex-col;
         align-items: flex-start;
@@ -77,31 +124,19 @@ $spacing-3-5: 14px;
         flex-shrink: 0;
     }
 
-    &__search-location {
-        font-size: $text-sm;
-        font-weight: $font-bold;
-        color: $primary;
-    }
-
-    &__search-dates {
-        font-size: $text-10px;
-        color: $gray-500;
-        font-weight: $font-medium;
-        margin-top: 2px;
-    }
-
     &__search-input {
-        width: 100%;
+        flex: 1;
         background: transparent;
         border: none;
-        padding: 0;
+        padding: 0 $spacing-2;
         font-size: $text-sm;
         color: $gray-700;
+        min-width: 0;
     }
 
     &__search-clear-btn {
         color: $gray-400;
-        padding: 0;
+        padding: 0 $spacing-2;
         @include flex-center;
     }
 
@@ -176,7 +211,8 @@ $spacing-3-5: 14px;
         color: $gray-600;
 
         &--active {
-            color: $gray-900;
+            color: $primary;
+            font-weight: $font-bold;
         }
     }
 
@@ -239,6 +275,87 @@ $spacing-3-5: 14px;
         font-weight: $font-medium;
     }
 
+    // ---- Panel variant (star/price, location) ----
+    &__dropdown--panel {
+        padding: $spacing-4;
+    }
+
+    &__panel-section {
+        margin-bottom: $spacing-4;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    &__panel-label {
+        font-size: $text-sm;
+        font-weight: $font-bold;
+        color: $gray-800;
+        display: block;
+        margin-bottom: $spacing-2;
+    }
+
+    &__panel-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacing-2;
+    }
+
+    &__panel-tag {
+        padding: $spacing-2 $spacing-3;
+        border-radius: $rounded;
+        border: 1px solid $gray-100;
+        background: $gray-50;
+        font-size: $text-sm;
+        color: $gray-700;
+
+        &--active {
+            border-color: $primary;
+            color: $primary;
+            background: rgba($primary, 0.05);
+            font-weight: $font-bold;
+        }
+    }
+
+    &__panel-footer {
+        display: flex;
+        gap: $spacing-3;
+        margin-top: $spacing-4;
+        padding-top: $spacing-3;
+        border-top: 1px solid $gray-100;
+    }
+
+    &__panel-reset {
+        flex: 1;
+        padding: $spacing-2-5 0;
+        border-radius: $rounded-full;
+        border: 1px solid $gray-200;
+        @include flex-center;
+        font-size: $text-sm;
+        color: $gray-600;
+        font-weight: $font-bold;
+    }
+
+    &__panel-confirm {
+        flex: 2;
+        padding: $spacing-2-5 0;
+        border-radius: $rounded-full;
+        @include gradient-primary-reverse;
+        @include flex-center;
+        font-size: $text-sm;
+        color: $white;
+        font-weight: $font-bold;
+        box-shadow: $shadow-md, $shadow-orange-medium;
+    }
+
+    &__panel-tip {
+        font-size: 10px;
+        color: $gray-400;
+        margin-top: $spacing-2;
+        display: block;
+    }
+
     // ---- Quick Filter Chips ----
     &__chips-scroll {
         background: $white;
@@ -264,11 +381,11 @@ $spacing-3-5: 14px;
         color: $gray-600;
         flex-shrink: 0;
 
-        &--special {
-            background: $red-50;
-            color: $red-500;
+        &--active {
+            background: rgba($primary, 0.08);
+            color: $primary;
             font-weight: $font-bold;
-            border-color: $red-100;
+            border-color: $primary;
         }
     }
 
