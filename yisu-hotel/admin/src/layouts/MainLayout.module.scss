@@ -74,18 +74,6 @@
   gap: 24px;
 }
 
-.searchInput {
-  width: 256px;
-  background: #f9fafb;
-  border-radius: 8px;
-  padding: 6px 12px;
-
-  &:focus-within {
-    background: white;
-    box-shadow: 0 0 0 2px rgba(19, 127, 236, 0.2);
-  }
-}
-
 .iconButton {
   padding: 8px;
   cursor: pointer;

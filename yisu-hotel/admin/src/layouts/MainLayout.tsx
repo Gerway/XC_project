@@ -1,12 +1,7 @@
 import React, { useState } from 'react'
-import { Layout, Menu, Avatar, Input, Breadcrumb, Dropdown, theme } from 'antd'
+import { Layout, Menu, Avatar, Breadcrumb, Dropdown, theme } from 'antd'
 import type { MenuProps } from 'antd'
-import {
-  AppstoreOutlined,
-  FileTextOutlined,
-  SearchOutlined,
-  LogoutOutlined,
-} from '@ant-design/icons'
+import { AppstoreOutlined, FileTextOutlined, LogoutOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 import styles from './MainLayout.module.scss'
 
@@ -144,13 +139,6 @@ const MainLayout: React.FC = () => {
             />
           </div>
           <div className={styles.headerRight}>
-            <Input
-              placeholder="搜索订单、客户..."
-              prefix={<SearchOutlined style={{ color: '#9ca3af' }} />}
-              className={styles.searchInput}
-              variant="borderless"
-            />
-
             <div className={styles.userSection}>
               <div className={styles.userInfo}>
                 <div className={styles.userName}>{user.name}</div>
