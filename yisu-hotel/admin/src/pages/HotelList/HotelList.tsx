@@ -29,7 +29,7 @@ import {
   ApartmentOutlined,
   EditOutlined,
 } from '@ant-design/icons'
-import { HotelStatus, type IHotel } from '@yisu/shared'
+import { HotelStatus, type IHotel } from '@/shared'
 import dayjs from 'dayjs'
 import styles from './HotelList.module.scss'
 import { merchantApi } from '../../api/merchant'

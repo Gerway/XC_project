@@ -1,5 +1,5 @@
 import request from '../utils/request'
-import type { IRoom } from '@yisu/shared'
+import type { IRoom } from '@/shared'
 
 export interface ApiResponse<T = unknown> {
   code: number

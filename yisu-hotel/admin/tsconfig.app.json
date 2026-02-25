@@ -24,8 +24,9 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@yisu/shared": ["../shared/src/index.ts"],
-      "@yisu/shared/*": ["../shared/src/*"]
+      "@/*": ["./src/*"],
+      "@yisu/shared": ["./src/shared/index.ts"],
+      "@yisu/shared/*": ["./src/shared/*"]
     }
   },
   "include": ["src"]

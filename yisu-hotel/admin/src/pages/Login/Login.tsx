@@ -3,7 +3,7 @@ import { Form, Input, Button, Radio, ConfigProvider, App } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router-dom'
 import styles from './Login.module.scss'
-import { UserRole } from '@yisu/shared/enums/UserRole'
+import { UserRole } from '@/shared/enums/UserRole'
 import type { RadioChangeEvent } from 'antd'
 import { loginApi } from '../../api/auth'
 

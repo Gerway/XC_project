@@ -9,7 +9,7 @@ import {
   TeamOutlined,
   DesktopOutlined,
 } from '@ant-design/icons'
-import { HotelStatus } from '@yisu/shared'
+import { HotelStatus } from '@/shared'
 import styles from './AuditDrawer.module.scss'
 
 // ===== 类型定义 =====

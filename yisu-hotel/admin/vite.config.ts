@@ -17,7 +17,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@yisu/shared': path.resolve(__dirname, '../shared/src'),
+      '@': path.resolve(__dirname, './src'),
+      '@yisu/shared': path.resolve(__dirname, './src/shared'),
     },
   },
   server: {
