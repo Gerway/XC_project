@@ -1,4 +1,4 @@
-// ===== Admin HotelAudit Page Design Tokens =====
+// ===== 管理员酒店审核页面设计标记 =====
 $primary-color: #137fec;
 $primary-hover: #0e6bd0;
 $primary-light: rgba(19, 127, 236, 0.1);
@@ -16,14 +16,14 @@ $shadow-md:
   0 4px 6px -1px rgba(0, 0, 0, 0.07),
   0 2px 4px -2px rgba(0, 0, 0, 0.05);
 
-// Stat card accent colors
+// 统计卡片强调色
 $stat-blue-bg: #eff6ff;
 $stat-green-bg: #f0fdf4;
 $stat-green-text: #16a34a;
 $stat-orange-bg: #fff7ed;
 $stat-orange-text: #ea580c;
 
-// ===== Page Container =====
+// ===== 页面容器 =====
 .container {
   padding: 32px;
   background-color: $background-light;
@@ -38,7 +38,7 @@ $stat-orange-text: #ea580c;
   gap: 24px;
 }
 
-// ===== Page Header =====
+// ===== 页面头部 =====
 .pageHeader {
   display: flex;
   justify-content: space-between;
@@ -105,7 +105,7 @@ $stat-orange-text: #ea580c;
   font-size: 14px;
 }
 
-// ===== Statistic Cards =====
+// ===== 统计卡片 =====
 .statGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -181,7 +181,7 @@ $stat-orange-text: #ea580c;
   }
 }
 
-// ===== Audit Table =====
+// ===== 审核表格 =====
 .tableCard {
   background: $background-white;
   border-radius: $border-radius-xl;
@@ -223,7 +223,7 @@ $stat-orange-text: #ea580c;
       border-bottom: none;
     }
 
-    // Pagination
+    // 分页
     .ant-pagination {
       padding: 16px 24px;
       margin: 0 !important;
@@ -232,7 +232,7 @@ $stat-orange-text: #ea580c;
   }
 }
 
-// ===== Cell Styles =====
+// ===== 单元格样式 =====
 .timeCell {
   display: flex;
   flex-direction: column;
@@ -300,7 +300,7 @@ $stat-orange-text: #ea580c;
   }
 }
 
-// ===== Status Badge =====
+// ===== 状态徽标 =====
 .statusPending {
   display: inline-flex;
   align-items: center;
@@ -313,7 +313,7 @@ $stat-orange-text: #ea580c;
   border: 1px solid $primary-border;
 }
 
-// ===== Action Button =====
+// ===== 操作按钮 =====
 .auditBtn {
   font-size: 14px;
   font-weight: 500;
@@ -321,7 +321,7 @@ $stat-orange-text: #ea580c;
   box-shadow: $shadow-sm;
 }
 
-// ===== Footer =====
+// ===== 页脚 =====
 .footer {
   text-align: center;
   margin-top: 8px;

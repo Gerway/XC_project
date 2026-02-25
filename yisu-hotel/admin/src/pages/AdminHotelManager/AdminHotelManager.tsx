@@ -72,7 +72,7 @@ const AdminHotelManager: React.FC = () => {
   const { message } = App.useApp()
   const [editForm] = Form.useForm()
 
-  // Data
+  // 数据
   const [loading, setLoading] = useState(true)
   const [hotels, setHotels] = useState<IAdminHotel[]>([])
   const [stats, setStats] = useState({ total: 0, published: 0, pending: 0 })
@@ -84,16 +84,16 @@ const AdminHotelManager: React.FC = () => {
       `显示 ${range[0]} 到 ${range[1]} 条，共 ${total.toLocaleString()} 条`,
   })
 
-  // Filters
+  // 筛选
   const [keyword, setKeyword] = useState('')
   const [statusFilter, setStatusFilter] = useState<number | ''>('')
   const [starFilter, setStarFilter] = useState<number | ''>('')
 
-  // Edit modal
+  // 编辑弹窗
   const [editVisible, setEditVisible] = useState(false)
   const [editTarget, setEditTarget] = useState<IAdminHotel | null>(null)
 
-  // ── Fetch hotels ─────────────────────────────────────────────────────────
+  // ── 获取酒店 ─────────────────────────────────────────────────────────
   const fetchHotels = useCallback(
     async (page = 1, pageSize = 10) => {
       setLoading(true)
@@ -143,7 +143,7 @@ const AdminHotelManager: React.FC = () => {
     fetchHotels(pag.current ?? 1, pag.pageSize ?? 10)
   }
 
-  // ── Edit ──────────────────────────────────────────────────────────────────
+  // ── 编辑 ──────────────────────────────────────────────────────────────────
   const handleOpenEdit = useCallback(
     (record: IAdminHotel) => {
       setEditTarget(record)
@@ -195,11 +195,11 @@ const AdminHotelManager: React.FC = () => {
         message.error(res?.message || '更新失败')
       }
     } catch {
-      // validation error or network error
+      // 验证错误或网络错误
     }
   }
 
-  // ── Delete ────────────────────────────────────────────────────────────────
+  // ── 删除 ────────────────────────────────────────────────────────────────
   const handleDelete = useCallback(
     async (record: IAdminHotel) => {
       try {
@@ -217,7 +217,7 @@ const AdminHotelManager: React.FC = () => {
     [message, fetchHotels, pagination],
   )
 
-  // ── Columns ───────────────────────────────────────────────────────────────
+  // ── 列配置 ───────────────────────────────────────────────────────────────
   const columns = useMemo<ColumnsType<IAdminHotel>>(
     () => [
       {
@@ -334,17 +334,17 @@ const AdminHotelManager: React.FC = () => {
     [handleOpenEdit, handleDelete],
   )
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── 渲染 ─────────────────────────────────────────────────────────────────
   return (
     <div className={styles.container}>
       <div className={styles.innerContainer}>
-        {/* Header */}
+        {/* 头部 */}
         <div className={styles.pageHeader}>
           <h2>酒店管理中心</h2>
           <p>查看、编辑和管理平台上的所有酒店信息。</p>
         </div>
 
-        {/* Stat Cards */}
+        {/* 统计卡片 */}
         <div className={styles.statGrid}>
           <Card className={styles.statCard} variant="borderless">
             <div className={styles.statInfo}>
@@ -386,7 +386,7 @@ const AdminHotelManager: React.FC = () => {
           </Card>
         </div>
 
-        {/* Filter Bar */}
+        {/* 筛选栏 */}
         <div className={styles.filterCard}>
           <Form layout="vertical" className={styles.filterForm}>
             <Form.Item label="搜索酒店" className={styles.searchField}>
@@ -426,7 +426,7 @@ const AdminHotelManager: React.FC = () => {
           </Form>
         </div>
 
-        {/* Table */}
+        {/* 表格 */}
         <div className={styles.tableCard}>
           <Table<IAdminHotel>
             columns={columns}
@@ -440,7 +440,7 @@ const AdminHotelManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Edit Modal */}
+      {/* 编辑弹窗 */}
       <FormModal
         title={
           <span>

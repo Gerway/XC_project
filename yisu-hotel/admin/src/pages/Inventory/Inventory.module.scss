@@ -1,4 +1,4 @@
-// Design Tokens (consistent with Dashboard & HotelList)
+// 设计标记
 $primary-color: #137fec;
 $primary-hover: #0e6bd0;
 $background-light: #f0f2f5;
@@ -10,7 +10,7 @@ $border-color: #e5e7eb;
 $border-radius: 8px;
 $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
-// ===== Main Container =====
+// ===== 主容器 =====
 .container {
   padding: 24px;
   background-color: $background-light;
@@ -23,7 +23,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 }
 
-// ===== Hotel Selector Bar =====
+// ===== 酒店选择器栏 =====
 .hotelSelectorBar {
   display: flex;
   align-items: center;
@@ -76,7 +76,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   color: $text-secondary;
 }
 
-// ===== Empty State =====
+// ===== 空状态 =====
 .emptyState {
   flex: 1;
   display: flex;
@@ -119,7 +119,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 }
 
-// ===== Left Panel: Room List =====
+// ===== 左侧面板：客房列表 =====
 .roomListPanel {
   width: 100%;
   flex-shrink: 0;
@@ -287,7 +287,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 }
 
-// ===== Right Panel: Calendar =====
+// ===== 右侧面板：日历 =====
 .calendarPanel {
   flex: 1;
   display: flex;
@@ -372,7 +372,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   gap: 12px;
 }
 
-// ===== Calendar Grid =====
+// ===== 日历网格 =====
 .calendarBody {
   flex: 1;
   overflow-y: auto;
@@ -507,7 +507,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 }
 
-// ===== Footer =====
+// ===== 页脚 =====
 .footer {
   text-align: center;
   margin-top: 16px;
@@ -516,7 +516,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   color: $text-muted;
 }
 
-// ===== Batch Modal =====
+// ===== 批量修改弹窗 =====
 .batchForm {
   .weekdayGroup {
     margin-top: 8px;

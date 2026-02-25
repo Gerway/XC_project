@@ -1,4 +1,4 @@
-// Design Tokens (consistent with Dashboard)
+// 设计标记与仪表盘保持一致
 $primary-color: #137fec;
 $primary-hover: #0e6bd0;
 $background-light: #f0f2f5;
@@ -10,7 +10,7 @@ $border-color: #e5e7eb;
 $border-radius: 8px;
 $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
-// Page Container
+// 页面容器
 .container {
   padding: 24px;
   background-color: $background-light;
@@ -26,7 +26,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   margin: 0 auto;
 }
 
-// Page Header
+// 页面头部
 .pageHeader {
   display: flex;
   flex-direction: column;
@@ -47,7 +47,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 }
 
-// Table Card Wrapper
+// 表格卡片包装器
 .tableCard {
   background: $background-white;
   border-radius: $border-radius;
@@ -55,7 +55,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   border: 1px solid $border-color;
   overflow: hidden;
 
-  // Override AntD Table styles
+  // 覆盖 AntD 表格样式
   :global {
     .ant-table {
       font-family: 'Inter', sans-serif;
@@ -72,7 +72,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
       border-bottom: 1px solid $border-color;
 
       &::before {
-        display: none !important; // Remove AntD default separator
+        display: none !important; // 移除 AntD 默认分隔符
       }
     }
 
@@ -90,7 +90,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
       border-bottom: none;
     }
 
-    // Pagination
+    // 分页
     .ant-pagination {
       padding: 16px 24px;
       margin: 0 !important;
@@ -99,14 +99,14 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 }
 
-// Hotel ID Column
+// 酒店 ID 列
 .hotelId {
   font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
   font-size: 12px;
   color: $text-secondary;
 }
 
-// Hotel Name Cell
+// 酒店名称单元格
 .hotelInfo {
   display: flex;
   align-items: center;
@@ -153,7 +153,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 }
 
-// Address Column
+// 地址列
 .address {
   color: $text-secondary;
   max-width: 240px;
@@ -162,7 +162,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   white-space: nowrap;
 }
 
-// Action Buttons
+// 操作按钮
 .actions {
   display: flex;
   align-items: center;
@@ -202,7 +202,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 }
 
-// Footer
+// 页脚
 .footer {
   text-align: center;
   margin-top: 32px;
@@ -211,7 +211,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   color: $text-muted;
 }
 
-// Add Hotel Modal
+// 添加酒店弹窗
 .addHotelModal {
   :global {
     .ant-modal-header {
@@ -273,7 +273,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   flex: 1;
 }
 
-// Edit Modal Title
+// 编辑弹窗标题
 .editModalTitle {
   display: flex;
   align-items: center;
@@ -288,7 +288,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   font-size: 16px;
 }
 
-// Edit Info Bar (hotel ID + submission date)
+// 编辑信息栏（酒店 ID + 提交日期）
 .editInfoBar {
   display: flex;
   align-items: center;
@@ -327,7 +327,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   background: $border-color;
 }
 
-// Rejection Notice (shown in edit modal for rejected hotels)
+// 驳回通知（在被驳回酒店的编辑弹窗中显示）
 .rejectionNotice {
   margin-top: 4px;
   padding: 12px 16px;

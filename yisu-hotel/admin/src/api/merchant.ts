@@ -22,7 +22,7 @@ export interface ManageHotelMediaBody {
   hotel_id: string
   action: 'add' | 'delete'
   media_id?: string
-  media_type?: number // 1: Image, 2: Video
+  media_type?: number // 1: 图片
   url?: string
   sort_order?: number
   media_name?: string

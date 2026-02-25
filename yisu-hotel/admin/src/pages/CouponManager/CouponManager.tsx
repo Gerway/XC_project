@@ -37,7 +37,7 @@ const CouponManager: React.FC = () => {
     try {
       setLoading(true)
       const res = await getCouponsListApi()
-      setData(res as unknown as ICoupon[]) // Need correct typing on axios resolve
+      setData(res as unknown as ICoupon[]) // 需要在 axios resolve 上设置正确类型
     } catch {
       message.error('获取优惠券列表失败')
     } finally {

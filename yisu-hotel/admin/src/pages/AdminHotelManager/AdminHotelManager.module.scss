@@ -1,4 +1,4 @@
-// ===== Design Tokens (matches UserManager) =====
+// ===== 设计变量 (匹配 UserManager) =====
 $primary-color: #1890ff;
 $primary-hover: #40a9ff;
 $background-main: #f0f2f5;
@@ -11,7 +11,7 @@ $border-radius: 8px;
 $border-radius-lg: 12px;
 $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
-// Status colors
+// 状态颜色
 $status-published-bg: #f0fdf4;
 $status-published-text: #15803d;
 $status-published-border: #dcfce7;
@@ -236,7 +236,7 @@ $status-rejected-dot: #ef4444;
   }
 }
 
-// ===== Cell: Hotel Info =====
+// ===== 单元格: 酒店信息 =====
 .hotelCell {
   display: flex;
   align-items: center;
@@ -278,7 +278,7 @@ $status-rejected-dot: #ef4444;
   }
 }
 
-// ===== Cell: Star Rating =====
+// ===== 单元格: 星级 =====
 .starBadge {
   display: inline-flex;
   align-items: center;
@@ -292,7 +292,7 @@ $status-rejected-dot: #ef4444;
   border: 1px solid #fef3c7;
 }
 
-// ===== Cell: Score =====
+// ===== 单元格: 评分 =====
 .scoreCell {
   display: flex;
   flex-direction: column;
@@ -309,13 +309,13 @@ $status-rejected-dot: #ef4444;
   }
 }
 
-// ===== Cell: Date =====
+// ===== 单元格: 日期 =====
 .dateText {
   font-size: 13px;
   color: $text-secondary;
 }
 
-// ===== Cell: Status =====
+// ===== 单元格: 状态 =====
 .statusBadge {
   display: inline-flex;
   align-items: center;
@@ -364,7 +364,7 @@ $status-rejected-dot: #ef4444;
   }
 }
 
-// ===== Cell: Actions =====
+// ===== 单元格: 操作 =====
 .actionCell {
   display: flex;
   align-items: center;
@@ -404,7 +404,7 @@ $status-rejected-dot: #ef4444;
   }
 }
 
-// ===== Edit Modal =====
+// ===== 编辑弹窗 =====
 .editModal {
   :global(.ant-modal-content) {
     border-radius: $border-radius-lg;

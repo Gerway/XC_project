@@ -1,5 +1,5 @@
 // ===== Admin Layout Design Tokens =====
-$admin-sidebar-bg: #101922; // Match Merchant
+$admin-sidebar-bg: #101922; // 匹配商家端
 $admin-primary: #137fec;
 $admin-primary-hover: #1890ff;
 $background-light: #f6f7f8;
@@ -25,7 +25,7 @@ $border-color: #e5e7eb;
     background: $admin-sidebar-bg;
     border-inline-end: none !important;
   }
-  // Removed custom menu item overrides to match Merchant style (default AntD dark)
+  // 移除自定义菜单项覆盖，匹配商家端样式 (默认 AntD 暗色)
 }
 
 .logo {
@@ -34,7 +34,7 @@ $border-color: #e5e7eb;
   display: flex;
   align-items: center;
   gap: 12px;
-  // Match Merchant logo style
+  // 匹配商家端 logo 样式
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 16px;
   flex-shrink: 0;
@@ -43,7 +43,7 @@ $border-color: #e5e7eb;
     width: 32px;
     height: 32px;
     background: $admin-primary;
-    border-radius: 4px; // Match Merchant radius
+    border-radius: 4px; // 匹配商家端圆角
     display: flex;
     align-items: center;
     justify-content: center;
@@ -58,7 +58,7 @@ $border-color: #e5e7eb;
 
     h1 {
       color: white;
-      font-size: 18px; // Match Merchant font size
+      font-size: 18px; // 匹配商家端字体大小
       font-weight: 700;
       margin: 0;
       line-height: 1.3;
