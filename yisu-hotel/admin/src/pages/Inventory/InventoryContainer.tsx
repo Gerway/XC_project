@@ -22,16 +22,16 @@ const InventoryContainer: React.FC = () => {
   const [rooms, setRooms] = useState<IRoomWithStock[]>([])
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
 
-  // Create room modal state
+  // 创建客房弹窗状态
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [createForm] = Form.useForm()
 
   const { message, modal } = App.useApp()
 
-  // Room image upload state
+  // 客房图片上传状态
   const [roomFileList, setRoomFileList] = useState<UploadFile[]>([])
 
-  // Fetch hotels on mount
+  // 挂载时获取酒店
   useEffect(() => {
     const fetchHotels = async () => {
       try {
@@ -50,7 +50,7 @@ const InventoryContainer: React.FC = () => {
     fetchHotels()
   }, [message, currentUserId])
 
-  // Fetch rooms when hotel selected
+  // 选中酒店时获取客房
   const fetchRooms = useCallback(
     async (hotelId: string) => {
       try {
@@ -90,7 +90,7 @@ const InventoryContainer: React.FC = () => {
     [rooms, selectedRoomId],
   )
 
-  // Handlers for room creation/deletion
+  // 创建/删除客房的处理函数
   const handleCreateRoom = () => {
     setCreateModalOpen(true)
   }
@@ -132,7 +132,7 @@ const InventoryContainer: React.FC = () => {
       const values = await createForm.validateFields()
       if (!selectedHotelId) return
 
-      // Collect uploaded image URLs
+      // 收集已上传图片的 URL
       const roomPhotos = roomFileList
         .filter((f) => f.status === 'done' && f.response)
         .map((f) => f.response as string)
@@ -166,12 +166,12 @@ const InventoryContainer: React.FC = () => {
         message.error(res.message || '创建房型失败')
       }
     } catch (err: unknown) {
-      // This catch block handles errors from validateFields or roomApi.createRoom
+      // 此 catch 块处理来自 validateFields 或 roomApi.createRoom 的错误
       if (err instanceof Error) {
-        // If it's a validation error, Ant Design usually shows it on the form.
-        // For other errors (e.g., network), we show a generic message.
+        // 如果是验证错误，Ant Design 通常会在表单上显示。
+        // 对于其他错误 (例如，网络错误)，我们显示通用消息。
         if (!('errorFields' in err)) {
-          // Check if it's not a Form validation error object
+          // 检查此时是否不是表单验证错误对象
           message.error(err.message || '操作失败')
         }
       } else {
@@ -180,8 +180,8 @@ const InventoryContainer: React.FC = () => {
     }
   }
 
-  // Handle single-day inventory update
-  // No explicit day update function from parent. Calendar fetches its own inventory.
+  // 处理单日库存更新
+  // 没有来自父组件的明确按日更新函数。日历获取自己的库存。
 
   const selectedHotel = useMemo(
     () => hotels.find((h) => h.hotel_id === selectedHotelId),
@@ -190,7 +190,7 @@ const InventoryContainer: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      {/* Hotel Selector Bar */}
+      {/* 酒店选择器栏 */}
       <div className={styles.hotelSelectorBar}>
         <div className={styles.hotelSelectorLeft}>
           <ShopOutlined className={styles.hotelSelectorIcon} />
@@ -218,7 +218,7 @@ const InventoryContainer: React.FC = () => {
         )}
       </div>
 
-      {/* Main Content */}
+      {/* 主内容区 */}
       {selectedHotelId ? (
         <div className={styles.splitView}>
           <RoomList
@@ -248,7 +248,7 @@ const InventoryContainer: React.FC = () => {
 
       <div className={styles.footer}>© 2026 易宿酒店平台。保留所有权利。</div>
 
-      {/* Create Room Modal */}
+      {/* 创建客房弹窗 */}
       <Modal
         title="新增房型"
         open={createModalOpen}

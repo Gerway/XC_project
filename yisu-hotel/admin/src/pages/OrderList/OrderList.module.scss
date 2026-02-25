@@ -1,4 +1,4 @@
-// Design Tokens (consistent with Dashboard & HotelList)
+// 设计变量
 $primary-color: #137fec;
 $primary-hover: #0e6bd0;
 $background-light: #f0f2f5;
@@ -10,7 +10,7 @@ $border-color: #e5e7eb;
 $border-radius: 8px;
 $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
-// Page Container
+// 页面容器
 .container {
   padding: 24px;
   background-color: $background-light;
@@ -29,7 +29,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   gap: 24px;
 }
 
-// ===== Filter Bar =====
+// ===== 筛选栏 =====
 .filterCard {
   background: $background-white;
   padding: 20px;
@@ -75,7 +75,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   align-items: flex-end;
 }
 
-// ===== Table Card =====
+// ===== 表格卡片 =====
 .tableCard {
   background: $background-white;
   border-radius: $border-radius;
@@ -117,7 +117,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
       border-bottom: none;
     }
 
-    // Pagination
+    // 分页
     .ant-pagination {
       padding: 16px 24px;
       margin: 0 !important;
@@ -126,7 +126,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 }
 
-// ===== Cell Styles =====
+// ===== 单元格样式 =====
 .orderId {
   font-weight: 500;
   font-size: 14px;
@@ -177,7 +177,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   color: $text-primary;
 }
 
-// ===== Status Badges =====
+// ===== 状态徽标 =====
 .statusBadge {
   display: inline-flex;
   align-items: center;
@@ -218,7 +218,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 }
 
-// ===== Action Buttons =====
+// ===== 操作按钮 =====
 .actionCheckIn {
   font-size: 12px;
   font-weight: 600;
@@ -263,7 +263,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 }
 
-// Modal order ID display
+// 弹框订单 ID 显示
 .modalOrderId {
   font-size: 13px;
   font-weight: 400;
@@ -271,7 +271,7 @@ $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   margin-left: 4px;
 }
 
-// ===== Footer =====
+// ===== 页脚 =====
 .footer {
   text-align: center;
   margin-top: 8px;

@@ -30,7 +30,7 @@ export const FormModal: React.FC<FormModalProps> = ({
     } catch (err: unknown) {
       /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
       if ((err as any)?.errorFields) {
-        // antd form validation failed, silently ignore
+        // antd 表单验证失败，静默忽略
       } else {
         message.error((err as Error)?.message || '操作失败')
       }
@@ -41,7 +41,7 @@ export const FormModal: React.FC<FormModalProps> = ({
 
   const handleCancel = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
-      if (loading) return // submitting 时不允许关闭
+      if (loading) return // 提交时不允许关闭
       onCancel?.(e)
     },
     [loading, onCancel],

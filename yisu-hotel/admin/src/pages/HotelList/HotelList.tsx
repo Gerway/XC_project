@@ -35,7 +35,7 @@ import styles from './HotelList.module.scss'
 import { merchantApi } from '../../api/merchant'
 import { StatusTag } from '../../components/StatusTag'
 
-// Hotel type options
+// 酒店类型选项
 const hotelTypeOptions = [
   { label: '经济型', value: 1 },
   { label: '舒适型', value: 2 },
@@ -45,7 +45,7 @@ const hotelTypeOptions = [
   { label: '民宿', value: 6 },
 ]
 
-// Star rating options
+// 星级选项
 const starRatingOptions = [
   { label: '5星级', value: 5 },
   { label: '4星级', value: 4 },
@@ -55,7 +55,7 @@ const starRatingOptions = [
   { label: '精选', value: 0 },
 ]
 
-// Form values type (shared between Add & Edit)
+// 表单数据类型（添加和编辑共用）
 interface HotelFormValues {
   name: string
   type: number
@@ -73,7 +73,7 @@ interface HotelFormValues {
   remark?: string
 }
 
-// Map hotel ID to icon
+// 映射酒店 ID 到图标
 const getHotelIcon = (id: string): React.ReactNode => {
   const iconMap: Record<string, React.ReactNode> = {
     'H-2023-001': <BankOutlined style={{ fontSize: 20 }} />,
@@ -85,9 +85,9 @@ const getHotelIcon = (id: string): React.ReactNode => {
   return iconMap[id] || <BankOutlined style={{ fontSize: 20 }} />
 }
 
-// Generate a unique hotel ID based on current year and sequence (removed unused generateHotelId and formatDateCN)
+// 根据当前年份和序列生成唯一的酒店 ID (移除了未使用的 generateHotelId 和 formatDateCN)
 
-// Status config (reused in table & edit modal)
+// 状态配置（在表格和编辑弹窗中重用）
 const statusConfig: Record<HotelStatus, { color: string; text: string }> = {
   [HotelStatus.PUBLISHED]: { color: 'success', text: '已通过' },
   [HotelStatus.REJECTED]: { color: 'error', text: '已驳回' },
@@ -143,7 +143,7 @@ const HotelList: React.FC = () => {
     fetchHotels()
   }, [fetchHotels])
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingHotel, setEditingHotel] = useState<IHotel | null>(null) // null = Add mode
+  const [editingHotel, setEditingHotel] = useState<IHotel | null>(null) // null = 添加模式
   const [confirmLoading, setConfirmLoading] = useState(false)
 
   const [form] = Form.useForm<HotelFormValues>()
@@ -163,7 +163,7 @@ const HotelList: React.FC = () => {
 
   const handleTableChange = (paginationConfig: TablePaginationConfig) => {
     setPagination(paginationConfig)
-    // TODO: Fetch data from API with new pagination params
+    // TODO: 使用新的分页参数从 API 获取数据
   }
 
   const handleViewReason = useCallback(
@@ -177,7 +177,7 @@ const HotelList: React.FC = () => {
     [modal],
   )
 
-  // --- Modal handlers (Add + Edit + Detail) ---
+  // --- 弹窗处理函数（添加 + 编辑 + 详情） ---
   const handleOpenDetailModal = useCallback((hotel: IHotel) => {
     setViewingHotel(hotel)
     setIsDetailModalOpen(true)
@@ -236,7 +236,7 @@ const HotelList: React.FC = () => {
       remark: hotel.remark,
     })
 
-    // Convert backend media to UploadFile format
+    // 将后端媒体转换为 UploadFile 格式
     const initialFiles: UploadFile[] = (hotel.media || [])
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .filter((m: any) => m.media_type === 1) // Images only
@@ -259,7 +259,7 @@ const HotelList: React.FC = () => {
     setFileList([])
   }
 
-  // --- Image Upload Handlers ---
+  // --- 图片上传处理函数 ---
   const handleUploadChange: UploadProps['onChange'] = (info) => {
     const newFileList = [...info.fileList]
     setFileList(newFileList)
@@ -272,7 +272,7 @@ const HotelList: React.FC = () => {
     formData.append('file', file)
 
     try {
-      // Simulate progress
+      // 模拟进度
       onProgress({ percent: 50 })
 
       const response = await fetch('/api/upload', {
@@ -287,7 +287,7 @@ const HotelList: React.FC = () => {
       const resData = await response.json()
       onProgress({ percent: 100 })
 
-      // Call onSuccess with the response url (so antd sets the url property correctly)
+      // 调用 onSuccess 并传入响应 url（以便 antd 正确设置 url 属性）
       onSuccess(resData.data.url, file)
     } catch (err) {
       onError(err)
@@ -302,7 +302,7 @@ const HotelList: React.FC = () => {
 
       const userId = getUserId()
 
-      // Step 1: Save hotel basic info
+      // 步骤 1: 保存酒店基本信息
 
       const openTimeStr = values.openTime
         ? values.openTime.format('YYYY-MM-DD HH:mm:ss')
@@ -337,10 +337,10 @@ const HotelList: React.FC = () => {
 
       const hotelId = String(resData.hotel_id)
 
-      // Step 2: Handle Media Sync
-      // Determine what was deleted vs newly uploaded based on fileList state vs initial
+      // 步骤 2: 处理媒体同步
+      // 根据 fileList 状态与初始状态确定删除与新上传的内容
 
-      // Deletions: Initial files not in current fileList
+      // 删除: 不在当前 fileList 中的初始文件
       if (editingHotel && editingHotel.media) {
         const currentUids = new Set(fileList.map((f) => f.uid))
         for (const dbMedia of editingHotel.media) {
@@ -357,8 +357,8 @@ const HotelList: React.FC = () => {
         }
       }
 
-      // Additions: uploaded files that do not have an initial backend ID
-      // i.e., upload response urls
+      // 添加: 没有初始后端 ID 的已上传文件
+      // 即，上传响应的 url
       const newFiles = fileList.filter((f) => f.response)
       for (const [index, f] of newFiles.entries()) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -382,13 +382,13 @@ const HotelList: React.FC = () => {
         isEditMode ? `酒店"${values.name}"的信息已更新` : `酒店"${values.name}"已成功添加`,
       )
 
-      // Refresh list
+      // 刷新列表
       fetchHotels()
       handleCloseModal()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       if (err?.errorFields) {
-        // Form validation failed - do nothing
+        // 表单验证失败 - 不执行操作
       } else {
         message.error(err.message || '操作失败')
       }
@@ -431,7 +431,7 @@ const HotelList: React.FC = () => {
         key: 'name',
         width: 280,
         render: (_: string, record: IHotel) => {
-          // Find first image
+          // 查找第一张图片
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const img = record.media?.find((m: any) => m.media_type === 1)
 
@@ -516,7 +516,7 @@ const HotelList: React.FC = () => {
     [handleViewReason, handleOpenDetailModal, handleDeleteHotel],
   )
 
-  // --- Modal title with status badge for Edit mode ---
+  // --- 编辑模式下带有状态徽标的弹窗标题 ---
   const modalTitle = isEditMode ? (
     <div className={styles.editModalTitle}>
       <EditOutlined className={styles.editTitleIcon} />
@@ -556,7 +556,7 @@ const HotelList: React.FC = () => {
         <div className={styles.footer}>© 2026 易宿酒店平台。保留所有权利。</div>
       </div>
 
-      {/* Add / Edit Hotel Modal */}
+      {/* 添加 / 编辑酒店弹窗 */}
       <Modal
         title={modalTitle}
         open={isModalOpen}
@@ -569,7 +569,7 @@ const HotelList: React.FC = () => {
         forceRender
         className={styles.addHotelModal}
       >
-        {/* Edit mode: show hotel ID and submission date */}
+        {/* 编辑模式: 显示酒店 ID 和提交日期 */}
         {isEditMode && (
           <div className={styles.editInfoBar}>
             <span className={styles.editInfoItem}>
@@ -709,7 +709,7 @@ const HotelList: React.FC = () => {
           </Form.Item>
         </Form>
 
-        {/* Edit mode: show rejection reason if exists */}
+        {/* 编辑模式: 如果存在则显示驳回原因 */}
         {isEditMode &&
           editingHotel.status === HotelStatus.REJECTED &&
           editingHotel.rejectionReason && (
@@ -720,7 +720,7 @@ const HotelList: React.FC = () => {
           )}
       </Modal>
 
-      {/* Hotel Detail Modal */}
+      {/* 酒店详情弹窗 */}
       <Modal
         title="酒店详情"
         open={isDetailModalOpen}

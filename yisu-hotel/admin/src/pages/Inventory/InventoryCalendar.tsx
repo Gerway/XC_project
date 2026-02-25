@@ -53,7 +53,7 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({ room }) => {
 
   const { message } = App.useApp()
 
-  // Fetch data
+  // 获取数据
   const fetchInventory = useCallback(async () => {
     if (!room || !currentUserId) {
       setInventoryData([])
@@ -71,7 +71,7 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({ room }) => {
         startDate,
         endDate,
       })
-      // Based on typical axios interceptors where code is un-wrapped, OR if backend doesn't return code
+      // 基于通常去除了外层包裹的 axios 拦截器，或者如果后端不返回 code
       const dataToSet = (response as { data?: unknown }).data || response || []
       setInventoryData(Array.isArray(dataToSet) ? (dataToSet as IDayInventory[]) : [])
     } catch (err: unknown) {
@@ -87,23 +87,23 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({ room }) => {
     fetchInventory()
   }, [fetchInventory])
 
-  // Day edit modal state
+  // 单日编辑弹窗状态
   const [dayEditOpen, setDayEditOpen] = useState(false)
   const [editingDate, setEditingDate] = useState<string | null>(null)
   const [dayForm] = Form.useForm()
 
-  // Build calendar grid
+  // 构建日历网格
   const calendarCells = useMemo<CalendarCell[]>(() => {
     const cells: CalendarCell[] = []
 
-    // First day of current month (0=Sun, 1=Mon, ...)
+    // 当前月份的第一天 (0=周日, 1=周一, ...)
     const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay()
-    // Days in current month
+    // 当前月份天数
     const daysInMonth = new Date(currentYear, currentMonth, 0).getDate()
-    // Days in previous month
+    // 上个月份天数
     const daysInPrevMonth = new Date(currentYear, currentMonth - 1, 0).getDate()
 
-    // Previous month fill
+    // 填充上个月份
     for (let i = firstDay - 1; i >= 0; i--) {
       const day = daysInPrevMonth - i
       const prevMonth = currentMonth - 1
@@ -113,14 +113,14 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({ room }) => {
       cells.push({ day, isCurrentMonth: false, date: dateStr })
     }
 
-    // Current month days
+    // 当前月份天数
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`
       const inv = inventoryData.find((d) => d.date && d.date.startsWith(dateStr))
       cells.push({ day, isCurrentMonth: true, date: dateStr, inventory: inv })
     }
 
-    // Next month fill (to complete 6 rows × 7 cols = 42 cells, or at least fill the last row)
+    // 填充下个月份 (以完成 6 行 × 7 列 = 42 单元格，或至少填满最后一行)
     const totalNeeded = Math.ceil(cells.length / 7) * 7
     const remaining = totalNeeded - cells.length
     for (let day = 1; day <= remaining; day++) {
@@ -236,13 +236,13 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({ room }) => {
         }
       })
       .catch(() => {
-        // validation errors shown by form
+        // 表单显示的验证错误
       })
   }
 
   const isLowStock = (stock: number): boolean => stock <= 1
 
-  // Day edit handlers
+  // 单日编辑处理函数
   const handleDayEdit = (cell: CalendarCell) => {
     if (!cell.isCurrentMonth) return
     setEditingDate(cell.date)
@@ -325,14 +325,14 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({ room }) => {
 
       <div className={styles.calendarBody}>
         <div className={styles.calendarGrid}>
-          {/* Weekday Headers */}
+          {/* 星期表头 */}
           {WEEKDAYS.map((wd) => (
             <div key={wd} className={styles.weekdayHeader}>
               {wd}
             </div>
           ))}
 
-          {/* Day Cells */}
+          {/* 日期单元格 */}
           {calendarCells.map((cell, idx) => {
             const inv = cell.inventory
             const low = inv ? isLowStock(inv.stock) : false
@@ -372,7 +372,7 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({ room }) => {
         </div>
       </div>
 
-      {/* Batch Settings Modal */}
+      {/* 批量设置弹窗 */}
       <Modal
         title="批量设置价格与库存"
         open={batchModalOpen}
@@ -432,7 +432,7 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({ room }) => {
         </Form>
       </Modal>
 
-      {/* Single Day Edit Modal */}
+      {/* 单日编辑弹窗 */}
       <Modal
         title={
           editingDate ? (

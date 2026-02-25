@@ -1,4 +1,4 @@
-@use "sass:color";
+@use 'sass:color';
 
 $primary-color: #135bec;
 $primary-hover: #0f4bc2;
@@ -12,8 +12,7 @@ $border-radius: 8px;
   width: 100vw;
   overflow: hidden;
   font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .leftPanel {
@@ -21,7 +20,7 @@ $border-radius: 8px;
   background-color: #1a1a1a;
   background-image:
     linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-    url("https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80");
+    url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80');
   background-size: cover;
   background-position: center;
   display: flex;
@@ -36,17 +35,13 @@ $border-radius: 8px;
   }
 
   &::before {
-    content: "";
+    content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.3) 0%,
-      rgba(0, 0, 0, 0.7) 100%
-    );
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.7) 100%);
   }
 
   .brand {
@@ -129,12 +124,12 @@ $border-radius: 8px;
   flex: 1;
   min-width: 400px;
   max-width: 600px;
-  background-color: #f8f9fa; // Match Register
+  background-color: #f8f9fa; // 匹配注册页面
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 30px; // Match Register (was 32px/64px in Login)
+  padding: 30px; // 匹配注册页面
   overflow-y: auto;
   transition: all 0.3s ease;
 
@@ -145,7 +140,7 @@ $border-radius: 8px;
 }
 
 .formWrapper {
-  // Match Register class name
+  // 匹配注册页面的类名
   width: 100%;
   max-width: 400px;
 
@@ -155,7 +150,7 @@ $border-radius: 8px;
 }
 
 .title {
-  // Match Register class name
+  // 匹配注册页面的类名
   font-size: 28px;
   font-weight: 700;
   color: #000;
@@ -164,14 +159,14 @@ $border-radius: 8px;
 }
 
 .subtitle {
-  // Match Register class name
+  // 匹配注册页面的类名
   font-size: 14px;
   color: $secondary-text;
   margin-bottom: 24px;
 }
 
 .roleSwitcher {
-  // Match Register style exactly
+  // 完全匹配注册页面的样式
   margin-bottom: 24px;
   background: rgba(0, 0, 0, 0.03);
   padding: 4px;
@@ -192,7 +187,7 @@ $border-radius: 8px;
   }
 }
 
-// Password group styles from Register (if needed, Login might not use them but good to have)
+// 密码组样式
 .passwordGroup {
   display: flex;
   gap: 12px;
@@ -240,13 +235,13 @@ $border-radius: 8px;
 }
 
 .divider {
-  // Login specific, keep style but check if it fits match?
+  // 登录页面特有样式
   position: relative;
   margin: 32px 0;
   text-align: center;
 
   &::before {
-    content: "";
+    content: '';
     position: absolute;
     top: 50%;
     left: 0;
@@ -257,7 +252,7 @@ $border-radius: 8px;
 
   span {
     position: relative;
-    background-color: #f8f9fa; // Update to match new bg color
+    background-color: #f8f9fa; // 更新以匹配新背景颜色
     padding: 0 12px;
     color: #64748b;
     font-size: 14px;
@@ -265,7 +260,7 @@ $border-radius: 8px;
 }
 
 .signupLink {
-  // Matches Register's footer roughly but Login has "Signup Link" vs "Footer"
+  // 匹配注册页面的页脚
   text-align: center;
   margin-top: 24px;
   font-size: 14px;
@@ -283,7 +278,7 @@ $border-radius: 8px;
   }
 }
 
-// Login specific mobile header (keep it?)
+// 登录页面特有移动端头部
 .mobileHeader {
   position: absolute;
   top: 32px;

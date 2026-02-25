@@ -63,7 +63,7 @@ const Login: React.FC = () => {
       }}
     >
       <div className={styles.container}>
-        {/* Left Panel - Hidden on mobile */}
+        {/* 左侧面板 - 移动端隐藏 */}
         <div className={styles.leftPanel}>
           <div className={styles.brand}>
             <div className={styles.logo}>Y</div>
@@ -90,7 +90,7 @@ const Login: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Panel - Login Form */}
+        {/* 右侧面板 - 登录表单 */}
         <div className={styles.rightPanel}>
           <div className={styles.mobileHeader}>
             <div className={styles.logo}>Y</div>
