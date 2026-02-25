@@ -1,7 +1,7 @@
 import Taro from '@tarojs/taro';
 
 // 后端 API 基础地址
-const BASE_URL = 'http://localhost:8800/api';
+const BASE_URL = 'https://yisuhotel.onrender.com/api';
 
 /**
  * 封装的全局请求工具
