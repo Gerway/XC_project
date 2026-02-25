@@ -3,6 +3,7 @@ import Taro, { useDidShow, useRouter } from '@tarojs/taro';
 import { View, Text, Image, ScrollView } from '@tarojs/components';
 import { OrderStatus } from '../../../types/types';
 import { hotelApi } from '../../api/hotel';
+import LoadingScreen from '../../components/LoadingScreen/LoadingScreen';
 import './index.scss';
 
 interface OrderDetail {
@@ -61,11 +62,7 @@ const OrderDetails: React.FC = () => {
     });
 
     if (!order) {
-        return (
-            <View className="order-details__not-found">
-                <Text className="order-details__not-found-text">订单加载中...</Text>
-            </View>
-        );
+        return <LoadingScreen text="加载订单详情..." />;
     }
 
     const isPending = order.status === OrderStatus.PENDING;

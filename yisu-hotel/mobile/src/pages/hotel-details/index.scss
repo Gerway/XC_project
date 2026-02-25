@@ -1100,6 +1100,50 @@ $text-11px: 11px;
         font-weight: $font-bold;
     }
 
+    // Nearby POIs
+    &__nearby-pois {
+        padding: $spacing-2 $spacing-1;
+    }
+
+    &__poi-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: $spacing-2 $spacing-1;
+        border-bottom: 1px solid $gray-50;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    &__poi-left {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__poi-icon {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+
+    &__poi-name {
+        font-size: $text-xs;
+        color: $gray-700;
+        @include line-clamp(1);
+    }
+
+    &__poi-dist {
+        font-size: $text-xs;
+        color: $gray-400;
+        flex-shrink: 0;
+        margin-left: $spacing-2;
+    }
+
     // ---- Section: Reviews ----
     &__reviews {
         padding: 0 $spacing-3;

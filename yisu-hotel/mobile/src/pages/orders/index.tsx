@@ -3,6 +3,7 @@ import Taro, { useDidShow } from '@tarojs/taro';
 import { View, Text, Image, Button, ScrollView } from '@tarojs/components';
 import { Order, OrderStatus } from '../../../types/types';
 import { hotelApi } from '../../api/hotel';
+import loadingGif from '../../images/loading.gif';
 import './index.scss';
 
 const Orders: React.FC = () => {
@@ -10,13 +11,13 @@ const Orders: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [canGoBack, setCanGoBack] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useDidShow(() => {
-    // Check page stack depth
     const pages = Taro.getCurrentPages();
     setCanGoBack(pages.length > 1);
+    setIsLoading(true);
 
-    // Check Login Status
     const userInfoStr = Taro.getStorageSync('userInfo');
     if (userInfoStr) {
       setIsLoggedIn(true);
@@ -33,15 +34,17 @@ const Orders: React.FC = () => {
           }).catch(err => {
             console.error('Failed to fetch orders', err);
             setOrders([]);
-          });
-        }
+          }).finally(() => setIsLoading(false));
+        } else { setIsLoading(false); }
       } catch (e) {
         console.error('Failed to parse userInfo', e);
         setOrders([]);
+        setIsLoading(false);
       }
     } else {
       setIsLoggedIn(false);
       setOrders([]);
+      setIsLoading(false);
     }
   });
 
@@ -221,7 +224,12 @@ const Orders: React.FC = () => {
       </View>
       {/* Order List */}
       <ScrollView scrollY className="orders-page__list">
-        {!isLoggedIn ? (
+        {isLoading ? (
+          <View style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: '80px' }}>
+            <Image src={loadingGif} style={{ width: '80px', height: '80px' }} />
+            <Text style={{ color: '#999', fontSize: '13px', marginTop: '12px' }}>加载订单中...</Text>
+          </View>
+        ) : !isLoggedIn ? (
           <View className="orders-page__empty">
             <Text className="orders-page__empty-icon">🧾</Text>
             <Text className="orders-page__empty-text">您还没有订单哟~</Text>

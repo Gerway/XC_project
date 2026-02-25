@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, Image, ScrollView, Swiper, SwiperItem } from '@tarojs/components';
+import { View, Text, Image, ScrollView, Swiper, SwiperItem, Map } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { Order, OrderStatus } from '../../../types/types';
 import { hotelApi, HotelDetails, RoomDetails } from '../../api/hotel';
 import DatePicker from '../../components/DatePicker/DatePicker';
 import RoomDetailModal from '../../components/RoomDetailModal/RoomDetailModal';
+import LoadingScreen from '../../components/LoadingScreen/LoadingScreen';
 import './index.scss';
 
 const HotelDetailsPage: React.FC = () => {
@@ -114,11 +115,7 @@ const HotelDetailsPage: React.FC = () => {
   }, [id, dates]);
 
   if (loading) {
-    return (
-      <View className="hotel-details" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <Text>玩命加载中...</Text>
-      </View>
-    );
+    return <LoadingScreen text="加载酒店详情..." />;
   }
 
   if (!hotelDetails) {
@@ -645,23 +642,77 @@ const HotelDetailsPage: React.FC = () => {
         <View className="hotel-details__location-card">
           <View className="hotel-details__section-title">周边位置</View>
           <View className="hotel-details__map-preview">
-            <View className="hotel-details__map-marker">
-              <View className="hotel-details__map-marker-label">
-                <Text>{hotelDetails.name.split(' ')[0]}</Text>
+            {hotelDetails.latitude && hotelDetails.longitude ? (
+              <Map
+                style={{ width: '100%', height: '100%' }}
+                latitude={Number(hotelDetails.latitude)}
+                longitude={Number(hotelDetails.longitude)}
+                scale={15}
+                showLocation={false}
+                onError={(e) => console.error('Map error', e)}
+                markers={[{
+                  id: 1,
+                  latitude: Number(hotelDetails.latitude),
+                  longitude: Number(hotelDetails.longitude),
+                  iconPath: '',
+                  width: 24,
+                  height: 24,
+                  callout: {
+                    content: hotelDetails.name.length > 8 ? hotelDetails.name.substring(0, 8) + '...' : hotelDetails.name,
+                    display: 'ALWAYS',
+                    fontSize: 12,
+                    color: '#ffffff',
+                    bgColor: '#FF6B35',
+                    borderRadius: 6,
+                    padding: 6,
+                  }
+                }] as any}
+              />
+            ) : (
+              <View className="hotel-details__map-marker">
+                <View className="hotel-details__map-marker-label">
+                  <Text>{hotelDetails.name.split(' ')[0]}</Text>
+                </View>
+                <View className="hotel-details__map-marker-dot"></View>
               </View>
-              <View className="hotel-details__map-marker-dot"></View>
-            </View>
+            )}
           </View>
-          <View className="hotel-details__location-station">
-            <View className="hotel-details__station-info">
-              <Text className="hotel-details__station-icon">🚇</Text>
-              <View>
-                <Text className="hotel-details__station-name">Nearest Station</Text>
-                <Text className="hotel-details__station-distance">2 min walk · 150m</Text>
+          {/* Nearby POIs */}
+          {(() => {
+            const lat = Number(hotelDetails.latitude);
+            const lng = Number(hotelDetails.longitude);
+            if (!lat || !lng) return null;
+            const haversine = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+              const R = 6371;
+              const dLat = (lat2 - lat1) * Math.PI / 180;
+              const dLng = (lng2 - lng1) * Math.PI / 180;
+              const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+              return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            };
+            const pois = [
+              { name: '重庆江北国际机场', icon: 'https://api.iconify.design/lucide:plane.svg?color=%23999', lat: 29.7192, lng: 106.6417 },
+              { name: '重庆站（菜园坝）', icon: 'https://api.iconify.design/lucide:train-front.svg?color=%23999', lat: 29.5393, lng: 106.5517 },
+              { name: '重庆北站', icon: 'https://api.iconify.design/lucide:train-front.svg?color=%23999', lat: 29.6078, lng: 106.5515 },
+              { name: '解放碑步行街', icon: 'https://api.iconify.design/lucide:map-pin.svg?color=%23999', lat: 29.5579, lng: 106.5781 },
+              { name: '洪崖洞', icon: 'https://api.iconify.design/lucide:landmark.svg?color=%23999', lat: 29.5633, lng: 106.5778 },
+              { name: '磁器口古镇', icon: 'https://api.iconify.design/lucide:landmark.svg?color=%23999', lat: 29.5823, lng: 106.4489 },
+            ].map(p => ({ ...p, dist: haversine(lat, lng, p.lat, p.lng) })).sort((a, b) => a.dist - b.dist).slice(0, 3);
+            return (
+              <View className="hotel-details__nearby-pois">
+                {pois.map((poi, i) => (
+                  <View key={i} className="hotel-details__poi-item">
+                    <View className="hotel-details__poi-left">
+                      <Image src={poi.icon} className="hotel-details__poi-icon" />
+                      <Text className="hotel-details__poi-name">{poi.name}</Text>
+                    </View>
+                    <Text className="hotel-details__poi-dist">
+                      {poi.dist < 1 ? `${Math.round(poi.dist * 1000)}m` : `${poi.dist.toFixed(1)}km`}
+                    </Text>
+                  </View>
+                ))}
               </View>
-            </View>
-            <Text className="hotel-details__station-arrow">›</Text>
-          </View>
+            );
+          })()}
         </View>
       </View>
 

@@ -1,0 +1,79 @@
+@use '../../styles/variables' as *;
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.skeleton-shimmer {
+    background: linear-gradient(90deg, $gray-100 25%, $gray-50 50%, $gray-100 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite ease-in-out;
+    border-radius: $rounded;
+}
+
+.skeleton-card {
+    display: flex;
+    gap: $spacing-3;
+    padding: $spacing-3;
+    margin: 0 $spacing-3 $spacing-2;
+    background: $white;
+    border-radius: $rounded-xl;
+
+    &__image {
+        width: 110px;
+        height: 100px;
+        border-radius: $rounded-lg;
+        flex-shrink: 0;
+    }
+
+    &__info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-2;
+        min-width: 0;
+    }
+
+    &__title {
+        height: 16px;
+        width: 80%;
+    }
+
+    &__subtitle {
+        height: 12px;
+        width: 60%;
+    }
+
+    &__tags {
+        display: flex;
+        gap: $spacing-2;
+    }
+
+    &__tag {
+        height: 12px;
+        width: 40px;
+    }
+
+    &__bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+    }
+
+    &__score {
+        height: 16px;
+        width: 40px;
+    }
+
+    &__price {
+        height: 20px;
+        width: 60px;
+    }
+}

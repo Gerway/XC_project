@@ -11,6 +11,8 @@ interface SearchRequestBody {
     max_price?: number;
     star_rating?: number[]; // [4, 5]
     room_type?: number;
+    page?: number;       // 默认 1
+    page_size?: number;  // 默认 5
 }
 
 export const searchHotels = async (
@@ -25,7 +27,9 @@ export const searchHotels = async (
         min_price,
         max_price,
         star_rating,
-        room_type
+        room_type,
+        page = 1,
+        page_size = 5
     } = req.body;
 
     try {
@@ -142,6 +146,19 @@ export const searchHotels = async (
         // 因为上面是 GROUP BY h.hotel_id, r.room_id，这意味着如果一个酒店有3个合格的房型，会返回3条一样的酒店数据（由于分组不同）。
         // 为保证前端列表中酒店不重复，我们可以外套一层查询，对酒店去重，找出真正的 min_price。
 
+        // 6. 分页：先查总数，再查当前页数据
+        const countSql = `
+            SELECT COUNT(*) as total FROM (
+                SELECT hotel_id
+                FROM (${sql}) AS available_rooms
+                GROUP BY hotel_id
+            ) AS counted
+        `;
+        const [countRows] = await pool.execute<RowDataPacket[]>(countSql, params);
+        const total = countRows[0]?.total || 0;
+        const total_pages = Math.ceil(total / page_size);
+        const offset = (page - 1) * page_size;
+
         const finalSql = `
             SELECT 
                 hotel_id, name, address, city_name, latitude, longitude, 
@@ -168,13 +185,20 @@ export const searchHotels = async (
             FROM (${sql}) AS available_rooms
             GROUP BY hotel_id
             ORDER BY score DESC
+            LIMIT ${page_size} OFFSET ${offset}
         `;
 
         const [rows] = await pool.execute<RowDataPacket[]>(finalSql, params);
 
         res.status(200).json({
             message: "查询成功",
-            data: rows
+            data: rows,
+            pagination: {
+                page,
+                page_size,
+                total,
+                total_pages
+            }
         });
 
     } catch (err) {
@@ -711,7 +735,23 @@ export const payOrder = async (
             [rc, rId, ci, co]
         );
 
-        res.status(200).json({ message: '支付成功', data: { order_id } });
+        // 5. 累积积分：每消费 1 元积 1 分（取 real_pay 向下取整）
+        const earnedPoints = Math.floor(real_pay || 0);
+        if (earnedPoints > 0) {
+            // 获取订单的 user_id
+            const [userRow] = await pool.execute<RowDataPacket[]>(
+                `SELECT user_id FROM orders WHERE order_id = ?`,
+                [order_id]
+            );
+            if (userRow.length > 0) {
+                await pool.execute(
+                    `UPDATE users SET points = points + ? WHERE user_id = ?`,
+                    [earnedPoints, userRow[0].user_id]
+                );
+            }
+        }
+
+        res.status(200).json({ message: '支付成功', data: { order_id, earned_points: earnedPoints } });
     } catch (err) {
         console.error('payOrder error:', err);
         res.status(500).json({ message: '支付处理失败' });
