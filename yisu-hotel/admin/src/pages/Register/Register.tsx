@@ -66,6 +66,10 @@ const Register: React.FC = () => {
       message.success({ content: res.message || '注册并登录成功！', key: 'register', duration: 2 })
       // 服务器会自动 set cookie，另外也可以保存用户信息
       localStorage.setItem('user', JSON.stringify(res.user))
+      // 保存 token 用于后续 API 请求的 Authorization header
+      if ((res as unknown as { token?: string }).token) {
+        localStorage.setItem('token', (res as unknown as { token: string }).token)
+      }
 
       // 可以直接跳转了，或者让用户重新手动登录
       if (role === UserRole.ADMIN) {
