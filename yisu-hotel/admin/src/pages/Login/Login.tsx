@@ -38,6 +38,10 @@ const Login: React.FC = () => {
 
       message.success({ content: res.message || '登录成功！', key: 'login', duration: 2 })
       localStorage.setItem('user', JSON.stringify(res.user))
+      // 保存 token 用于后续 API 请求的 Authorization header
+      if ((res as unknown as { token?: string }).token) {
+        localStorage.setItem('token', (res as unknown as { token: string }).token)
+      }
 
       // 根据角色跳转到不同入口
       if (role === UserRole.ADMIN) {
