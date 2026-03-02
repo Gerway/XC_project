@@ -65,6 +65,10 @@ const Home: React.FC = () => {
     fetchCoupons();
   });
 
+  // 处理搜索的函数，点击搜索按钮时触发
+  // 1. 根据当前选中的 tab，将 tab 映射为 room_type
+  // 2. 将搜索参数存储到本地
+  // 3. 跳转到搜索页面
   const handleSearch = () => {
     // Map tab into an integer `room_type`. (Dummy logic: domestic->1, hourly->2, homestay->3, international->4)
     let room_type = 1;
@@ -89,15 +93,21 @@ const Home: React.FC = () => {
     });
   };
 
+  //传递给DatePicker组件的函数
   const handleDateSelect = (start: Date, end: Date) => {
     setDates({ start, end });
   };
 
+  // 传递给FilterModal组件的修改状态函数
   const handleFilterConfirm = (range: [number, number], stars: number[]) => {
     setPriceRange(range);
     setSelectedStars(stars);
   };
 
+  // 用户点击tag时触发
+  // 1. 如果keyword中包含tag，就从keyword中删除tag
+  // 2. 如果keyword中不包含tag，就将tag添加到keyword中
+  // 3. 更新keyword状态
   const handleTagClick = (tag: string) => {
     setKeyword(prev => {
       if (prev.includes(tag)) {

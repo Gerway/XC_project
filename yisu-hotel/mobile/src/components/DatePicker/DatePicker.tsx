@@ -207,7 +207,6 @@ const DatePicker: React.FC<DatePickerProps> = ({ isOpen, onClose, onSelect, star
             <View className="date-picker__footer">
                 <View className="date-picker__footer-info">
                     <Text className="date-picker__nights-text">共 {totalNights} 晚</Text>
-                    <Text className="date-picker__price-badge">查看价格</Text>
                 </View>
                 <Button
                     onClick={handleDone}

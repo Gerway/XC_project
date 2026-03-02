@@ -328,15 +328,44 @@ const Search: React.FC = () => {
 
   // Map
   const mapCenter = useMemo(() => {
+    if (userLocation) {
+      return { latitude: userLocation.lat, longitude: userLocation.lng };
+    }
     const v = sortedHotels.filter(h => h.latitude && h.longitude);
     if (!v.length) return { latitude: 29.5630, longitude: 106.5516 };
     return { latitude: v.reduce((s, h) => s + Number(h.latitude), 0) / v.length, longitude: v.reduce((s, h) => s + Number(h.longitude), 0) / v.length };
-  }, [sortedHotels]);
+  }, [sortedHotels, userLocation]);
 
-  const mapMarkers = useMemo(() => sortedHotels.filter(h => h.latitude && h.longitude).map((h, i) => ({
-    id: i, latitude: Number(h.latitude), longitude: Number(h.longitude), width: 60, height: 30,
-    callout: { content: `¥${h.min_price}`, color: '#ffffff', bgColor: selectedHotel?.hotel_id === h.hotel_id ? '#10b981' : '#FF6B35', padding: 6, borderRadius: 14, display: 'ALWAYS', fontSize: 12, borderWidth: 0, borderColor: 'transparent', textAlign: 'center' }
-  })), [sortedHotels, selectedHotel]);
+  const mapMarkers = useMemo(() => {
+    const hotelMarkers = sortedHotels.filter(h => h.latitude && h.longitude).map((h, i) => ({
+      id: i, latitude: Number(h.latitude), longitude: Number(h.longitude), width: 60, height: 30,
+      callout: { content: `¥${h.min_price}`, color: '#ffffff', bgColor: selectedHotel?.hotel_id === h.hotel_id ? '#10b981' : '#FF6B35', padding: 6, borderRadius: 14, display: 'ALWAYS', fontSize: 12, borderWidth: 0, borderColor: 'transparent', textAlign: 'center' }
+    }));
+
+    if (userLocation) {
+      return [...hotelMarkers, {
+        id: 99999,
+        latitude: userLocation.lat,
+        longitude: userLocation.lng,
+        width: 32,
+        height: 32,
+        iconPath: 'https://api.iconify.design/lucide:navigation.svg?color=%233b82f6',
+        callout: {
+          content: '我的位置',
+          color: '#ffffff',
+          bgColor: '#3b82f6',
+          padding: 6,
+          borderRadius: 8,
+          display: 'ALWAYS',
+          fontSize: 12,
+          borderWidth: 0,
+          borderColor: 'transparent',
+          textAlign: 'center'
+        }
+      }];
+    }
+    return hotelMarkers;
+  }, [sortedHotels, selectedHotel, userLocation]);
 
   const handleMarkerTap = (e: any) => { const id = e.detail?.markerId; if (id !== undefined) setSelectedHotel(sortedHotels.filter(h => h.latitude && h.longitude)[id] || null); };
 
@@ -368,7 +397,20 @@ const Search: React.FC = () => {
               </View>
             )}
           </View>
-          <View className="search-page__map-btn" onClick={() => { setIsMapView(v => !v); setSelectedHotel(null); }}>
+          <View className="search-page__map-btn" onClick={() => {
+            setIsMapView(v => {
+              const nextView = !v;
+              if (nextView && !userLocation) {
+                Taro.getLocation({
+                  type: 'gcj02',
+                  success: (res) => setUserLocation({ lat: res.latitude, lng: res.longitude }),
+                  fail: () => Taro.showToast({ title: '无法获取你的位置', icon: 'none' })
+                });
+              }
+              return nextView;
+            });
+            setSelectedHotel(null);
+          }}>
             <View className="search-page__map-icon-wrapper">
               <Image src={isMapView ? 'https://api.iconify.design/lucide:list.svg?color=%23FF6B35' : 'https://api.iconify.design/lucide:map.svg?color=%23FF6B35'} style={{ width: 20, height: 20 }} />
             </View>
