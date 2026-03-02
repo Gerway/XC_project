@@ -176,16 +176,7 @@ const HotelDetailsPage: React.FC = () => {
       guest_phone: ''
     };
 
-    // 2. Save to storage
-    try {
-      const existing = Taro.getStorageSync('orders');
-      const orders = existing ? JSON.parse(existing) : [];
-      orders.unshift(newOrder); // Add to top
-      Taro.setStorageSync('orders', JSON.stringify(orders));
-    } catch (e) {
-      console.error('Failed to create order', e);
-    }
-
+    // 2. Save to storage (Removed fake order caching)
     // 3. Store booking info for UI rendering (Hotel/Room details)
     Taro.setStorageSync('bookingInfo', JSON.stringify({
       hotel: hotelDetails,
