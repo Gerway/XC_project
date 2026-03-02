@@ -40,6 +40,7 @@
   "dependencies": {
     "@babel/runtime": "^7.24.4",
     "@tarojs/components": "4.1.11",
+    "@tarojs/components-advanced": "4.1.11",
     "@tarojs/helper": "4.1.11",
     "@tarojs/plugin-framework-react": "4.1.11",
     "@tarojs/plugin-platform-alipay": "4.1.11",
