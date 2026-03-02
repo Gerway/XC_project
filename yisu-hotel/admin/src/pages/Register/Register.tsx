@@ -11,6 +11,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import styles from './Register.module.scss'
 import type { RadioChangeEvent } from 'antd'
 import { registerApi } from '../../api/auth'
+import { useAuth } from '../../contexts/AuthContext'
+import type { IAuthUser } from '../../contexts/AuthContext'
 
 // 用户角色枚举
 enum UserRole {
@@ -33,6 +35,7 @@ const Register: React.FC = () => {
   const [form] = Form.useForm()
   const navigate = useNavigate()
   const { message } = App.useApp()
+  const auth = useAuth()
 
   // 模拟密码强度计算状态
   const [passwordStrength, setPasswordStrength] = useState<number>(0)
@@ -62,13 +65,12 @@ const Register: React.FC = () => {
         phone: values.phone,
         password: values.password,
         role: role === UserRole.MERCHANT ? '商户' : '管理',
-      })) as unknown as { message: string; user: Record<string, unknown> }
+      })) as unknown as { message: string; user: IAuthUser; token?: string }
       message.success({ content: res.message || '注册并登录成功！', key: 'register', duration: 2 })
-      // 服务器会自动 set cookie，另外也可以保存用户信息
-      localStorage.setItem('user', JSON.stringify(res.user))
-      // 保存 token 用于后续 API 请求的 Authorization header
-      if ((res as unknown as { token?: string }).token) {
-        localStorage.setItem('token', (res as unknown as { token: string }).token)
+
+      // 通过 AuthContext 统一登录
+      if (res.user && res.token) {
+        auth.login(res.user, res.token)
       }
 
       // 可以直接跳转了，或者让用户重新手动登录

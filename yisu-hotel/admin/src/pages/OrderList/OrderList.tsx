@@ -7,6 +7,7 @@ import { orderApi, ORDER_STATUS, type IOrderRecord, type OrderStatusValue } from
 import styles from './OrderList.module.scss'
 import { StatusTag } from '../../components/StatusTag'
 import { FormModal } from '../../components/FormModal'
+import { useAuth } from '../../contexts/AuthContext'
 
 const { RangePicker } = DatePicker
 
@@ -87,24 +88,11 @@ const OrderList: React.FC = () => {
   const [editVisible, setEditVisible] = useState(false)
   const [editTarget, setEditTarget] = useState<IOrderRecord | null>(null)
 
-  // ── 获取当前登录商户的 user_id ────────────────────────────────────────────
-  const getCurrentUserId = (): string => {
-    try {
-      const userStr = localStorage.getItem('user')
-      if (userStr) {
-        const userData = JSON.parse(userStr)
-        return String(userData.user_id || userData.id || '')
-      }
-    } catch {
-      /* ignore */
-    }
-    return ''
-  }
+  const { userId } = useAuth()
 
   // ── 获取订单列表 ───────────────────────────────────────────────────────────
   const fetchOrders = useCallback(
     async (page = 1, pageSize = 10) => {
-      const userId = getCurrentUserId()
       if (!userId) {
         message.warning('无法获取当前用户信息，请重新登录')
         return
@@ -151,7 +139,7 @@ const OrderList: React.FC = () => {
         setLoading(false)
       }
     },
-    [filterForm, message],
+    [filterForm, message, userId],
   )
 
   // 初始加载

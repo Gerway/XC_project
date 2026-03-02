@@ -34,6 +34,7 @@ import dayjs from 'dayjs'
 import styles from './HotelList.module.scss'
 import { merchantApi } from '../../api/merchant'
 import { StatusTag } from '../../components/StatusTag'
+import { useAuth } from '../../contexts/AuthContext'
 
 // 酒店类型选项
 const hotelTypeOptions = [
@@ -98,24 +99,12 @@ const HotelList: React.FC = () => {
   const [hotels, setHotels] = useState<IHotel[]>([])
   const [loading, setLoading] = useState(false)
   const { message, modal } = App.useApp()
-
-  const getUserId = () => {
-    const userStr = localStorage.getItem('user')
-    if (userStr) {
-      try {
-        const u = JSON.parse(userStr)
-        return u.user_id || u.id || 'M_001' // mock fallback
-      } catch {
-        return 'M_001'
-      }
-    }
-    return 'M_001'
-  }
+  const { userId } = useAuth()
 
   const fetchHotels = React.useCallback(async () => {
     setLoading(true)
     try {
-      const res = await merchantApi.getMerchantHotels({ user_id: getUserId() })
+      const res = await merchantApi.getMerchantHotels({ user_id: userId })
       if (res && res.data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mappedData = res.data.map((h: any) => ({
@@ -137,7 +126,7 @@ const HotelList: React.FC = () => {
     } finally {
       setLoading(false)
     }
-  }, [message])
+  }, [message, userId])
 
   useEffect(() => {
     fetchHotels()
@@ -300,8 +289,6 @@ const HotelList: React.FC = () => {
       const values = await form.validateFields()
       setConfirmLoading(true)
 
-      const userId = getUserId()
-
       // 步骤 1: 保存酒店基本信息
 
       const openTimeStr = values.openTime
@@ -401,7 +388,7 @@ const HotelList: React.FC = () => {
       try {
         setLoading(true)
         await merchantApi.deleteMerchantHotel({
-          user_id: getUserId(),
+          user_id: userId,
           hotel_id: String(hotel.hotel_id),
         })
         message.success(`酒店"${hotel.name}"删除成功`)
@@ -413,7 +400,7 @@ const HotelList: React.FC = () => {
         setLoading(false)
       }
     },
-    [message, fetchHotels],
+    [message, fetchHotels, userId],
   )
 
   const columns = useMemo<ColumnsType<IHotel>>(

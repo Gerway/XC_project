@@ -11,6 +11,7 @@ import type { IDayInventory } from '@/shared'
 import { roomApi, type IRoomWithStock } from '../../api/room'
 import { merchantApi } from '../../api/merchant'
 import styles from './Inventory.module.scss'
+import { useAuth } from '../../contexts/AuthContext'
 
 const { RangePicker } = DatePicker
 
@@ -45,11 +46,7 @@ const InventoryCalendar: React.FC<InventoryCalendarProps> = ({ room }) => {
 
   const [inventoryData, setInventoryData] = useState<IDayInventory[]>([])
 
-  const currentUserId = useMemo(() => {
-    const userStr = localStorage.getItem('user')
-    const user = userStr ? JSON.parse(userStr) : null
-    return user?.user_id || 'U-TEST-001'
-  }, [])
+  const { userId: currentUserId } = useAuth()
 
   const { message } = App.useApp()
 
