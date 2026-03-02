@@ -8,13 +8,10 @@ import InventoryCalendar from './InventoryCalendar'
 import styles from './Inventory.module.scss'
 import { merchantApi } from '../../api/merchant'
 import { roomApi, type IRoomWithStock } from '../../api/room'
+import { useAuth } from '../../contexts/AuthContext'
 
 const InventoryContainer: React.FC = () => {
-  const currentUserId = useMemo(() => {
-    const userStr = localStorage.getItem('user')
-    const user = userStr ? JSON.parse(userStr) : null
-    return user?.user_id || user?.id || ''
-  }, [])
+  const { userId: currentUserId } = useAuth()
 
   const [hotels, setHotels] = useState<Pick<IHotel, 'hotel_id' | 'name' | 'hotel_type'>[]>([])
   const [selectedHotelId, setSelectedHotelId] = useState<string | undefined>(undefined)

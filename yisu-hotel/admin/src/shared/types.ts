@@ -1,3 +1,17 @@
+// ─── 用户信息结构（AuthContext 使用） ──────────────────────────────────────────
+
+export interface IAuthUser {
+  user_id: string | number
+  id?: string | number
+  username?: string
+  account?: string
+  email?: string
+  phone?: string
+  role?: string // '商户' | '管理'
+  avatar?: string
+  [key: string]: unknown
+}
+
 export enum HotelStatus {
   PENDING = 'PENDING',
   PUBLISHED = 'PUBLISHED',

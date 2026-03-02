@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import { Form, Input, Button, Radio, ConfigProvider, App } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, Navigate } from 'react-router-dom'
 import styles from './Login.module.scss'
 import { UserRole } from '@/shared/enums/UserRole'
 import type { RadioChangeEvent } from 'antd'
 import { loginApi } from '../../api/auth'
+import { useAuth } from '../../contexts/AuthContext'
+import type { IAuthUser } from '../../contexts/AuthContext'
 
 interface LoginFormValues {
   username: string
@@ -17,15 +19,22 @@ const Login: React.FC = () => {
   const [form] = Form.useForm()
   const navigate = useNavigate()
   const { message } = App.useApp()
+  const auth = useAuth()
+
+  React.useEffect(() => {
+    document.title = '易宿酒店管理 - 登录'
+  }, [])
+
+  // 已登录用户自动重定向
+  if (auth.isLoggedIn) {
+    const target = auth.user?.role === '管理' ? '/admin/audit' : '/rooms'
+    return <Navigate to={target} replace />
+  }
 
   const onRoleChange = (e: RadioChangeEvent) => {
     setRole(e.target.value)
     message.info(`已切换至 ${e.target.value === UserRole.MERCHANT ? '商家' : '管理员'} 登录`)
   }
-
-  React.useEffect(() => {
-    document.title = '易宿酒店管理 - 登录'
-  }, [])
 
   const handleLogin = async (values: LoginFormValues) => {
     try {
@@ -34,13 +43,13 @@ const Login: React.FC = () => {
         account: values.username,
         password: values.password,
         role: role === UserRole.MERCHANT ? '商户' : '管理',
-      })) as unknown as { message?: string; user?: Record<string, unknown> }
+      })) as unknown as { message?: string; user?: IAuthUser; token?: string }
 
       message.success({ content: res.message || '登录成功！', key: 'login', duration: 2 })
-      localStorage.setItem('user', JSON.stringify(res.user))
-      // 保存 token 用于后续 API 请求的 Authorization header
-      if ((res as unknown as { token?: string }).token) {
-        localStorage.setItem('token', (res as unknown as { token: string }).token)
+
+      // 通过 AuthContext 统一登录
+      if (res.user && res.token) {
+        auth.login(res.user, res.token)
       }
 
       // 根据角色跳转到不同入口

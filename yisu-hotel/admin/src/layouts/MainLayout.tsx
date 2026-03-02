@@ -1,19 +1,21 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Layout, Menu, Avatar, Breadcrumb, Dropdown, theme } from 'antd'
 import type { MenuProps } from 'antd'
 import { AppstoreOutlined, FileTextOutlined, LogoutOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 import styles from './MainLayout.module.scss'
+import { useAuth } from '../contexts/AuthContext'
 
 const { Header, Sider, Content } = Layout
 
 const MainLayout: React.FC = () => {
-  const [collapsed] = useState(false)
+  const collapsed = false
   const {
     token: { colorBgContainer },
   } = theme.useToken()
   const navigate = useNavigate()
   const location = useLocation()
+  const { user: authUser, logout } = useAuth()
 
   React.useEffect(() => {
     const titleMap: Record<string, string> = {
@@ -25,29 +27,13 @@ const MainLayout: React.FC = () => {
     document.title = `${pageTitle} - 商家端`
   }, [location.pathname])
 
-  const [user, setUser] = useState({
-    name: '未知用户',
-    role: '商家管理员',
-    email: '',
-    avatar: '',
-  })
-
-  React.useEffect(() => {
-    const userStr = localStorage.getItem('user')
-    if (userStr) {
-      try {
-        const userData = JSON.parse(userStr)
-        setUser({
-          name: userData.username || userData.account || '未知用户',
-          role: userData.role === '管理' ? '超级管理员' : '商家管理员',
-          email: userData.email || '',
-          avatar: userData.avatar || '',
-        })
-      } catch (err) {
-        console.error('Failed to parse user info', err)
-      }
-    }
-  }, [])
+  // 从 AuthContext 读取用户信息
+  const user = {
+    name: authUser?.username || authUser?.account || '未知用户',
+    role: authUser?.role === '管理' ? '超级管理员' : '商家管理员',
+    email: (authUser?.email as string) || '',
+    avatar: (authUser?.avatar as string) || '',
+  }
 
   const userMenu: MenuProps = {
     items: [
@@ -56,7 +42,10 @@ const MainLayout: React.FC = () => {
         label: '退出登录',
         icon: <LogoutOutlined />,
         danger: true,
-        onClick: () => navigate('/login'),
+        onClick: () => {
+          logout()
+          navigate('/login')
+        },
       },
     ],
   }

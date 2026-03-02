@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Spin } from 'antd'
+import { AuthProvider } from './contexts/AuthContext'
+import PrivateRoute from './components/PrivateRoute'
 import MainLayout from './layouts/MainLayout'
 import AdminLayout from './layouts/AdminLayout'
 
@@ -24,29 +26,35 @@ const PageLoading = (
 
 function App() {
   return (
-    <BrowserRouter>
-      <Suspense fallback={PageLoading}>
-        <Routes>
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          {/* 商户端路由 */}
-          <Route element={<MainLayout />}>
-            <Route path="/rooms" element={<HotelList />} />
-            <Route path="/inventory" element={<InventoryContainer />} />
-            <Route path="/orders" element={<OrderList />} />
-          </Route>
-          {/* 管理员端路由 */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/audit" replace />} />
-            <Route path="audit" element={<HotelAudit />} />
-            <Route path="hotels" element={<AdminHotelManager />} />
-            <Route path="coupons" element={<CouponManager />} />
-            <Route path="users" element={<UserManager />} />
-          </Route>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Suspense fallback={PageLoading}>
+          <Routes>
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            {/* 商户端路由（需登录 + 商户角色） */}
+            <Route element={<PrivateRoute requiredRole="merchant" />}>
+              <Route element={<MainLayout />}>
+                <Route path="/rooms" element={<HotelList />} />
+                <Route path="/inventory" element={<InventoryContainer />} />
+                <Route path="/orders" element={<OrderList />} />
+              </Route>
+            </Route>
+            {/* 管理员端路由（需登录 + 管理员角色） */}
+            <Route element={<PrivateRoute requiredRole="admin" />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="/admin/audit" replace />} />
+                <Route path="audit" element={<HotelAudit />} />
+                <Route path="hotels" element={<AdminHotelManager />} />
+                <Route path="coupons" element={<CouponManager />} />
+                <Route path="users" element={<UserManager />} />
+              </Route>
+            </Route>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 

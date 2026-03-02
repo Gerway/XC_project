@@ -1,5 +1,6 @@
 import React from 'react'
 import { Layout, Menu, Avatar, Breadcrumb, Dropdown } from 'antd'
+import { useAuth } from '../contexts/AuthContext'
 import type { MenuProps } from 'antd'
 import {
   SafetyCertificateOutlined,
@@ -25,6 +26,7 @@ const breadcrumbMap: Record<string, string> = {
 const AdminLayout: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const { user: authUser, logout } = useAuth()
 
   React.useEffect(() => {
     const pageTitle = breadcrumbMap[location.pathname] || '酒店审核'
@@ -34,28 +36,12 @@ const AdminLayout: React.FC = () => {
   // 当前选中菜单 key
   const selectedKey = location.pathname.replace('/admin/', '') || 'audit'
 
-  // 管理员信息
-  const [admin, setAdmin] = React.useState({
-    name: '未知管理',
-    email: '-',
-    avatar: '',
-  })
-
-  React.useEffect(() => {
-    const userStr = localStorage.getItem('user')
-    if (userStr) {
-      try {
-        const userData = JSON.parse(userStr)
-        setAdmin({
-          name: userData.username || userData.account || '管理员',
-          email: userData.email || '-',
-          avatar: userData.avatar || '',
-        })
-      } catch (err) {
-        console.error('Failed to parse admin info', err)
-      }
-    }
-  }, [])
+  // 从 AuthContext 读取管理员信息
+  const admin = {
+    name: authUser?.username || authUser?.account || '管理员',
+    email: (authUser?.email as string) || '-',
+    avatar: (authUser?.avatar as string) || '',
+  }
 
   // 用户下拉菜单
   const userMenu: MenuProps = {
@@ -65,7 +51,10 @@ const AdminLayout: React.FC = () => {
         label: '退出登录',
         icon: <LogoutOutlined />,
         danger: true,
-        onClick: () => navigate('/login'),
+        onClick: () => {
+          logout()
+          navigate('/login')
+        },
       },
     ],
   }
