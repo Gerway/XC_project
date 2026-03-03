@@ -1,15 +1,19 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { View, Text, Image, ScrollView, Input, Map } from '@tarojs/components';
-import Taro, { useDidShow, useReachBottom } from '@tarojs/taro';
+import Taro, { useDidShow } from '@tarojs/taro';
 import { hotelApi, SearchHotelsParams, Hotel } from '../../api/hotel';
 import DatePicker from '../../components/DatePicker/DatePicker';
 import CityPicker from '../../components/CityPicker/CityPicker';
 import SearchFilterModal, { MoreFilterResult } from '../../components/SearchFilterModal/SearchFilterModal';
 import HotelCardSkeleton from '../../components/HotelCardSkeleton/HotelCardSkeleton';
 import HotelCardItem from '../../components/HotelCardItem/HotelCardItem';
+import VirtualScrollList from '../../components/VirtualScrollList/VirtualScrollList';
 import './index.scss';
 
 const PAGE_SIZE = 5;
+
+// 酒店卡片估算高度 (px)
+const ITEM_HEIGHT = 180;
 
 // 星级选项 (inline dropdown)
 const STAR_OPTIONS = [2, 3, 4, 5];
@@ -131,10 +135,12 @@ const Search: React.FC = () => {
     fetchHotels(searchState, page + 1, true);
   }, [hasMore, page, searchState, fetchHotels]);
 
-  // 页面级触底无限滚动
-  useReachBottom(() => {
-    handleLoadMore();
-  });
+  // 计算虚拟列表可用高度（窗口高度 - 顶部区域）
+  const listHeight = useMemo(() => {
+    const windowHeight = systemInfo.windowHeight || 667;
+    // header (导航 + 搜索栏 + 筛选栏 + chips) 大约 200px
+    return windowHeight - 200;
+  }, [systemInfo.windowHeight]);
 
   useDidShow(() => {
     try {
@@ -569,25 +575,33 @@ const Search: React.FC = () => {
               <View className="search-page__result-count">
                 <Text>共找到 {total} 家酒店</Text>
               </View>
-              {sortedHotels.map((hotel, idx) => (
-                <HotelCardItem
-                  key={hotel.hotel_id}
-                  id={`hotel-${hotel.hotel_id}`}
-                  index={idx}
-                  data={{ hotels: sortedHotels, searchState, userLocation, calcDistance, isLoadingMore, hasMore }}
-                />
-              ))}
-              {/* Load more / No more */}
-              {isLoadingMore ? (
-                <HotelCardSkeleton count={2} />
-              ) : !hasMore ? (
-                <View className="search-page__load-more">
-                  <Text className="search-page__load-more-text">—— 已经到底了 ——</Text>
-                </View>
-              ) : null}
+              <VirtualScrollList
+                height={listHeight}
+                itemCount={sortedHotels.length}
+                itemHeight={ITEM_HEIGHT}
+                overscanCount={3}
+                onScrollToLower={handleLoadMore}
+                lowerThreshold={300}
+                renderItem={(index) => (
+                  <HotelCardItem
+                    key={sortedHotels[index].hotel_id}
+                    id={`hotel-${sortedHotels[index].hotel_id}`}
+                    index={index}
+                    data={{ hotels: sortedHotels, searchState, userLocation, calcDistance }}
+                  />
+                )}
+                footer={
+                  isLoadingMore ? (
+                    <HotelCardSkeleton count={2} />
+                  ) : !hasMore ? (
+                    <View className="search-page__load-more">
+                      <Text className="search-page__load-more-text">—— 已经到底了 ——</Text>
+                    </View>
+                  ) : null
+                }
+              />
             </>
           )}
-          <View style={{ height: '60px' }} />
         </View>
       )}
 
