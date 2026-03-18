@@ -1,6 +1,8 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { ScrollView, View } from '@tarojs/components';
 import './VirtualScrollList.scss';
+
+const SCROLL_LOWER_THROTTLE_DELAY = 200;
 
 interface VirtualScrollListProps {
     /** 滚动容器高度 (px) */
@@ -32,7 +34,7 @@ const VirtualScrollList: React.FC<VirtualScrollListProps> = ({
     lowerThreshold = 300,
 }) => {
     const [scrollTop, setScrollTop] = useState(0);
-    const loadingTriggeredRef = useRef(false);
+    const throttleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // 总高度 = 所有项撑起的空间
     const totalHeight = itemCount * itemHeight;
@@ -48,23 +50,28 @@ const VirtualScrollList: React.FC<VirtualScrollListProps> = ({
     // 可见区域的上方留白 (用 paddingTop 定位)
     const offsetTop = startIndex * itemHeight;
 
+    useEffect(() => () => {
+        if (throttleTimerRef.current) {
+            clearTimeout(throttleTimerRef.current);
+            throttleTimerRef.current = null;
+        }
+    }, []);
+
     const handleScroll = useCallback((e: any) => {
         const currentScrollTop = e.detail?.scrollTop ?? 0;
         setScrollTop(currentScrollTop);
 
-        // 触底检测
-        if (onScrollToLower) { // 如果传了触底加载的函数
-            const scrollBottom = currentScrollTop + height;
-            if (scrollBottom >= totalHeight - lowerThreshold) {
-                if (!loadingTriggeredRef.current) {
-                    loadingTriggeredRef.current = true;
-                    onScrollToLower();
-                }
-            } else {
-                // 用户往上滑了，重置触发标记
-                loadingTriggeredRef.current = false;
-            }
-        }
+        if (!onScrollToLower) return;
+
+        const scrollBottom = currentScrollTop + height;
+        const shouldTrigger = scrollBottom >= totalHeight - lowerThreshold;
+
+        if (!shouldTrigger || throttleTimerRef.current) return;
+
+        onScrollToLower();
+        throttleTimerRef.current = setTimeout(() => {
+            throttleTimerRef.current = null;
+        }, SCROLL_LOWER_THROTTLE_DELAY);
     }, [height, totalHeight, lowerThreshold, onScrollToLower]);
 
     // 生成可见范围内的元素

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { View, Text, Image, ScrollView, Input, Map } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { hotelApi, SearchHotelsParams, Hotel } from '../../api/hotel';
@@ -11,6 +11,7 @@ import VirtualScrollList from '../../components/VirtualScrollList/VirtualScrollL
 import './index.scss';
 
 const PAGE_SIZE = 5;
+const INPUT_DEBOUNCE_DELAY = 400;
 
 // 酒店卡片估算高度 (px)
 const ITEM_HEIGHT = 180;
@@ -135,6 +136,18 @@ const Search: React.FC = () => {
     fetchHotels(searchState, page + 1, true);
   }, [hasMore, page, searchState, fetchHotels]);
 
+  const buildSearchParams = useCallback((overrides: Partial<SearchHotelsParams> = {}) => ({
+    ...searchState,
+    keyword,
+    ...overrides,
+  }), [searchState, keyword]);
+
+  const syncSearchAndFetch = useCallback((overrides: Partial<SearchHotelsParams> = {}) => {
+    const nextState = buildSearchParams(overrides);
+    setSearchState(nextState);
+    fetchHotels(nextState);
+  }, [buildSearchParams, fetchHotels]);
+
   // 计算虚拟列表可用高度（窗口高度 - 顶部区域）
   const listHeight = useMemo(() => {
     const windowHeight = systemInfo.windowHeight || 667;
@@ -158,6 +171,16 @@ const Search: React.FC = () => {
       } else fetchHotels(defaultState);
     } catch { fetchHotels(defaultState); }
   });
+
+  useEffect(() => {
+    if (keyword === searchState.keyword) return;
+
+    const timer = setTimeout(() => {
+      syncSearchAndFetch({ keyword });
+    }, INPUT_DEBOUNCE_DELAY);
+
+    return () => clearTimeout(timer);
+  }, [keyword, searchState.keyword, syncSearchAndFetch]);
 
   const dateRangeDisplay = useMemo(() => {
     if (!searchState.check_in || !searchState.check_out) return '';
@@ -254,8 +277,8 @@ const Search: React.FC = () => {
   const applyStarPrice = () => {
     setSelectedStars(tempStars);
     setSelectedPrice(tempPrice);
-    const u = { ...searchState, star_rating: tempStars, min_price: tempPrice.min, max_price: tempPrice.max };
-    setSearchState(u); fetchHotels(u); setActiveDropdown(null);
+    syncSearchAndFetch({ star_rating: tempStars, min_price: tempPrice.min, max_price: tempPrice.max });
+    setActiveDropdown(null);
   };
   const resetStarPrice = () => { setTempStars([]); setTempPrice(PRICE_QUICK[0]); };
 
@@ -278,8 +301,7 @@ const Search: React.FC = () => {
     setMoreFilterValues(result);
     // Apply price + stars from more-filter if set
     if (result.minPrice > 0 || result.maxPrice < 99999) {
-      const u = { ...searchState, min_price: result.minPrice, max_price: result.maxPrice };
-      setSearchState(u); fetchHotels(u);
+      syncSearchAndFetch({ min_price: result.minPrice, max_price: result.maxPrice });
     }
     if (result.hotelTypes.length > 0) {
       // hotel_type filter is client-side, no need to refetch
@@ -380,12 +402,11 @@ const Search: React.FC = () => {
               <Text className="search-page__search-dates">{dateRangeDisplay}</Text>
             </View>
             <View className="search-page__pill-divider" />
-            <Input className="search-page__search-input" placeholder="酒店 / 关键词" value={keyword}
+            <Input className="search-page__search-input" placeholder="Hotel / keyword" value={keyword}
               onInput={(e) => setKeyword(e.detail.value)}
-              onConfirm={() => { const u = { ...searchState, keyword }; setSearchState(u); fetchHotels(u); }}
             />
             {keyword && (
-              <View onClick={() => { setKeyword(''); const u = { ...searchState, keyword: '' }; setSearchState(u); fetchHotels(u); }} className="search-page__search-clear-btn">
+              <View onClick={() => { setKeyword(''); syncSearchAndFetch({ keyword: '' }); }} className="search-page__search-clear-btn">
                 <Text className="search-page__search-clear-icon">✕</Text>
               </View>
             )}
@@ -608,12 +629,12 @@ const Search: React.FC = () => {
       {/* Pickers & Modals */}
       <CityPicker isOpen={isCityPickerOpen} currentCity={searchState.city_name || ''}
         onClose={() => setIsCityPickerOpen(false)}
-        onSelect={city => { const u = { ...searchState, city_name: city }; setSearchState(u); setIsCityPickerOpen(false); fetchHotels(u); }}
+        onSelect={city => { syncSearchAndFetch({ city_name: city }); setIsCityPickerOpen(false); }}
       />
       <DatePicker isOpen={isDatePickerOpen} onClose={() => setIsDatePickerOpen(false)}
         startDate={searchState.check_in ? new Date(searchState.check_in) : new Date()}
         endDate={searchState.check_out ? new Date(searchState.check_out) : new Date()}
-        onSelect={(s, e) => { const fmt = (d: Date) => d.toISOString().split('T')[0]; const u = { ...searchState, check_in: fmt(s), check_out: fmt(e) }; setSearchState(u); setIsDatePickerOpen(false); fetchHotels(u); }}
+        onSelect={(s, e) => { const fmt = (d: Date) => d.toISOString().split('T')[0]; syncSearchAndFetch({ check_in: fmt(s), check_out: fmt(e) }); setIsDatePickerOpen(false); }}
       />
       <SearchFilterModal isOpen={isMoreFilterOpen} initialValues={moreFilterValues}
         onClose={() => setIsMoreFilterOpen(false)} onConfirm={handleMoreFilterConfirm}
