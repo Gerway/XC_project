@@ -181,13 +181,7 @@ const Orders: React.FC = () => {
           <View className="orders-page__title-center">
             <View className="orders-page__title-row">
               <Text className="orders-page__title">酒店订单</Text>
-              <Text className="orders-page__title-expand">▾</Text>
             </View>
-          </View>
-
-          <View className="orders-page__header-actions">
-            <Text className="orders-page__header-action-icon">🔍</Text>
-            <Text className="orders-page__header-action-icon">⋮</Text>
           </View>
         </View>
 

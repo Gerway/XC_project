@@ -53,7 +53,7 @@ const VirtualScrollList: React.FC<VirtualScrollListProps> = ({
         setScrollTop(currentScrollTop);
 
         // 触底检测
-        if (onScrollToLower) {
+        if (onScrollToLower) { // 如果传了触底加载的函数
             const scrollBottom = currentScrollTop + height;
             if (scrollBottom >= totalHeight - lowerThreshold) {
                 if (!loadingTriggeredRef.current) {
