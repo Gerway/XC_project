@@ -117,12 +117,12 @@ const Profile: React.FC = () => {
 
         {/* Stats Row */}
         <View className="profile-page__stats-row">
-          <View className="profile-page__stat-item" onClick={() => handleAuthAction(() => Taro.navigateTo({ url: '/pages/coupons/index' }))}>
+          <View className="profile-page__stat-item" onClick={() => handleAuthAction(() => Taro.navigateTo({ url: '/packageUser/coupons/index' }))}>
             <Text className="profile-page__stat-value">{couponCount}</Text>
             <Text className="profile-page__stat-label">优惠券</Text>
           </View>
           <View className="profile-page__stat-line"></View>
-          <View className="profile-page__stat-item" onClick={() => handleAuthAction(() => Taro.navigateTo({ url: '/pages/favorites/index' }))}>
+          <View className="profile-page__stat-item" onClick={() => handleAuthAction(() => Taro.navigateTo({ url: '/packageUser/favorites/index' }))}>
             <Text className="profile-page__stat-value">{favCount}</Text>
             <Text className="profile-page__stat-label">收藏/足迹</Text>
           </View>

@@ -39,7 +39,7 @@ const HotelCardItem: React.FC<{ id: string; index: number; data: any }> = ({ id,
 
     return (
         <View id={id} key={hotel.hotel_id} className="search-page__hotel-card" onClick={() => {
-            let url = `/pages/hotel-details/index?id=${hotel.hotel_id}`;
+            let url = `/packageHotel/hotel-details/index?id=${hotel.hotel_id}`;
             if (searchState.check_in && searchState.check_out) url += `&check_in=${searchState.check_in}&check_out=${searchState.check_out}`;
             Taro.navigateTo({ url });
         }}>

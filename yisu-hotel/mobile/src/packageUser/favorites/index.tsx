@@ -71,7 +71,7 @@ const Favorites: React.FC = () => {
         <View
             key={hotel.hotel_id}
             className="favorites-page__hotel-card"
-            onClick={() => Taro.navigateTo({ url: `/pages/hotel-details/index?id=${hotel.hotel_id}` })}
+            onClick={() => Taro.navigateTo({ url: `/packageHotel/hotel-details/index?id=${hotel.hotel_id}` })}
         >
             <View className="favorites-page__card-image">
                 <Image src={hotel.image_url} className="favorites-page__card-img" mode="aspectFill" />

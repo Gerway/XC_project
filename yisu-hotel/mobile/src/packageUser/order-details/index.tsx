@@ -139,7 +139,7 @@ const OrderDetails: React.FC = () => {
     };
 
     const handleBookAgain = () => {
-        Taro.navigateTo({ url: `/pages/hotel-details/index?id=${order.hotel_id}` });
+        Taro.navigateTo({ url: `/packageHotel/hotel-details/index?id=${order.hotel_id}` });
     };
 
     const handlePay = () => {
@@ -226,7 +226,7 @@ const OrderDetails: React.FC = () => {
 
                 {/* Hotel Info Card */}
                 <View className="order-details__card">
-                    <View className="order-details__hotel-row" onClick={() => Taro.navigateTo({ url: `/pages/hotel-details/index?id=${order.hotel_id}` })}>
+                    <View className="order-details__hotel-row" onClick={() => Taro.navigateTo({ url: `/packageHotel/hotel-details/index?id=${order.hotel_id}` })}>
                         <View className="order-details__hotel-thumb">
                             <Image src={order.hotel_image} mode="aspectFill" className="order-details__hotel-thumb-img" />
                         </View>
@@ -373,7 +373,7 @@ const OrderDetails: React.FC = () => {
                     <View className="order-details__card order-details__card--spaced">
                         <View
                             className="order-details__write-review-btn"
-                            onClick={() => Taro.navigateTo({ url: `/pages/write-review/index?orderId=${order.order_id}&hotelId=${order.hotel_id}` })}
+                            onClick={() => Taro.navigateTo({ url: `/packageHotel/write-review/index?orderId=${order.order_id}&hotelId=${order.hotel_id}` })}
                         >
                             <Text className="order-details__write-review-text">写评价</Text>
                         </View>

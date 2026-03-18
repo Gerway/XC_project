@@ -189,7 +189,7 @@ const HotelDetailsPage: React.FC = () => {
     }));
 
     // 4. Navigate with orderId
-    Taro.navigateTo({ url: `/pages/booking/index?orderId=${newOrder.order_id}` });
+    Taro.navigateTo({ url: `/packageHotel/booking/index?orderId=${newOrder.order_id}` });
   };
 
   const handleDateSelect = (start: Date, end: Date) => {
@@ -405,7 +405,7 @@ const HotelDetailsPage: React.FC = () => {
               <Text className="hotel-details__score-number">{hotelDetails.score}</Text>
               <Text className="hotel-details__score-label">{hotelDetails.score >= 4.5 ? '极好' : '很好'}</Text>
             </View>
-            <View className="hotel-details__score-reviews" onClick={() => Taro.navigateTo({ url: `/pages/reviews/index?id=${hotelDetails.hotel_id}` })}>
+            <View className="hotel-details__score-reviews" onClick={() => Taro.navigateTo({ url: `/packageHotel/reviews/index?id=${hotelDetails.hotel_id}` })}>
               <Text>{hotelDetails.reviews_count} 条点评 ›</Text>
             </View>
             {/* <Text className="hotel-details__score-subtitle">卫生 4.9 · 服务 4.8</Text> */}
@@ -766,7 +766,7 @@ const HotelDetailsPage: React.FC = () => {
             ))}
           </View>
 
-          <View className="hotel-details__review-view-more" onClick={() => Taro.navigateTo({ url: `/pages/reviews/index?id=${hotelDetails.hotel_id}` })}>
+          <View className="hotel-details__review-view-more" onClick={() => Taro.navigateTo({ url: `/packageHotel/reviews/index?id=${hotelDetails.hotel_id}` })}>
             <View className="hotel-details__review-view-more-link">
               <Text>更多 ›</Text>
             </View>

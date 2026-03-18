@@ -537,7 +537,7 @@ const Search: React.FC = () => {
           {selectedHotel && (
             <View className="search-page__map-popup">
               <View className="search-page__map-popup-card" onClick={() => {
-                let url = `/pages/hotel-details/index?id=${selectedHotel.hotel_id}`;
+                let url = `/packageHotel/hotel-details/index?id=${selectedHotel.hotel_id}`;
                 if (searchState.check_in && searchState.check_out) url += `&check_in=${searchState.check_in}&check_out=${searchState.check_out}`;
                 Taro.navigateTo({ url });
               }}>

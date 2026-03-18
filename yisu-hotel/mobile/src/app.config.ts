@@ -3,17 +3,47 @@ export default defineAppConfig({
     'pages/home/index',
     'pages/search/index',
     'pages/welfare/index',
-    'pages/hotel-details/index',
-    'pages/reviews/index',
-    'pages/write-review/index',
     'pages/login/index',
-    'pages/booking/index',
     'pages/profile/index',
     'pages/orders/index',
-    'pages/order-details/index',
-    'pages/favorites/index',
-    'pages/coupons/index',
   ],
+  subPackages: [
+    {
+      root: 'packageHotel',
+      pages: [
+        'hotel-details/index',
+        'reviews/index',
+        'write-review/index',
+        'booking/index',
+      ],
+    },
+    {
+      root: 'packageUser',
+      pages: [
+        'order-details/index',
+        'favorites/index',
+        'coupons/index',
+      ],
+    },
+  ],
+  preloadRule: {
+    'pages/search/index': {
+      network: 'all', // 在什么样的网络环境下触发预下载
+      packages: ['packageHotel'], // 下载哪一个（或哪些）分包
+    },
+    'pages/profile/index': {
+      network: 'all',
+      packages: ['packageUser'],
+    },
+    'pages/orders/index': {
+      network: 'all',
+      packages: ['packageUser'],
+    },
+    'packageUser/order-details/index': {
+      network: 'all',
+      packages: ['packageHotel'],
+    },
+  },
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#fff',

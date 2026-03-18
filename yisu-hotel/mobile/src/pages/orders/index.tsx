@@ -133,11 +133,11 @@ const Orders: React.FC = () => {
 
   const handleAction = async (action: string, order: Order) => {
     if (action === 'book_again') {
-      Taro.navigateTo({ url: `/pages/hotel-details/index?id=${order.hotel_id}` });
+      Taro.navigateTo({ url: `/packageHotel/hotel-details/index?id=${order.hotel_id}` });
     } else if (action === 'pay') {
-      Taro.navigateTo({ url: `/pages/order-details/index?orderId=${order.order_id}` });
+      Taro.navigateTo({ url: `/packageUser/order-details/index?orderId=${order.order_id}` });
     } else if (action === 'review') {
-      Taro.navigateTo({ url: `/pages/write-review/index?orderId=${order.order_id}` });
+      Taro.navigateTo({ url: `/packageHotel/write-review/index?orderId=${order.order_id}` });
     }
   };
 
@@ -251,7 +251,7 @@ const Orders: React.FC = () => {
               <View
                 key={order.order_id}
                 className="orders-page__card"
-                onClick={() => Taro.navigateTo({ url: `/pages/order-details/index?orderId=${order.order_id}` })}
+                onClick={() => Taro.navigateTo({ url: `/packageUser/order-details/index?orderId=${order.order_id}` })}
               >
                 <View className="orders-page__card-image">
                   <Image
